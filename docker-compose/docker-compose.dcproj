@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.Docker.Sdk">
+  <!--<PropertyGroup Label="Globals">
+    <ProjectGuid>8d33f181-7dde-04eb-e05a-075c5c0d4e39</ProjectGuid>
+  </PropertyGroup>-->
+	<PropertyGroup>
+		<DockerTargetOS>Linux</DockerTargetOS>
+		<ProjectVersion>2.1</ProjectVersion>
+	</PropertyGroup>
+	<ItemGroup>
+    <None Include="docker-compose.override.yml">
+      <DependentUpon>docker-compose.yml</DependentUpon>
+    </None>
+    <None Include="docker-compose.yml" />
+  </ItemGroup>
+</Project>
