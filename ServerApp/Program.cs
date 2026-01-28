@@ -23,8 +23,6 @@ namespace ServerApp
             app.UseSwaggerUI();
 
             //remove before production - not using dev environment yet: add https too.
-         
-
             app.UseAuthorization();
 
             app.MapControllers();

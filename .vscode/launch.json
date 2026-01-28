@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Attach to .NET API",
+      "type": "coreclr",
+      "request": "attach",
+      "processId": "auto"
+    },
+    {
+      "name": "Attach to Next.js",
+      "type": "node",
+      "request": "attach",
+      "port": 9229
+    }
+  ]
+}
