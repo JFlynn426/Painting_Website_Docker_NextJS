@@ -6,8 +6,8 @@ services:
     ports:
       - "5000:8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:8080
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
     volumes:
       - ../ServerApp:/app
     stdin_open: true
@@ -25,8 +25,17 @@ services:
       - ../clientapp:/app
       - /app/node_modules
     environment:
-      - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://api:5000
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://api:5000
     stdin_open: true
     tty: true
     command: sh -c "npm run dev"
+
+    develop:
+      watch:
+        - action: sync
+          path: ../clientapp
+          target: /app
+
+        - action: rebuild
+          path: ../clientapp/Dockerfile
