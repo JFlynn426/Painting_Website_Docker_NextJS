@@ -1,24 +1,24 @@
 import type { Metadata } from "next";
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Container } from "react-bootstrap";
 import NavBar from "./NavBar";
+import Footer from "./Footer";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const font = localFont({
+  src: [
+    {
+      path: "../../public/fonts/PoiretOne-Regular.ttf",
+    },
+  ],
+  variable: "--font-local",
+  display: "swap",
 });
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 
 export const metadata: Metadata = {
-  title: "NextJs Image Gallery",
-  description: "Tutorial project for learning NextJs",
+  title: "Gloria Gronowicz Fine Art",
+  description: "Gloria Gronowicz is a talented artist known for her captivating paintings that blend realism with a touch of surrealism. Her work often features vibrant colors and intricate details, drawing viewers into a world of imagination and emotion. With a unique style that combines traditional techniques with contemporary themes, Gloria's art has garnered acclaim for its ability to evoke deep feelings and spark thoughtful reflection. Whether depicting serene landscapes or thought-provoking portraits, Gloria Gronowicz's paintings are a testament to her artistic vision and skill.",
 };
 
 export default function RootLayout({
@@ -28,13 +28,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`${font.variable}`}>
         <NavBar />
         <main>
           <Container className="py-4">
             {children}
           </Container>
         </main>
+        <Footer />
       </body>
     </html>
   );
