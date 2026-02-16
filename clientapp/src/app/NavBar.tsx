@@ -1,12 +1,13 @@
 'use client'
 
-import { Navbar, Nav } from 'react-bootstrap';
+import { Navbar, Nav, NavDropdown } from 'react-bootstrap';
 import styles from './NavBar.module.css';
 import Link from 'next/link';
+import { paintingCategories } from './models/paintingCategories';
 
 export default function NavBar() {
     return (
-        <Navbar bg="dark" variant="dark" expand="lg" className={styles.customNavbar}>
+        <Navbar bg="dark" variant="dark" expand="lg" className={styles.customNavbar} sticky="top">
             <div className={styles.navbarContainer}>
                 <div className="d-flex justify-content-between align-items-center w-100">
                     <Navbar.Brand as={Link} href="/" className={styles.customNavbarBrand}>
@@ -25,9 +26,23 @@ export default function NavBar() {
                         <Nav.Link as={Link} href="/about" className={styles.customNavLink}>
                             About
                         </Nav.Link>
-                        <Nav.Link as={Link} href="/paintings" className={styles.customNavLink}>
-                            Paintings
-                        </Nav.Link>
+                        <NavDropdown
+                            title="Paintings"
+                            id="paintings-dropdown"
+                            className={styles.customNavDropdown}
+                            menuVariant="dark"
+                        >
+                            {paintingCategories.map((category) => (
+                                <NavDropdown.Item
+                                    as={Link}
+                                    href={`/paintings/${category.slug}`}
+                                    key={category.id}
+                                    className={styles.customNavDropdownItem}
+                                >
+                                    {category.name}
+                                </NavDropdown.Item>
+                            ))}
+                        </NavDropdown>
                         <Nav.Link as={Link} href="/new_paintings" className={styles.customNavLink}>
                             New Paintings
                         </Nav.Link>
