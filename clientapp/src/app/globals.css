@@ -4,17 +4,17 @@
 @tailwind utilities;
 
 :root {
-  --background: #2d2d2d;
+  --background: #3d3d3d;
   --foreground: #ffffff;
-  --navbar-footer-bg: #3d3d3d;
+  --navbar-footer-bg: #2d2d2d;
   --font-local: 'Poiret One', sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #2d2d2d;
+    --background: #3d3d3d;
     --foreground: #ffffff;
-    --navbar-footer-bg: #3d3d3d;
+    --navbar-footer-bg: #2d2d2d;
   }
 }
 

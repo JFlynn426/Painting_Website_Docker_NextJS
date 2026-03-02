@@ -35,7 +35,7 @@ export default function NavBar() {
                     <div className="relative">
                         <button
                             onClick={togglePaintingsDropdown}
-                            className="pl-3 py-2 rounded flex items-center justify-center transition duration-200 ease-in-out w-full"
+                            className="pl-3 py-2 rounded flex items-center hover:text-blue-400 justify-center transition duration-200 ease-in-out w-full"
                         >
                             Paintings
                             <span style={{
@@ -58,7 +58,7 @@ export default function NavBar() {
                                     <Link
                                         key={category.id}
                                         href={`/paintings/${category.id}`}
-                                        className="block px-4 py-2 transition duration-200 ease-in-out hover:bg-[#1e3a8a] hover:text-blue-400 text-left text-center w-full"
+                                        className="block px-4 py-2 transition duration-200 ease-in-out hover:bg-[#1e3a8a] text-center w-full"
                                     >
                                         {category.name}
                                     </Link>

@@ -48,7 +48,7 @@ export default function ArtCarousel() {
     };
 
     return (
-        <div className="relative w-full max-w-[50rem] h-[75vh] overflow-hidden rounded-lg mx-auto">
+        <div className="relative w-full max-w-[50rem] h-[75vh] overflow-hidden rounded-lg mx-auto bg-[var(--background)]">
             {/* Images container */}
             <div className="relative w-full h-full">
                 {images.map((image, index) => (
