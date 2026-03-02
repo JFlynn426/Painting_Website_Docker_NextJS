@@ -1,13 +1,20 @@
+/* eslint-disable */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
-  --background: #444444;
-  --foreground: #171717;
+  --background: #2d2d2d;
+  --foreground: #ffffff;
+  --navbar-footer-bg: #3d3d3d;
   --font-local: 'Poiret One', sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #444444;
-    --foreground: #171717;
+    --background: #2d2d2d;
+    --foreground: #ffffff;
+    --navbar-footer-bg: #3d3d3d;
   }
 }
 
@@ -24,77 +31,3 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
-}
-
-/* Remove any padding/margin that might affect full width */
-.navbar {
-  width: 100% !important;
-  left: 0 !important;
-  position: relative !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-/* Ensure navbar spans full width */
-.navbar-container {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  width: 100% !important;
-}
-
-/* Responsive margins for the painting */
-@media (min-width: 576px) {
-  .w-100 {
-    margin: 0 1rem;
-  }
-}
-
-@media (min-width: 768px) {
-  .w-100 {
-    margin: 0 2rem;
-  }
-}
-
-@media (min-width: 992px) {
-  .w-100 {
-    margin: 0 3rem;
-  }
-}
-
-@media (min-width: 1200px) {
-  .w-100 {
-    margin: 0 4rem;
-  }
-}
-
-@media (min-width: 1400px) {
-  .w-100 {
-    margin: 0 5rem;
-  }
-}
-
-/* Set maximum height for image on larger screens */
-@media (min-width: 1200px) {
-  .w-100 {
-    max-height: 75vh;
-  }
-}
-

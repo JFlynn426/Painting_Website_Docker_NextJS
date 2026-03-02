@@ -1,60 +1,92 @@
 'use client'
 
-import { Navbar, Nav, NavDropdown } from 'react-bootstrap';
-import styles from './NavBar.module.css';
+import { useState } from 'react';
 import Link from 'next/link';
 import { paintingCategories } from './models/paintingCategories';
 
 export default function NavBar() {
+    const [isPaintingsOpen, setIsPaintingsOpen] = useState(false);
+
+    const togglePaintingsDropdown = () => {
+        setIsPaintingsOpen(!isPaintingsOpen);
+    };
+
     return (
-        <Navbar bg="dark" variant="dark" expand="lg" className={styles.customNavbar} sticky="top">
-            <div className={styles.navbarContainer}>
-                <div className="d-flex justify-content-between align-items-center w-100">
-                    <Navbar.Brand as={Link} href="/" className={styles.customNavbarBrand}>
+        <nav className="bg-[var(--navbar-footer-bg)] text-white sticky-top">
+            <div className="container mx-auto px-4 py-3">
+                <div className="flex flex-col items-center mb-3">
+                    <Link href="/" className="text-2xl md:text-3xl font-bold text-blue-300">
                         Gloria Gronowicz Fine Art
-                    </Navbar.Brand>
-                    <Navbar.Toggle aria-controls="navbarScroll" className={`${styles.navbarToggle}`} />
+                    </Link>
                 </div>
-                <Navbar.Collapse id="navbarScroll" className={`${styles.navbarCollapse} justify-content-center w-100`}>
-                    <Nav
-                        className={`${styles.customNav} navbar-nav my-2 my-lg-0 d-flex justify-content-center`}
-                        navbarScroll
+                <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4 w-full md:w-auto justify-center">
+                    <Link
+                        href="/"
+                        className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-blue-400 text-center w-full md:w-auto"
                     >
-                        <Nav.Link as={Link} href="/" className={styles.customNavLink}>
-                            Home
-                        </Nav.Link>
-                        <Nav.Link as={Link} href="/about" className={styles.customNavLink}>
-                            About
-                        </Nav.Link>
-                        <NavDropdown
-                            title="Paintings"
-                            id="paintings-dropdown"
-                            className={styles.customNavDropdown}
-                            menuVariant="dark"
+                        Home
+                    </Link>
+                    <Link
+                        href="/about"
+                        className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-blue-400 text-center w-full md:w-auto"
+                    >
+                        About
+                    </Link>
+                    <div className="relative">
+                        <button
+                            onClick={togglePaintingsDropdown}
+                            className="pl-3 py-2 rounded flex items-center justify-center transition duration-200 ease-in-out w-full"
                         >
-                            {paintingCategories.map((category) => (
-                                <NavDropdown.Item
-                                    as={Link}
-                                    href={`/paintings/${category.slug}`}
-                                    key={category.id}
-                                    className={styles.customNavDropdownItem}
-                                >
-                                    {category.name}
-                                </NavDropdown.Item>
-                            ))}
-                        </NavDropdown>
-                        <Nav.Link as={Link} href="/new_paintings" className={styles.customNavLink}>
-                            New Paintings
-                        </Nav.Link>
-                        <Nav.Link as={Link} href="/gallery" className={styles.customNavLink}>
-                            Gallery
-                        </Nav.Link>
-                        <Nav.Link as={Link} href="/contact" className={styles.customNavLink}>
-                            Contact
-                        </Nav.Link>
-                    </Nav>
-                </Navbar.Collapse>
+                            Paintings
+                            <span style={{
+                                display: 'inline-block',
+                                transform: isPaintingsOpen ? 'rotate(0deg) scale(0.6)' : 'rotate(90deg) scale(0.6)',
+                                marginLeft: '0.25rem',
+                                transition: 'transform 0.2s ease',
+                                transformOrigin: 'center',
+                                position: 'relative',
+                                top: '-2px',
+                                width: '3rem',
+                                right: '1rem'
+                            }}>
+                                ▼
+                            </span>
+                        </button>
+                        {isPaintingsOpen && (
+                            <div className="relative w-full md:absolute left-0 mt-2 bg-[#3a3a3a] rounded-md shadow-lg py-1 z-10">
+                                {paintingCategories.map((category) => (
+                                    <Link
+                                        key={category.id}
+                                        href={`/paintings/${category.id}`}
+                                        className="block px-4 py-2 transition duration-200 ease-in-out hover:bg-[#1e3a8a] hover:text-blue-400 text-left text-center w-full"
+                                    >
+                                        {category.name}
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    <Link
+                        href="/new_paintings"
+                        className="pr-3 py-2 rounded transition duration-200 ease-in-out hover:text-blue-400 text-center w-full md:w-auto"
+                    >
+                        New Paintings
+                    </Link>
+                    <Link
+                        href="/gallery"
+                        className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-blue-400 text-center w-full md:w-auto"
+                    >
+                        Gallery
+                    </Link>
+                    <Link
+                        href="/contact"
+                        className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-blue-400 text-center w-full md:w-auto"
+                    >
+                        Contact
+                    </Link>
+                </div>
             </div>
-        </Navbar>
+            <div className="h-px bg-white w-full"></div>
+        </nav>
     );
 }

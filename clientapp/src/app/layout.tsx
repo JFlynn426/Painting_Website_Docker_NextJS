@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import 'bootstrap/dist/css/bootstrap.min.css';
 import localFont from "next/font/local";
 import "./globals.css";
-import { Container } from "react-bootstrap";
 import NavBar from "./NavBar";
 import Footer from "./Footer";
 
@@ -28,12 +26,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${font.variable}`}>
+      <body className={`${font.variable} bg-[var(--background)] text-[var(--foreground)]`}>
         <NavBar />
-        <main>
-          <Container className="py-4">
-            {children}
-          </Container>
+        <main className="py-4">
+          {children}
         </main>
         <Footer />
       </body>
