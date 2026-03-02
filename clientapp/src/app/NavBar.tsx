@@ -14,8 +14,8 @@ export default function NavBar() {
     return (
         <nav className="bg-[var(--navbar-footer-bg)] text-white sticky-top">
             <div className="container mx-auto px-4 py-3">
-                <div className="flex flex-col items-center mb-3">
-                    <Link href="/" className="text-2xl md:text-3xl font-bold text-blue-300">
+                <div className="flex flex-col items-center m-3">
+                    <Link href="/" className="text-4xl md:text-5xl font-bold text-blue-300">
                         Gloria Gronowicz Fine Art
                     </Link>
                 </div>

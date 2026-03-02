@@ -48,7 +48,7 @@ export default function ArtCarousel() {
     };
 
     return (
-        <div className="relative w-full h-[75vh] overflow-hidden rounded-lg shadow-xl">
+        <div className="relative w-full max-w-[50rem] h-[75vh] overflow-hidden rounded-lg mx-auto">
             {/* Images container */}
             <div className="relative w-full h-full">
                 {images.map((image, index) => (
@@ -74,7 +74,7 @@ export default function ArtCarousel() {
             {/* Navigation buttons - constrained to close to image edges */}
             <button
                 onClick={goToPrev}
-                className="absolute left-[10rem] top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition"
+                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition"
                 aria-label="Previous slide"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -83,7 +83,7 @@ export default function ArtCarousel() {
             </button>
             <button
                 onClick={goToNext}
-                className="absolute right-[10rem] top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition"
                 aria-label="Next slide"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
