@@ -57,7 +57,7 @@ export default function NavBar() {
                                 {paintingCategories.map((category) => (
                                     <Link
                                         key={category.id}
-                                        href={`/paintings/${category.id}`}
+                                        href={`/paintings/${category.slug}`}
                                         className="block px-4 py-2 transition duration-200 ease-in-out hover:bg-[#1e3a8a] text-center w-full"
                                     >
                                         {category.name}

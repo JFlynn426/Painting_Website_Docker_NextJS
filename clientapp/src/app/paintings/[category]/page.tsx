@@ -2,22 +2,29 @@
 
 import { paintingCategories } from "@/app/models/paintingCategories";
 import Image from "next/image";
+import { use, useState, useEffect } from "react";
 
 interface CategoryPageProps {
-    params: {
+    params: Promise<{
         category: string;
-    };
+    }>;
 }
 
 export default function CategoryPage({ params }: CategoryPageProps) {
-    const { category } = params;
+    const { category } = use(params);
+    const [images, setImages] = useState<string[]>([]);
 
     // Find the category from the model
     const categoryData = paintingCategories.find(cat => cat.slug === category);
 
     // Get images from the corresponding folder
     const folderName = getFolderNameFromSlug(category);
-    const images = getImagesForCategory(folderName);
+
+    // Get images on mount
+    useEffect(() => {
+        const categoryImages = getImagesForCategory(folderName);
+        setImages(categoryImages);
+    }, [folderName]);
 
     if (!categoryData) {
         return (
@@ -35,16 +42,17 @@ export default function CategoryPage({ params }: CategoryPageProps) {
             )}
 
             {images.length > 0 ? (
-                <div className="imageGrid">
+                <div className="masonry-grid">
                     {images.map((image, index) => (
-                        <div key={index} className="imageWrapper">
+                        <div key={index} className="masonry-item-wrapper">
                             <Image
                                 src={`/${folderName}/${image}`}
                                 alt={`${categoryData.name} - ${image}`}
-                                width={400}
-                                height={400}
-                                className="image"
-                                priority={index < 3}
+                                width={350}
+                                height={350}
+                                className="masonry-image"
+                                style={{ width: '100%', height: 'auto' }}
+                                priority={index < 2}
                             />
                         </div>
                     ))}
