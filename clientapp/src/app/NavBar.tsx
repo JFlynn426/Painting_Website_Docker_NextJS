@@ -7,15 +7,15 @@ import { paintingCategories } from './models/paintingCategories';
 export default function NavBar() {
     const [isPaintingsOpen, setIsPaintingsOpen] = useState(false);
 
-    const togglePaintingsDropdown = () => {
-        setIsPaintingsOpen(!isPaintingsOpen);
+    const closePaintingsDropdown = () => {
+        setIsPaintingsOpen(false);
     };
 
     return (
         <nav className="bg-[var(--navbar-footer-bg)] text-white sticky-top">
             <div className="container mx-auto px-4 py-3">
                 <div className="flex flex-col items-center m-3">
-                    <Link href="/" className="text-4xl md:text-5xl font-bold text-blue-300">
+                    <Link href="/" className="text-4xl md:text-5xl font-bold" style={{ color: 'var(--title-color)' }}>
                         Gloria Gronowicz Fine Art
                     </Link>
                 </div>
@@ -34,7 +34,7 @@ export default function NavBar() {
                     </Link>
                     <div className="relative">
                         <button
-                            onClick={togglePaintingsDropdown}
+                            onClick={() => setIsPaintingsOpen(!isPaintingsOpen)}
                             className="pl-3 py-2 rounded flex items-center hover:text-blue-400 justify-center transition duration-200 ease-in-out w-full"
                         >
                             Paintings
@@ -58,6 +58,7 @@ export default function NavBar() {
                                     <Link
                                         key={category.id}
                                         href={`/paintings/${category.slug}`}
+                                        onClick={closePaintingsDropdown}
                                         className="block px-4 py-2 transition duration-200 ease-in-out hover:bg-[#1e3a8a] text-center w-full"
                                     >
                                         {category.name}

@@ -2,7 +2,8 @@
 
 import { paintingCategories } from "@/app/models/paintingCategories";
 import Image from "next/image";
-import { use, useState, useEffect } from "react";
+import { use } from "react";
+import styles from "./page.module.css";
 
 interface CategoryPageProps {
     params: Promise<{
@@ -12,19 +13,13 @@ interface CategoryPageProps {
 
 export default function CategoryPage({ params }: CategoryPageProps) {
     const { category } = use(params);
-    const [images, setImages] = useState<string[]>([]);
 
     // Find the category from the model
     const categoryData = paintingCategories.find(cat => cat.slug === category);
 
     // Get images from the corresponding folder
     const folderName = getFolderNameFromSlug(category);
-
-    // Get images on mount
-    useEffect(() => {
-        const categoryImages = getImagesForCategory(folderName);
-        setImages(categoryImages);
-    }, [folderName]);
+    const images = getImagesForCategory(folderName);
 
     if (!categoryData) {
         return (
@@ -35,30 +30,29 @@ export default function CategoryPage({ params }: CategoryPageProps) {
     }
 
     return (
-        <div className="container">
-            <h1 className="categoryTitle">{categoryData.name}</h1>
+        <div className={styles.container}>
+            <h1 className={styles.categoryTitle}>{categoryData.name}</h1>
             {categoryData.description && (
-                <p className="description">{categoryData.description}</p>
+                <p className={styles.description}>{categoryData.description}</p>
             )}
 
             {images.length > 0 ? (
-                <div className="masonry-grid">
+                <div className={styles.masonryGrid}>
                     {images.map((image, index) => (
-                        <div key={index} className="masonry-item-wrapper">
+                        <div key={index} className={styles.imageWrapper}>
                             <Image
                                 src={`/${folderName}/${image}`}
                                 alt={`${categoryData.name} - ${image}`}
-                                width={350}
-                                height={350}
-                                className="masonry-image"
-                                style={{ width: '100%', height: 'auto' }}
-                                priority={index < 2}
+                                width={400}
+                                height={400}
+                                className={styles.paintingImage}
+                                priority={index < 3}
                             />
                         </div>
                     ))}
                 </div>
             ) : (
-                <p className="noImages">No images available for this category.</p>
+                <p className={styles.noImages}>No images available for this category.</p>
             )}
         </div>
     );

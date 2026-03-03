@@ -9,11 +9,11 @@ export default function Footer() {
             <div className="container mx-auto px-4 py-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="flex flex-col items-center text-center">
-                        <h3 className="text-xl font-bold mb-4 text-blue-300">Email</h3>
+                        <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--title-color)' }}>Email</h3>
                         <p className="text-lg">gloriagronowicz@gmail.com</p>
                     </div>
                     <div className="flex flex-col items-center text-center">
-                        <h3 className="text-xl font-bold mb-4 text-blue-300">Phone</h3>
+                        <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--title-color)' }}>Phone</h3>
                         <p className="text-lg">860.670.0799</p>
                     </div>
                 </div>

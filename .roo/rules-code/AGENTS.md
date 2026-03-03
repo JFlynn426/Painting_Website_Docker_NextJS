@@ -8,6 +8,11 @@
 - Component files use `.tsx` extension for TypeScript React components
 - Uses CSS modules for styling (e.g., `page.module.css`)
 - Uses React Compiler for performance optimization (enabled in next.config.ts)
+- Uses CSS custom properties (variables) defined in `globals.css`:
+  - `--title-color: #66b3ff` - Light blue color for titles (navbar, footer, category pages)
+  - `--background: #3d3d3d` - Background color
+  - `--foreground: #ffffff` - Foreground/text color
+  - `--navbar-footer-bg: #2d2d2d` - Navbar and footer background color
 
 ## Next.js 16 Route Handler Params
 
@@ -39,4 +44,3 @@
       const { category } = await params;
       // use category...
   }
-  ```
