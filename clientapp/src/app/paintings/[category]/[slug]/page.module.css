@@ -74,8 +74,9 @@
 
 .infoLabel {
     font-size: 0.9rem;
-    color: #aaa;
+    color: var(--title-color);
     font-weight: 500;
+    text-decoration: underline;
 }
 
 .infoValue {
@@ -84,9 +85,9 @@
 }
 
 .price {
-    font-size: 1.5rem;
+    font-size: 1rem;
     font-weight: bold;
-    color: var(--title-color);
+    color: var(--foreground);
 }
 
 .available {

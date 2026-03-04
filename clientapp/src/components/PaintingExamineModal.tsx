@@ -72,7 +72,7 @@ export default function PaintingExamineModal({ onClose, painting }: PaintingExam
                 case "-":
                 case "_":
                     e.preventDefault();
-                    setScale(prev => Math.max(prev / 1.2, 1));
+                    setScale(prev => Math.max(prev / 1.2, 0.01));
                     break;
             }
         };
@@ -86,7 +86,7 @@ export default function PaintingExamineModal({ onClose, painting }: PaintingExam
         e.preventDefault();
         const zoomSensitivity = 0.001;
         const delta = -e.deltaY * zoomSensitivity;
-        const newScale = Math.max(1, Math.min(scale + delta, 5));
+        const newScale = Math.max(0.01, Math.min(scale + delta, 5));
         setScale(newScale);
     }, [scale]);
 
@@ -128,7 +128,7 @@ export default function PaintingExamineModal({ onClose, painting }: PaintingExam
     };
 
     const handleZoomOut = () => {
-        setScale(prev => Math.max(prev / 1.2, 1));
+        setScale(prev => Math.max(prev / 1.2, 0.01));
     };
 
     const handleReset = () => {
