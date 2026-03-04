@@ -1,15 +1,30 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { paintingCategories } from './models/paintingCategories';
+import { paintingCategories } from '../app/models/paintingCategories';
 
 export default function NavBar() {
     const [isPaintingsOpen, setIsPaintingsOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     const closePaintingsDropdown = () => {
         setIsPaintingsOpen(false);
     };
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsPaintingsOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     return (
         <nav className="bg-[var(--navbar-footer-bg)] text-white sticky-top">
@@ -32,7 +47,7 @@ export default function NavBar() {
                     >
                         About
                     </Link>
-                    <div className="relative">
+                    <div className="relative" ref={dropdownRef}>
                         <button
                             onClick={() => setIsPaintingsOpen(!isPaintingsOpen)}
                             className="pl-3 py-2 rounded flex items-center hover:text-blue-400 justify-center transition duration-200 ease-in-out w-full"

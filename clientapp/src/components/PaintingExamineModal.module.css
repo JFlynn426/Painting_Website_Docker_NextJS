@@ -1,0 +1,185 @@
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.95);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.modalContent {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.closeButton {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 2px solid white;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 1001;
+}
+
+.closeButton:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.closeButton svg {
+    width: 24px;
+    height: 24px;
+}
+
+.zoomControls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 10px 20px;
+    border-radius: 30px;
+    z-index: 1001;
+}
+
+.zoomButton {
+    width: 40px;
+    height: 40px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid white;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.zoomButton:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.zoomButton svg {
+    width: 20px;
+    height: 20px;
+}
+
+.zoomLevel {
+    color: white;
+    font-size: 1rem;
+    min-width: 50px;
+    text-align: center;
+}
+
+.imageContainer {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: grab;
+    background-color: black;
+}
+
+.imageContainer:active {
+    cursor: grabbing;
+}
+
+.imageWrapper {
+    transition: transform 0.1s ease;
+    will-change: transform;
+}
+
+.examineImage {
+    max-width: none;
+    max-height: none;
+    display: block;
+    width: auto;
+    height: auto;
+}
+
+.infoPanel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 300px;
+    padding: 100px 30px 30px 20px;
+    text-align: right;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.infoTitle {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+    color: #66b3ff;
+}
+
+.infoPrice {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.infoDimensions {
+    font-size: 1rem;
+    color: #ccc;
+    margin-bottom: 4px;
+}
+
+.infoAvailability {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.available {
+    color: #4caf50;
+}
+
+.sold {
+    color: #f44336;
+}
+
+.infoDescription {
+    font-size: 0.95rem;
+    color: #ddd;
+    max-width: 100%;
+    text-align: right;
+}
+
+.instructions {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+    z-index: 1001;
+}

@@ -1,0 +1,181 @@
+.container {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.contentWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+@media (min-width: 768px) {
+    .contentWrapper {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+}
+
+.imageSection {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    flex: 0 0 auto;
+    cursor: pointer;
+}
+
+.paintingImage {
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.detailsSection {
+    width: 20vw;
+    flex: 0 0 20vw;
+    padding: 20px;
+}
+
+.title {
+    font-size: 2rem;
+    color: var(--title-color);
+    margin-bottom: 16px;
+    text-decoration: underline;
+}
+
+.description {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--foreground);
+    margin-bottom: 24px;
+}
+
+.infoGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+@media (min-width: 600px) {
+    .infoGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.infoItem {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.infoLabel {
+    font-size: 0.9rem;
+    color: #aaa;
+    font-weight: 500;
+}
+
+.infoValue {
+    font-size: 1rem;
+    color: var(--foreground);
+}
+
+.price {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--title-color);
+}
+
+.available {
+    color: #4caf50;
+    font-weight: 500;
+}
+
+.unavailable {
+    color: #f44336;
+    font-weight: 500;
+}
+
+.buttonGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.backButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 24px;
+    background-color: transparent;
+    color: var(--title-color);
+    text-decoration: none;
+    border: 1px solid var(--title-color);
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.backButton:hover {
+    background-color: var(--title-color);
+    color: white;
+}
+
+.inquireButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 24px;
+    background-color: var(--title-color);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.inquireButton:hover {
+    background-color: #55a0ee;
+}
+
+.examineButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background-color: var(--button-color);
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    border: 1px solid white;
+    transition: background-color 0.2s ease;
+}
+
+.examineButton:hover {
+    background-color: #55a0ee;
+}
+
+.magnifyingGlass {
+    width: 20px;
+    height: 20px;
+}
+
+.notFoundTitle {
+    font-size: 2rem;
+    color: var(--title-color);
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.notFoundText {
+    font-size: 1.1rem;
+    color: var(--foreground);
+    text-align: center;
+    margin-bottom: 24px;
+}

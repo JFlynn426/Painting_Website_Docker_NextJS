@@ -21,22 +21,85 @@
 
 .masonryGrid {
     column-count: 3;
-    column-gap: 15px;
+    column-gap: 30px;
 }
 
 .imageWrapper {
     break-inside: avoid;
-    margin-bottom: 15px;
-    background-color: #f5f5f5;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.imageContainer {
+    position: relative;
+    display: inline-block;
+    width: 100%;
 }
 
 .paintingImage {
     width: 100%;
     height: auto;
     display: block;
+    border-radius: 8px;
+    background-color: #f5f5f5;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.hoverOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.imageWrapper:hover .hoverOverlay {
+    opacity: 1;
+}
+
+.hoverContent {
+    text-align: center;
+    color: white;
+    padding: 20px;
+}
+
+.hoverTitle {
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.hoverPrice {
+    font-size: 1.2rem;
+    color: white;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.hoverDimensions {
+    font-size: 1rem;
+    color: #ccc;
+}
+
+.hoverAvailability {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+.available {
+    color: #4caf50;
+}
+
+.sold {
+    color: #f44336;
 }
 
 .noImages {
@@ -57,10 +120,10 @@
 
     .masonryGrid {
         column-count: 1;
-        column-gap: 10px;
+        column-gap: 30px;
     }
 
     .imageWrapper {
-        margin-bottom: 10px;
+        margin-bottom: 30px;
     }
 }

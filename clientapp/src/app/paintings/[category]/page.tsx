@@ -1,8 +1,5 @@
-"use client";
-
 import { paintingCategories } from "@/app/models/paintingCategories";
-import Image from "next/image";
-import { use } from "react";
+import PaintingGrid, { PaintingImageItem } from "@/components/PaintingGrid";
 import styles from "./page.module.css";
 
 interface CategoryPageProps {
@@ -11,15 +8,15 @@ interface CategoryPageProps {
     }>;
 }
 
-export default function CategoryPage({ params }: CategoryPageProps) {
-    const { category } = use(params);
+export default async function CategoryPage({ params }: CategoryPageProps) {
+    const { category } = await params;
 
     // Find the category from the model
     const categoryData = paintingCategories.find(cat => cat.slug === category);
 
     // Get images from the corresponding folder
     const folderName = getFolderNameFromSlug(category);
-    const images = getImagesForCategory(folderName);
+    const images = getImagesForCategory(folderName, categoryData?.name || 'Unknown');
 
     if (!categoryData) {
         return (
@@ -36,24 +33,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                 <p className={styles.description}>{categoryData.description}</p>
             )}
 
-            {images.length > 0 ? (
-                <div className={styles.masonryGrid}>
-                    {images.map((image, index) => (
-                        <div key={index} className={styles.imageWrapper}>
-                            <Image
-                                src={`/${folderName}/${image}`}
-                                alt={`${categoryData.name} - ${image}`}
-                                width={400}
-                                height={400}
-                                className={styles.paintingImage}
-                                priority={index < 3}
-                            />
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <p className={styles.noImages}>No images available for this category.</p>
-            )}
+            <PaintingGrid images={images} category={category} />
         </div>
     );
 }
@@ -70,7 +50,7 @@ function getFolderNameFromSlug(slug: string): string {
 }
 
 // Get list of images for a category folder
-function getImagesForCategory(folderName: string): string[] {
+function getImagesForCategory(folderName: string, categoryName: string): PaintingImageItem[] {
     // Define images for each category based on the public folder structure
     const imagesByCategory: Record<string, string[]> = {
         'Landscapes and Cityscapes': [
@@ -155,5 +135,10 @@ function getImagesForCategory(folderName: string): string[] {
         ],
     };
 
-    return imagesByCategory[folderName] || [];
+    const imageNames = imagesByCategory[folderName] || [];
+    return imageNames.map(image => ({
+        src: `/${folderName}/${image}`,
+        alt: `${categoryName} - ${image}`,
+        filename: image
+    }));
 }
