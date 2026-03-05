@@ -9,15 +9,15 @@ export default function ArtCarousel() {
     // Image data
     const images = [
         {
-            src: "/Cloud Creatures23crop.jpg",
+            src: "/Carousel Paintings/Cloud Creatures23crop.jpg",
             alt: "Cloud Creatures"
         },
         {
-            src: "/Turtle_Painting23crop.jpg",
+            src: "/Carousel Paintings/Turtle_Painting23crop.jpg",
             alt: "Turtle Painting"
         },
         {
-            src: "/VioletCuryPreserve.jpg",
+            src: "/Carousel Paintings/VioletCuryPreserve.jpg",
             alt: "Violet Cury Preserve"
         }
     ];
