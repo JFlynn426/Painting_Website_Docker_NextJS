@@ -115,3 +115,12 @@
 - **Phase 2**: Implement server-side rendering with caching (medium risk)
 - **Phase 3**: Integrate external API (high risk)
 - Always test changes thoroughly before merging
+
+## C# Coding Style
+
+- **Always use `using` statements** for type references instead of fully qualified class names
+- **Correct**: `using ServerApp.Shared.Abstractions.Exceptions;` followed by `public class MyException : ServerAppException`
+- **Incorrect**: `public class MyException : ServerApp.Shared.Abstractions.Exceptions.ServerAppException`
+- **Also correct**: `using ServerApp.Shared.Abstractions.Domain;` followed by `public record MyValue : StringValueObject`
+- **Incorrect**: `public record MyValue : ServerApp.Shared.Abstractions.Domain.StringValueObject`
+- This improves code readability and maintainability

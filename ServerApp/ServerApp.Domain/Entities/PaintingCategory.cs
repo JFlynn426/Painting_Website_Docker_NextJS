@@ -2,12 +2,13 @@ namespace ServerApp.Domain.Entities;
 
 using System.Collections.Generic;
 using ServerApp.Shared.Abstractions.Domain;
+using ServerApp.Domain.ValueObjects;
 
-public class PaintingCategory : AggregateRoot<string>
+public class PaintingCategory : AggregateRoot<Guid>
 {
-    public string Name { get; protected set; } = string.Empty;
-    public string Slug { get; protected set; } = string.Empty;
-    public string? Description { get; protected set; }
+    public PaintingCategoryName Name { get; set; }
+    private readonly string _slug;
+    public PaintingCategoryDescription? Description { get; }
 
     // Navigation property for Paintings in this category
     public ICollection<Painting> Paintings { get; protected set; } = new List<Painting>();
@@ -16,11 +17,11 @@ public class PaintingCategory : AggregateRoot<string>
     public int PaintingCount => Paintings.Count;
 
     // Constructor for creating a new category
-    public PaintingCategory(string id, string name, string slug, string? description = null)
+    internal PaintingCategory(PaintingCategoryID id, PaintingCategoryName name, string slug, PaintingCategoryDescription? description = null)
     {
-        Id = id;
+        Id = id.Value;
         Name = name;
-        Slug = slug;
+        _slug = slug;
         Description = description;
     }
 

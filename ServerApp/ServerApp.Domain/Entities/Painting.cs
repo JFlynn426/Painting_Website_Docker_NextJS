@@ -53,6 +53,5 @@ public class Painting : AggregateRoot<string>
     public void AssignCategory(PaintingCategory category)
     {
         Category = category;
-        CategorySlug = category.Slug;
     }
 }
