@@ -10,14 +10,14 @@ public abstract record StringValueObject
     {
     }
 
-    protected StringValueObject(string value, int maxLength) : this()
+    protected StringValueObject(string value, int maxLength, bool allowEmpty = false, bool enforceMaxLength = true) : this()
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (!allowEmpty && string.IsNullOrWhiteSpace(value))
         {
             throw StringValueObjectException.CreateEmptyException(GetTypeName());
         }
 
-        if (value.Length > maxLength)
+        if (enforceMaxLength && value.Length > maxLength)
         {
             throw StringValueObjectException.CreateTooLongException(GetTypeName(), maxLength);
         }

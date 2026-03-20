@@ -1,4 +1,4 @@
-namespace ServerApp.Domain.ValueObjects;
+namespace ServerApp.Domain.ValueObjects.PaintingCategory;
 
 using ServerApp.Shared.Abstractions.Domain;
 
