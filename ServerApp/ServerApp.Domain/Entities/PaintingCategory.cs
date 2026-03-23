@@ -13,9 +13,6 @@ public class PaintingCategory : AggregateRoot<Guid>
     // Navigation property for Paintings in this category
     public ICollection<Painting> Paintings { get; protected set; } = new List<Painting>();
 
-    // Computed property for painting count
-    public int PaintingCount => Paintings.Count;
-
     // Constructor for creating a new category
     internal PaintingCategory(PaintingCategoryID id, PaintingCategoryName name, PaintingCategorySlug slug, PaintingCategoryDescription? description = null)
     {

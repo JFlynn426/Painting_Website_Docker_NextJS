@@ -6,4 +6,27 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
+    <PackageReference Include="Scrutor" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ServerApp.Application\ServerApp.Application.csproj" />
+    <ProjectReference Include="..\Shared\ServerApp.Shared.Abstractions\ServerApp.Shared.Abstractions.csproj" />
+    <ProjectReference Include="..\Shared\ServerApp.Shared\ServerApp.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="EF\Config\" />
+    <Folder Include="EF\Contexts\" />
+    <Folder Include="EF\Migrations\" />
+    <Folder Include="EF\Models\" />
+    <Folder Include="EF\Services\" />
+    <Folder Include="EF\Repositories\" />
+    <Folder Include="EF\Options\" />
+    <Folder Include="Queries\Handlers\" />
+  </ItemGroup>
+
 </Project>

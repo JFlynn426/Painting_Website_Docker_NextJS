@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.MicrosoftExtensions;
+using ServerApp.Application;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace ServerApp
+namespace ServerApp.Api
 {
     public class Program
     {
@@ -16,6 +17,9 @@ namespace ServerApp
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            // Add Application layer services
+            builder.Services.AddApplicationServices();
 
             var app = builder.Build();
 

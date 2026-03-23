@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Shared\ServerApp.Shared.Abstractions\ServerApp.Shared.Abstractions.csproj" />
-    <ProjectReference Include="..\Shared\ServerApp.Shared\ServerApp.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>
