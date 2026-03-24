@@ -6,6 +6,6 @@ namespace ServerApp.Shared.Abstractions.Commands
 {
     public interface ICommandHandler<TCommand> where TCommand : class, ICommand
     {
-        Task HandleAsync(TCommand command);
+        Task HandleAsync(TCommand command, CancellationToken cancellationToken = default);
     }
 }

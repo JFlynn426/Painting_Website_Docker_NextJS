@@ -16,9 +16,9 @@ public class GetPageContentHandler : IQueryHandler<GetPageContent, PageContentDt
         _repository = repository;
     }
 
-    public async Task<PageContentDto> HandleAsync(GetPageContent query)
+    public async Task<PageContentDto> HandleAsync(GetPageContent query, CancellationToken cancellationToken = default)
     {
-        var pageContent = await _repository.GetByAddressAsync(new PageAddress(query.Address), default);
+        var pageContent = await _repository.GetByAddressAsync(new PageAddress(query.Address), cancellationToken);
 
         if (pageContent == null)
         {

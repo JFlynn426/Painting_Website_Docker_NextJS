@@ -9,9 +9,9 @@ public interface IPaintingFactory
     Task<Painting> CreateAsync(
         PaintingID id,
         PaintingName title,
-        PaintingDescription description,
+        PaintingDescription? description,
         PaintingImageUrl imageUrl,
-        PaintingThumbnailUrl thumbnailUrl,
+        PaintingThumbnailUrl? thumbnailUrl,
         PaintingCategorySlug categorySlug,
         PaintingPrice? price,
         PaintingWidth? width = null,

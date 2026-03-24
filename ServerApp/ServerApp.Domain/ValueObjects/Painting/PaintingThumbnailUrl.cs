@@ -13,4 +13,6 @@ public record PaintingThumbnailUrl : StringValueObject
     }
 
     public static implicit operator PaintingThumbnailUrl(string url) => new(url);
+
+    public static PaintingThumbnailUrl? FromNullable(string? value) => value != null ? new PaintingThumbnailUrl(value) : null;
 }

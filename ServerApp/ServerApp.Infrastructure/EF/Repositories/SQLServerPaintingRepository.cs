@@ -7,6 +7,7 @@ using ServerApp.Domain.ValueObjects.Painting;
 using ServerApp.Domain.ValueObjects.PaintingCategory;
 using ServerApp.Infrastructure.EF.Contexts;
 using ServerApp.Infrastructure.EF.Models;
+using ServerApp.Shared.Extensions;
 
 internal class SQLServerPaintingRepository : IPaintingRepository
 {
@@ -82,18 +83,18 @@ internal class SQLServerPaintingRepository : IPaintingRepository
     private Painting MapToDomain(PaintingReadModel readModel)
     {
         var painting = Activator.CreateInstance<Painting>();
-        SetProtectedProperty(painting, "Id", readModel.Id);
-        SetProtectedProperty(painting, "Title", new PaintingName(readModel.Title));
-        SetProtectedProperty(painting, "Description", new PaintingDescription(readModel.Description ?? string.Empty));
-        SetProtectedProperty(painting, "ImageUrl", new PaintingImageUrl(readModel.ImageUrl));
-        SetProtectedProperty(painting, "ThumbnailUrl", new PaintingThumbnailUrl(readModel.ThumbnailUrl ?? string.Empty));
-        SetProtectedProperty(painting, "CategorySlug", new PaintingCategorySlug(readModel.CategorySlug));
-        SetProtectedProperty(painting, "Width", readModel.Width.HasValue ? new PaintingWidth(readModel.Width.Value) : null);
-        SetProtectedProperty(painting, "Height", readModel.Height.HasValue ? new PaintingHeight(readModel.Height.Value) : null);
-        SetProtectedProperty(painting, "Depth", readModel.Depth.HasValue ? new PaintingDepth(readModel.Depth.Value) : null);
-        SetProtectedProperty(painting, "Year", readModel.Year.HasValue ? new PaintingYear(readModel.Year.Value) : null);
-        SetProtectedProperty(painting, "Price", readModel.Price.HasValue ? new PaintingPrice(readModel.Price.Value) : null);
-        SetProtectedProperty(painting, "IsAvailable", new PaintingIsAvailable(readModel.IsAvailable));
+        painting.SetProtectedProperty("Id", readModel.Id);
+        painting.SetProtectedProperty("Title", new PaintingName(readModel.Title));
+        painting.SetProtectedProperty("Description", PaintingDescription.FromNullable(readModel.Description));
+        painting.SetProtectedProperty("ImageUrl", new PaintingImageUrl(readModel.ImageUrl));
+        painting.SetProtectedProperty("ThumbnailUrl", PaintingThumbnailUrl.FromNullable(readModel.ThumbnailUrl));
+        painting.SetProtectedProperty("CategorySlug", new PaintingCategorySlug(readModel.CategorySlug));
+        painting.SetProtectedProperty("Width", readModel.Width.HasValue ? new PaintingWidth(readModel.Width.Value) : null);
+        painting.SetProtectedProperty("Height", readModel.Height.HasValue ? new PaintingHeight(readModel.Height.Value) : null);
+        painting.SetProtectedProperty("Depth", readModel.Depth.HasValue ? new PaintingDepth(readModel.Depth.Value) : null);
+        painting.SetProtectedProperty("Year", readModel.Year.HasValue ? new PaintingYear(readModel.Year.Value) : null);
+        painting.SetProtectedProperty("Price", readModel.Price.HasValue ? new PaintingPrice(readModel.Price.Value) : null);
+        painting.SetProtectedProperty("IsAvailable", new PaintingIsAvailable(readModel.IsAvailable));
 
         return painting;
     }
@@ -104,9 +105,9 @@ internal class SQLServerPaintingRepository : IPaintingRepository
         {
             Id = painting.Id,
             Title = painting.Title.Value,
-            Description = painting.Description.Value,
+            Description = painting.Description?.Value,
             ImageUrl = painting.ImageUrl.Value,
-            ThumbnailUrl = painting.ThumbnailUrl.Value,
+            ThumbnailUrl = painting.ThumbnailUrl?.Value,
             CategorySlug = painting.CategorySlug.Value,
             Width = painting.Width?.Value,
             Height = painting.Height?.Value,
@@ -115,11 +116,5 @@ internal class SQLServerPaintingRepository : IPaintingRepository
             Price = painting.Price?.Value,
             IsAvailable = painting.IsAvailable.Value
         };
-    }
-
-    private void SetProtectedProperty(object obj, string propertyName, object? value)
-    {
-        var property = obj.GetType().GetProperty(propertyName);
-        property?.SetValue(obj, value);
     }
 }

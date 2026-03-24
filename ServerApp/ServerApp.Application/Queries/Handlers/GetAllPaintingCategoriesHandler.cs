@@ -14,9 +14,9 @@ public class GetAllPaintingCategoriesHandler : IQueryHandler<GetAllPaintingCateg
         _repository = repository;
     }
 
-    public async Task<List<PaintingCategoryDto>> HandleAsync(GetAllPaintingCategories query)
+    public async Task<List<PaintingCategoryDto>> HandleAsync(GetAllPaintingCategories query, CancellationToken cancellationToken = default)
     {
-        var categories = await _repository.GetAllAsync(default);
+        var categories = await _repository.GetAllAsync(cancellationToken);
         return categories.Select(c => new PaintingCategoryDto
         {
             Id = c.Id,

@@ -9,4 +9,5 @@ public interface IPageContentRepository
     Task AddAsync(PageContent pageContent, CancellationToken cancellationToken = default);
     Task UpdateAsync(PageContent pageContent, CancellationToken cancellationToken = default);
     Task<bool> ExistsByAddressAsync(PageAddress address, CancellationToken cancellationToken = default);
+    Task DeleteAsync(PageAddress address, CancellationToken cancellationToken = default);
 }

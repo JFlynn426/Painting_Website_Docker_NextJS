@@ -15,4 +15,6 @@ public record PaintingDescription : StringValueObject
     }
 
     public static implicit operator PaintingDescription(string description) => new(description);
+
+    public static PaintingDescription? FromNullable(string? value) => value != null ? new PaintingDescription(value) : null;
 }

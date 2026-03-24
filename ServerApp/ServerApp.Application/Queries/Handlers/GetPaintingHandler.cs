@@ -1,4 +1,4 @@
-namespace ServerApp.Application.Handlers;
+namespace ServerApp.Application.Queries.Handlers;
 
 using ServerApp.Shared.Abstractions.Queries;
 using ServerApp.Application.Queries;
@@ -15,9 +15,9 @@ public class GetPaintingHandler : IQueryHandler<GetPainting, PaintingDto>
         _repository = repository;
     }
 
-    public async Task<PaintingDto> HandleAsync(GetPainting query)
+    public async Task<PaintingDto> HandleAsync(GetPainting query, CancellationToken cancellationToken = default)
     {
-        var painting = await _repository.GetAsync(query.Id, default);
+        var painting = await _repository.GetAsync(query.Id, cancellationToken);
 
         if (painting == null)
         {

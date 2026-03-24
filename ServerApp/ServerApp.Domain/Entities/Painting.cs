@@ -9,23 +9,23 @@ using ServerApp.Domain.Events;
 public class Painting : AggregateRoot<Guid>
 {
     public PaintingName Title { get; protected set; } = new PaintingName();
-    public PaintingDescription Description { get; protected set; } = new PaintingDescription();
+    public PaintingDescription? Description { get; protected set; }
     public PaintingImageUrl ImageUrl { get; protected set; } = new PaintingImageUrl();
-    public PaintingThumbnailUrl ThumbnailUrl { get; protected set; } = new PaintingThumbnailUrl();
+    public PaintingThumbnailUrl? ThumbnailUrl { get; protected set; }
     public PaintingCategorySlug CategorySlug { get; protected set; }
     public PaintingWidth? Width { get; protected set; }
     public PaintingHeight? Height { get; protected set; }
     public PaintingDepth? Depth { get; protected set; }
     public PaintingYear? Year { get; protected set; }
-    public PaintingPrice? Price { get; protected set; } = new PaintingPrice();
+    public PaintingPrice? Price { get; protected set; }
     public PaintingIsAvailable IsAvailable { get; protected set; } = true;
 
     // Navigation property for the category this painting belongs to
     public PaintingCategory? Category { get; protected set; }
 
     // Constructor for creating a new painting
-    public Painting(PaintingID id, PaintingName title, PaintingDescription description, PaintingImageUrl imageUrl,
-        PaintingThumbnailUrl thumbnailUrl, PaintingCategorySlug categorySlug, PaintingPrice? price,
+    public Painting(PaintingID id, PaintingName title, PaintingDescription? description, PaintingImageUrl imageUrl,
+        PaintingThumbnailUrl? thumbnailUrl, PaintingCategorySlug categorySlug, PaintingPrice? price,
         PaintingWidth? width = null, PaintingHeight? height = null, PaintingDepth? depth = null,
         PaintingYear? year = null, PaintingIsAvailable isAvailable = default!)
     {

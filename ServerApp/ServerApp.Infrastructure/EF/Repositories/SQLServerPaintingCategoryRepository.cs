@@ -6,6 +6,7 @@ using ServerApp.Domain.Repositories;
 using ServerApp.Domain.ValueObjects.PaintingCategory;
 using ServerApp.Infrastructure.EF.Contexts;
 using ServerApp.Infrastructure.EF.Models;
+using ServerApp.Shared.Extensions;
 
 internal class SQLServerPaintingCategoryRepository : IPaintingCategoryRepository
 {
@@ -83,10 +84,10 @@ internal class SQLServerPaintingCategoryRepository : IPaintingCategoryRepository
     private PaintingCategory MapToDomain(PaintingCategoryReadModel readModel)
     {
         var category = Activator.CreateInstance<PaintingCategory>();
-        SetProtectedProperty(category, "Id", readModel.Id);
-        SetProtectedProperty(category, "Name", new PaintingCategoryName(readModel.Name));
-        SetProtectedProperty(category, "Slug", new PaintingCategorySlug(readModel.Slug));
-        SetProtectedProperty(category, "Description", readModel.Description != null ? new PaintingCategoryDescription(readModel.Description) : null);
+        category.SetProtectedProperty("Id", readModel.Id);
+        category.SetProtectedProperty("Name", new PaintingCategoryName(readModel.Name));
+        category.SetProtectedProperty("Slug", new PaintingCategorySlug(readModel.Slug));
+        category.SetProtectedProperty("Description", PaintingCategoryDescription.FromNullable(readModel.Description));
 
         return category;
     }
@@ -100,11 +101,5 @@ internal class SQLServerPaintingCategoryRepository : IPaintingCategoryRepository
             Slug = category.Slug.Value,
             Description = category.Description?.Value
         };
-    }
-
-    private void SetProtectedProperty(object obj, string propertyName, object? value)
-    {
-        var property = obj.GetType().GetProperty(propertyName);
-        property?.SetValue(obj, value);
     }
 }

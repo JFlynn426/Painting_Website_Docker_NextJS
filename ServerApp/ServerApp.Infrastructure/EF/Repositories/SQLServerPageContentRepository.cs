@@ -6,6 +6,7 @@ using ServerApp.Domain.Repositories;
 using ServerApp.Domain.ValueObjects.Page;
 using ServerApp.Infrastructure.EF.Contexts;
 using ServerApp.Infrastructure.EF.Models;
+using ServerApp.Shared.Extensions;
 
 internal class SQLServerPageContentRepository : IPageContentRepository
 {
@@ -48,14 +49,26 @@ internal class SQLServerPageContentRepository : IPageContentRepository
         return await _readContext.PageContents.AnyAsync(p => p.Address == address.Value, cancellationToken);
     }
 
+    public async Task DeleteAsync(PageAddress address, CancellationToken cancellationToken = default)
+    {
+        var writeModel = await _writeContext.PageContents
+            .FirstOrDefaultAsync(p => p.Address == address.Value, cancellationToken);
+
+        if (writeModel == null)
+            return;
+
+        _writeContext.PageContents.Remove(writeModel);
+        await _writeContext.SaveChangesAsync(cancellationToken);
+    }
+
     private PageContent MapToDomain(PageContentReadModel readModel)
     {
         var pageContent = Activator.CreateInstance<PageContent>();
-        SetProtectedProperty(pageContent, "Id", readModel.Id);
-        SetProtectedProperty(pageContent, "Address", new PageAddress(readModel.Address));
-        SetProtectedProperty(pageContent, "Title", new PageTitle(readModel.Title));
-        SetProtectedProperty(pageContent, "Content", new PageContentText(readModel.Content));
-        SetProtectedProperty(pageContent, "UpdatedAt", readModel.UpdatedAt);
+        pageContent.SetProtectedProperty("Id", readModel.Id);
+        pageContent.SetProtectedProperty("Address", new PageAddress(readModel.Address));
+        pageContent.SetProtectedProperty("Title", new PageTitle(readModel.Title));
+        pageContent.SetProtectedProperty("Content", new PageContentText(readModel.Content));
+        pageContent.SetProtectedProperty("UpdatedAt", readModel.UpdatedAt);
 
         return pageContent;
     }
@@ -70,11 +83,5 @@ internal class SQLServerPageContentRepository : IPageContentRepository
             Content = pageContent.Content.Value,
             UpdatedAt = pageContent.UpdatedAt
         };
-    }
-
-    private void SetProtectedProperty(object obj, string propertyName, object? value)
-    {
-        var property = obj.GetType().GetProperty(propertyName);
-        property?.SetValue(obj, value);
     }
 }

@@ -20,16 +20,16 @@ public class GetPaintingCategoryWithPaintingsHandler : IQueryHandler<GetPainting
         _paintingRepository = paintingRepository;
     }
 
-    public async Task<PaintingCategoryWithPaintingsDto> HandleAsync(GetPaintingCategoryWithPaintings query)
+    public async Task<PaintingCategoryWithPaintingsDto> HandleAsync(GetPaintingCategoryWithPaintings query, CancellationToken cancellationToken = default)
     {
-        var category = await _categoryRepository.FindBySlugAsync(new PaintingCategorySlug(query.Slug), default);
+        var category = await _categoryRepository.FindBySlugAsync(new PaintingCategorySlug(query.Slug), cancellationToken);
 
         if (category == null)
         {
             throw new PaintingCategoryNotFoundException(query.Slug);
         }
 
-        var paintings = await _paintingRepository.GetByCategoryAsync(category.Slug, default);
+        var paintings = await _paintingRepository.GetByCategoryAsync(category.Slug, cancellationToken);
 
         return new PaintingCategoryWithPaintingsDto
         {

@@ -18,9 +18,9 @@ public class PaintingFactory : IPaintingFactory
     public async Task<Painting> CreateAsync(
         PaintingID id,
         PaintingName title,
-        PaintingDescription description,
+        PaintingDescription? description,
         PaintingImageUrl imageUrl,
-        PaintingThumbnailUrl thumbnailUrl,
+        PaintingThumbnailUrl? thumbnailUrl,
         PaintingCategorySlug categorySlug,
         PaintingPrice? price,
         PaintingWidth? width = null,
