@@ -21,10 +21,13 @@ public class AddPaintingCategoryHandler : ICommandHandler<AddPaintingCategory>
 
     public async Task HandleAsync(AddPaintingCategory command, CancellationToken cancellationToken = default)
     {
-        var (id, name, description) = command;
+        var (name, description) = command;
+
+        // Auto-generate ID
+        var categoryId = new PaintingCategoryID();
 
         var category = await _factory.CreateAsync(
-            id,
+            categoryId,
             name,
             PaintingCategoryDescription.FromNullable(description),
             cancellationToken);

@@ -5,6 +5,7 @@ using ServerApp.Application.Queries;
 using ServerApp.Application.DTOs;
 using ServerApp.Domain.Repositories;
 using ServerApp.Application.Exceptions;
+using ServerApp.Domain.ValueObjects.Painting;
 
 public class GetPaintingHandler : IQueryHandler<GetPainting, PaintingDto>
 {
@@ -17,16 +18,16 @@ public class GetPaintingHandler : IQueryHandler<GetPainting, PaintingDto>
 
     public async Task<PaintingDto> HandleAsync(GetPainting query, CancellationToken cancellationToken = default)
     {
-        var painting = await _repository.GetAsync(query.Id, cancellationToken);
+        var slug = new PaintingSlug(query.Slug);
+        var painting = await _repository.GetAsync(slug, cancellationToken);
 
         if (painting == null)
         {
-            throw new PaintingNotFoundException(query.Id);
+            throw new PaintingNotFoundException(query.Slug);
         }
 
         return new PaintingDto
         {
-            Id = painting.Id,
             Title = painting.Title.Value,
             Description = painting.Description?.Value,
             ImageUrl = painting.ImageUrl.Value,

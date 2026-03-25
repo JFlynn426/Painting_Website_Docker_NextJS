@@ -20,11 +20,11 @@ internal class SQLServerPaintingRepository : IPaintingRepository
         _writeContext = writeContext;
     }
 
-    public async Task<Painting?> GetAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Painting?> GetAsync(PaintingSlug slug, CancellationToken cancellationToken = default)
     {
         var readModel = await _readContext.Paintings
             .Include(p => p.Category)
-            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+            .FirstOrDefaultAsync(p => p.Slug == slug.Value, cancellationToken);
 
         if (readModel == null)
             return null;
@@ -80,11 +80,17 @@ internal class SQLServerPaintingRepository : IPaintingRepository
         return await _readContext.Paintings.AnyAsync(p => p.Id == id, cancellationToken);
     }
 
+    public async Task<bool> ExistsBySlugAsync(PaintingSlug slug, CancellationToken cancellationToken = default)
+    {
+        return await _readContext.Paintings.AnyAsync(p => p.Slug == slug.Value, cancellationToken);
+    }
+
     private Painting MapToDomain(PaintingReadModel readModel)
     {
         var painting = Activator.CreateInstance<Painting>();
         painting.SetProtectedProperty("Id", readModel.Id);
         painting.SetProtectedProperty("Title", new PaintingName(readModel.Title));
+        painting.SetProtectedProperty("Slug", new PaintingSlug(readModel.Slug));
         painting.SetProtectedProperty("Description", PaintingDescription.FromNullable(readModel.Description));
         painting.SetProtectedProperty("ImageUrl", new PaintingImageUrl(readModel.ImageUrl));
         painting.SetProtectedProperty("ThumbnailUrl", PaintingThumbnailUrl.FromNullable(readModel.ThumbnailUrl));
@@ -105,6 +111,7 @@ internal class SQLServerPaintingRepository : IPaintingRepository
         {
             Id = painting.Id,
             Title = painting.Title.Value,
+            Slug = painting.Slug.Value,
             Description = painting.Description?.Value,
             ImageUrl = painting.ImageUrl.Value,
             ThumbnailUrl = painting.ThumbnailUrl?.Value,

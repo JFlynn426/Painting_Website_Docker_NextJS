@@ -27,11 +27,9 @@ public class GetPageContentHandler : IQueryHandler<GetPageContent, PageContentDt
 
         return new PageContentDto
         {
-            Id = pageContent.Id,
             Address = pageContent.Address.Value,
             Title = pageContent.Title.Value,
-            Content = pageContent.Content.Value,
-            UpdatedAt = pageContent.UpdatedAt
+            Content = pageContent.Content.Value
         };
     }
 }

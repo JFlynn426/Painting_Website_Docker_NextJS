@@ -22,6 +22,11 @@ public class PaintingWriteModelConfiguration : IEntityTypeConfiguration<Painting
             .HasColumnType("nvarchar(200)")
             .IsRequired();
 
+        builder.Property(e => e.Slug)
+            .HasColumnName("Slug")
+            .HasColumnType("nvarchar(200)")
+            .IsRequired();
+
         builder.Property(e => e.Description)
             .HasColumnName("Description")
             .HasColumnType("nvarchar(max)");
@@ -76,5 +81,6 @@ public class PaintingWriteModelConfiguration : IEntityTypeConfiguration<Painting
 
         builder.HasIndex(e => e.CategorySlug);
         builder.HasIndex(e => e.CategoryId);
+        builder.HasIndex(e => e.Slug).IsUnique();
     }
 }

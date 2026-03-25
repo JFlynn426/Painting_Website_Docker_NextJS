@@ -3,7 +3,6 @@ namespace ServerApp.Application.Commands;
 using ServerApp.Shared.Abstractions.Commands;
 
 public record AddPainting(
-    Guid Id,
     string Title,
     string? Description,
     string ImageUrl,

@@ -9,6 +9,7 @@ using ServerApp.Domain.Events;
 public class Painting : AggregateRoot<Guid>
 {
     public PaintingName Title { get; protected set; } = new PaintingName();
+    public PaintingSlug Slug { get; protected set; } = new PaintingSlug();
     public PaintingDescription? Description { get; protected set; }
     public PaintingImageUrl ImageUrl { get; protected set; } = new PaintingImageUrl();
     public PaintingThumbnailUrl? ThumbnailUrl { get; protected set; }
@@ -31,6 +32,7 @@ public class Painting : AggregateRoot<Guid>
     {
         Id = id.Value;
         Title = title;
+        Slug = PaintingSlug.FromTitle(title);
         Description = description;
         ImageUrl = imageUrl;
         ThumbnailUrl = thumbnailUrl;

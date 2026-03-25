@@ -39,7 +39,6 @@ public class GetPaintingCategoryWithPaintingsHandler : IQueryHandler<GetPainting
             Description = category.Description?.Value,
             Paintings = paintings.Select(p => new PaintingDto
             {
-                Id = p.Id,
                 Title = p.Title.Value,
                 Description = p.Description?.Value,
                 ImageUrl = p.ImageUrl.Value,

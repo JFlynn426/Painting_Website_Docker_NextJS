@@ -68,7 +68,6 @@ internal class SQLServerPageContentRepository : IPageContentRepository
         pageContent.SetProtectedProperty("Address", new PageAddress(readModel.Address));
         pageContent.SetProtectedProperty("Title", new PageTitle(readModel.Title));
         pageContent.SetProtectedProperty("Content", new PageContentText(readModel.Content));
-        pageContent.SetProtectedProperty("UpdatedAt", readModel.UpdatedAt);
 
         return pageContent;
     }
@@ -80,8 +79,7 @@ internal class SQLServerPageContentRepository : IPageContentRepository
             Id = pageContent.Id,
             Address = pageContent.Address.Value,
             Title = pageContent.Title.Value,
-            Content = pageContent.Content.Value,
-            UpdatedAt = pageContent.UpdatedAt
+            Content = pageContent.Content.Value
         };
     }
 }

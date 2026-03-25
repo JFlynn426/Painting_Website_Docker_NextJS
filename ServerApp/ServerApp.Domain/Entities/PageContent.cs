@@ -8,7 +8,6 @@ public class PageContent : AggregateRoot<Guid>
     public PageAddress Address { get; protected set; }
     public PageTitle Title { get; protected set; }
     public PageContentText Content { get; protected set; }
-    public DateTime? UpdatedAt { get; protected set; }
 
     // Constructor for creating a new page content
     internal PageContent(PageAddress address, PageTitle title, PageContentText content)
@@ -26,6 +25,5 @@ public class PageContent : AggregateRoot<Guid>
     {
         Title = newTitle;
         Content = newContent;
-        UpdatedAt = DateTime.UtcNow;
     }
 }

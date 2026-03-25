@@ -13,4 +13,6 @@ public record PaintingDepth : DecimalValueObject
     }
 
     public static implicit operator PaintingDepth(decimal depth) => new(depth);
+
+    public static PaintingDepth? FromNullable(decimal? value) => value != null ? new PaintingDepth(value.Value) : null;
 }

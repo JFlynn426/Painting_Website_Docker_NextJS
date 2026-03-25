@@ -13,4 +13,6 @@ public record PaintingHeight : DecimalValueObject
     }
 
     public static implicit operator PaintingHeight(decimal height) => new(height);
+
+    public static PaintingHeight? FromNullable(decimal? value) => value != null ? new PaintingHeight(value.Value) : null;
 }

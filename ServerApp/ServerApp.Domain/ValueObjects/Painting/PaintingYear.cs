@@ -22,4 +22,6 @@ public record PaintingYear
     public static implicit operator PaintingYear(int year) => new(year);
 
     public static implicit operator int(PaintingYear year) => year.Value;
+
+    public static PaintingYear? FromNullable(int? value) => value != null ? new PaintingYear(value.Value) : null;
 }

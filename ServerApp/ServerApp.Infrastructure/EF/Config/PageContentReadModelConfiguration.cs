@@ -32,10 +32,6 @@ public class PageContentReadModelConfiguration : IEntityTypeConfiguration<PageCo
             .HasColumnType("nvarchar(max)")
             .IsRequired();
 
-        builder.Property(e => e.UpdatedAt)
-            .HasColumnName("UpdatedAt")
-            .HasColumnType("datetime2");
-
         builder.HasIndex(e => e.Address)
             .IsUnique();
     }
