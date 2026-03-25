@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.MicrosoftExtensions;
 using ServerApp.Application;
+using ServerApp.Infrastructure;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -20,6 +21,9 @@ namespace ServerApp.Api
 
             // Add Application layer services
             builder.Services.AddApplicationServices();
+
+            // Add Infrastructure layer services
+            builder.Services.AddInfrastructureServices(builder.Configuration);
 
             var app = builder.Build();
 
