@@ -1,6 +1,6 @@
 namespace ServerApp.Domain.Exceptions;
 
-using ServerApp.Shared.Abstractions.Exceptions;
+using ServerApp.Shared.Exceptions;
 
 public class PaintingMustHaveAnAssignedCategoryException : ServerAppException
 {

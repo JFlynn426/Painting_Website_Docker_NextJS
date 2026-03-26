@@ -1,6 +1,6 @@
 namespace ServerApp.Application.Queries;
 
-using ServerApp.Shared.Abstractions.Queries;
+using MediatR;
 using ServerApp.Application.DTOs;
 
-public record GetPageContent(string Address) : IQuery<PageContentDto>;
+public record GetPageContent(string Address) : IRequest<PageContentDto>;

@@ -1,9 +1,10 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using ServerApp.Infrastructure.Commands;
+using ServerApp.Domain.Factories;
 using ServerApp.Infrastructure.EF;
-using ServerApp.Infrastructure.Queries;
+using ServerApp.Infrastructure.Persistence;
 using ServerApp.Infrastructure.Services;
+using ServerApp.Shared.Persistence;
 
 namespace ServerApp.Infrastructure;
 
@@ -15,7 +16,8 @@ public static class InfrastructureExtensions
 {
     /// <summary>
     /// Adds all infrastructure services to the service collection.
-    /// This includes DbContexts, repositories, command handlers, and query handlers.
+    /// This includes DbContexts, repositories, UnitOfWork, and domain factories.
+    /// Command and Query handlers are registered in the Application layer.
     /// </summary>
     /// <param name="services">The service collection to add services to.</param>
     /// <param name="configuration">The application configuration.</param>
@@ -27,11 +29,13 @@ public static class InfrastructureExtensions
         // Register SQL Server DbContexts and repositories
         services.AddSQLServer(configuration);
 
-        // Register command handlers using Scrutor for automatic discovery
-        services.AddCommandHandlers();
+        // Register UnitOfWork for transaction management
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-        // Register query handlers using Scrutor for automatic discovery
-        services.AddQueryHandlers();
+        // Register domain factories for entity creation
+        services.AddScoped<IPaintingFactory, PaintingFactory>();
+        services.AddScoped<IPaintingCategoryFactory, PaintingCategoryFactory>();
+        services.AddScoped<IPageContentFactory, PageContentFactory>();
 
         // Register the app initializer for database migrations
         services.AddHostedService<AppInitializer>();

@@ -1,22 +1,48 @@
 namespace ServerApp.Application.Commands.Handlers;
 
+using MediatR;
+using ServerApp.Shared.Persistence;
 using ServerApp.Application.Commands;
-using ServerApp.Domain.Repositories;
+using ServerApp.Domain.Repositories.Write;
+using ServerApp.Domain.Repositories.Read;
 using ServerApp.Domain.ValueObjects.Page;
-using ServerApp.Shared.Abstractions.Commands;
+using ServerApp.Application.Exceptions;
 
-public class DeletePageContentHandler : ICommandHandler<DeletePageContent>
+public class DeletePageContentHandler : IRequestHandler<DeletePageContent>
 {
-    private readonly IPageContentRepository _repository;
+    private readonly IPageContentWriteRepository _writeRepository;
+    private readonly IPageContentReadRepository _readRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public DeletePageContentHandler(IPageContentRepository repository)
+    public DeletePageContentHandler(
+        IPageContentWriteRepository writeRepository,
+        IPageContentReadRepository readRepository,
+        IUnitOfWork unitOfWork)
     {
-        _repository = repository;
+        _writeRepository = writeRepository;
+        _readRepository = readRepository;
+        _unitOfWork = unitOfWork;
     }
 
-    public async Task HandleAsync(DeletePageContent command, CancellationToken cancellationToken = default)
+    public async Task Handle(DeletePageContent command, CancellationToken cancellationToken = default)
     {
-        var address = new PageAddress(command.Address);
-        await _repository.DeleteAsync(address, cancellationToken);
+        await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            var pageContent = await _readRepository.GetByAddressAsync(new PageAddress(command.Address), cancellationToken);
+            if (pageContent == null)
+            {
+                throw new PageContentNotFoundException(command.Address);
+            }
+
+            await _writeRepository.DeleteAsync(pageContent.Id, cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await _unitOfWork.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 }

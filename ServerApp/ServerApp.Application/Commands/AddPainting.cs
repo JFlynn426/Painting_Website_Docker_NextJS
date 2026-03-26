@@ -1,6 +1,7 @@
 namespace ServerApp.Application.Commands;
 
-using ServerApp.Shared.Abstractions.Commands;
+using MediatR;
+using ServerApp.Application.DTOs;
 
 public record AddPainting(
     string Title,
@@ -14,4 +15,4 @@ public record AddPainting(
     decimal? Depth,
     int? Year,
     bool IsAvailable
-) : ICommand;
+) : IRequest<PaintingCreatedResult>;

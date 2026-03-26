@@ -1,6 +1,6 @@
 namespace ServerApp.Application.Exceptions;
 
-using ServerApp.Shared.Abstractions.Exceptions;
+using ServerApp.Shared.Exceptions;
 
 public class PaintingNotFoundException : ServerAppException
 {

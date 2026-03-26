@@ -1,20 +1,51 @@
 namespace ServerApp.Application.Commands.Handlers;
 
-using ServerApp.Shared.Abstractions.Commands;
+using MediatR;
+using ServerApp.Shared.Persistence;
 using ServerApp.Application.Commands;
-using ServerApp.Domain.Repositories;
+using ServerApp.Domain.Repositories.Write;
+using ServerApp.Domain.Repositories.Read;
+using ServerApp.Application.Exceptions;
 
-public class DeletePaintingHandler : ICommandHandler<DeletePainting>
+public class DeletePaintingHandler : IRequestHandler<DeletePainting>
 {
-    private readonly IPaintingRepository _repository;
+    private readonly IPaintingWriteRepository _writeRepository;
+    private readonly IPaintingReadRepository _readRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public DeletePaintingHandler(IPaintingRepository repository)
+    public DeletePaintingHandler(
+        IPaintingWriteRepository writeRepository,
+        IPaintingReadRepository readRepository,
+        IUnitOfWork unitOfWork)
     {
-        _repository = repository;
+        _writeRepository = writeRepository;
+        _readRepository = readRepository;
+        _unitOfWork = unitOfWork;
     }
 
-    public async Task HandleAsync(DeletePainting command, CancellationToken cancellationToken = default)
+    public async Task Handle(DeletePainting command, CancellationToken cancellationToken = default)
     {
-        await _repository.DeleteAsync(command.Id, cancellationToken);
+        await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            // Get all paintings and find by ID
+            var allPaintings = await _readRepository.GetAllAsync(cancellationToken);
+            var painting = allPaintings.FirstOrDefault(p => p.Id == command.Id);
+
+            if (painting == null)
+            {
+                throw new PaintingNotFoundException(command.Id.ToString());
+            }
+
+            painting.MarkAsDeleted();
+            await _writeRepository.UpdateAsync(painting, cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await _unitOfWork.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 }

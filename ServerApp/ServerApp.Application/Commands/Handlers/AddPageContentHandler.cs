@@ -1,29 +1,64 @@
 namespace ServerApp.Application.Commands.Handlers;
 
-using ServerApp.Shared.Abstractions.Commands;
+using MediatR;
+using ServerApp.Shared.Persistence;
 using ServerApp.Application.Commands;
+using ServerApp.Application.DTOs;
 using ServerApp.Domain.Factories;
-using ServerApp.Domain.Repositories;
+using ServerApp.Domain.Repositories.Write;
+using ServerApp.Domain.Repositories.Read;
 using ServerApp.Domain.ValueObjects.Page;
+using ServerApp.Domain.Exceptions;
 
-public class AddPageContentHandler : ICommandHandler<AddPageContent>
+public class AddPageContentHandler : IRequestHandler<AddPageContent, PageContentCreatedResult>
 {
     private readonly IPageContentFactory _factory;
-    private readonly IPageContentRepository _repository;
+    private readonly IPageContentWriteRepository _writeRepository;
+    private readonly IPageContentReadRepository _readRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
     public AddPageContentHandler(
         IPageContentFactory factory,
-        IPageContentRepository repository)
+        IPageContentWriteRepository writeRepository,
+        IPageContentReadRepository readRepository,
+        IUnitOfWork unitOfWork)
     {
         _factory = factory;
-        _repository = repository;
+        _writeRepository = writeRepository;
+        _readRepository = readRepository;
+        _unitOfWork = unitOfWork;
     }
 
-    public async Task HandleAsync(AddPageContent command, CancellationToken cancellationToken = default)
+    public async Task<PageContentCreatedResult> Handle(AddPageContent command, CancellationToken cancellationToken = default)
     {
-        var (address, title, content) = command;
+        await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
-        var pageContent = _factory.Create(address, title, content);
-        await _repository.AddAsync(pageContent, cancellationToken);
+        try
+        {
+            var (address, title, content) = command;
+
+            // Check if page content already exists
+            var exists = await _readRepository.ExistsByAddressAsync(new PageAddress(address), cancellationToken);
+            if (exists)
+            {
+                throw new PageContentAlreadyExistsException(address);
+            }
+
+            // Create page content using factory
+            var pageContent = _factory.Create(
+                new PageAddress(address),
+                new PageTitle(title),
+                new PageContentText(content));
+
+            await _writeRepository.AddAsync(pageContent, cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
+
+            return new PageContentCreatedResult(pageContent.Id, pageContent.Address.Value, pageContent.Title.Value);
+        }
+        catch
+        {
+            await _unitOfWork.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 }

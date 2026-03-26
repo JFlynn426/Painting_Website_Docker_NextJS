@@ -1,5 +1,5 @@
 namespace ServerApp.Application.Commands;
 
-using ServerApp.Shared.Abstractions.Commands;
+using MediatR;
 
-public record DeletePainting(Guid Id) : ICommand;
+public record DeletePainting(Guid Id) : IRequest;

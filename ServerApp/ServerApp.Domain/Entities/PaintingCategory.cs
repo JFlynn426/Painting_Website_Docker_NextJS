@@ -1,19 +1,22 @@
 namespace ServerApp.Domain.Entities;
 
 using System.Collections.Generic;
-using ServerApp.Shared.Abstractions.Domain;
+using ServerApp.Shared.Domain;
 using ServerApp.Domain.ValueObjects.PaintingCategory;
 
 public class PaintingCategory : AggregateRoot<Guid>
 {
-    public PaintingCategoryName Name { get; protected set; }
-    public PaintingCategorySlug Slug { get; protected set; }
-    public PaintingCategoryDescription? Description { get; protected set; }
+    public PaintingCategoryName Name { get; private set; }
+    public PaintingCategorySlug Slug { get; private set; }
+    public PaintingCategoryDescription? Description { get; private set; }
 
     // Navigation property for Paintings in this category
-    public ICollection<Painting> Paintings { get; protected set; } = new List<Painting>();
+    public ICollection<Painting> Paintings { get; private set; } = new List<Painting>();
 
-    // Constructor for creating a new category
+    // Parameterless constructor for EF Core
+    private PaintingCategory() { }
+
+    // Constructor for creating a new category (domain creation path)
     internal PaintingCategory(PaintingCategoryID id, PaintingCategoryName name, PaintingCategorySlug slug, PaintingCategoryDescription? description = null)
     {
         Id = id.Value;
@@ -21,9 +24,6 @@ public class PaintingCategory : AggregateRoot<Guid>
         Slug = slug;
         Description = description;
     }
-
-    // Parameterless constructor for ORM
-    protected PaintingCategory() { }
 
     // Method to add a painting to this category
     public void AddPainting(Painting painting)

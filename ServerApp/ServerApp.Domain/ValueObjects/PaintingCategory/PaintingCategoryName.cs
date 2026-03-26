@@ -1,6 +1,6 @@
 namespace ServerApp.Domain.ValueObjects.PaintingCategory;
 
-using ServerApp.Shared.Abstractions.Domain;
+using ServerApp.Shared.Domain;
 
 public record PaintingCategoryName : StringValueObject
 {

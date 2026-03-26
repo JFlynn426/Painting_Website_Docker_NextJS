@@ -6,7 +6,7 @@ using ServerApp.Domain.ValueObjects.PaintingCategory;
 
 public interface IPaintingFactory
 {
-    Task<Painting> CreateAsync(
+    Painting Create(
         PaintingID id,
         PaintingName title,
         PaintingDescription? description,
@@ -18,6 +18,5 @@ public interface IPaintingFactory
         PaintingHeight? height = null,
         PaintingDepth? depth = null,
         PaintingYear? year = null,
-        PaintingIsAvailable isAvailable = default!,
-        CancellationToken cancellationToken = default);
+        PaintingIsAvailable isAvailable = default!);
 }

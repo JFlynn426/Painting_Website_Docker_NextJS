@@ -1,14 +1,13 @@
 namespace ServerApp.Infrastructure.EF.Contexts;
 
 using Microsoft.EntityFrameworkCore;
-using ServerApp.Infrastructure.EF.Config;
-using ServerApp.Infrastructure.EF.Models;
+using ServerApp.Domain.Entities;
 
 internal sealed class ReadDbContext : DbContext
 {
-    public DbSet<PaintingReadModel> Paintings { get; set; } = default!;
-    public DbSet<PaintingCategoryReadModel> PaintingCategories { get; set; } = default!;
-    public DbSet<PageContentReadModel> PageContents { get; set; } = default!;
+    public DbSet<Painting> Paintings { get; set; } = default!;
+    public DbSet<PaintingCategory> PaintingCategories { get; set; } = default!;
+    public DbSet<PageContent> PageContents { get; set; } = default!;
 
     public ReadDbContext(DbContextOptions<ReadDbContext> options) : base(options)
     {
@@ -18,13 +17,7 @@ internal sealed class ReadDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        var paintingConfig = new PaintingReadModelConfiguration();
-        modelBuilder.ApplyConfiguration(paintingConfig);
-
-        var paintingCategoryConfig = new PaintingCategoryReadModelConfiguration();
-        modelBuilder.ApplyConfiguration(paintingCategoryConfig);
-
-        var pageContentConfig = new PageContentReadModelConfiguration();
-        modelBuilder.ApplyConfiguration(pageContentConfig);
+        // Apply all configurations from this assembly
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ReadDbContext).Assembly);
     }
 }

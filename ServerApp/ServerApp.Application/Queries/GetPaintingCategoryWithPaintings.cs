@@ -1,6 +1,6 @@
 namespace ServerApp.Application.Queries;
 
-using ServerApp.Shared.Abstractions.Queries;
+using MediatR;
 using ServerApp.Application.DTOs;
 
-public record GetPaintingCategoryWithPaintings(string Slug) : IQuery<PaintingCategoryWithPaintingsDto>;
+public record GetPaintingCategoryWithPaintings(string Slug) : IRequest<PaintingCategoryWithPaintingsDto>;

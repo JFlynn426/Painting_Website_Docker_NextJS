@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using MediatR;
 using ServerApp.Application.Commands;
 using ServerApp.Application.DTOs;
 using ServerApp.Application.Queries;
-using ServerApp.Shared.Abstractions.Commands;
-using ServerApp.Shared.Abstractions.Queries;
 
 namespace ServerApp.Api.Controllers;
 
@@ -14,15 +13,11 @@ namespace ServerApp.Api.Controllers;
 [Route("api/[controller]")]
 public class PaintingsController : BaseController
 {
-    private readonly ICommandDispatcher _commandDispatcher;
-    private readonly IQueryDispatcher _queryDispatcher;
+    private readonly IMediator _mediator;
 
-    public PaintingsController(
-        ICommandDispatcher commandDispatcher,
-        IQueryDispatcher queryDispatcher)
+    public PaintingsController(IMediator mediator)
     {
-        _commandDispatcher = commandDispatcher;
-        _queryDispatcher = queryDispatcher;
+        _mediator = mediator;
     }
 
     /// <summary>
@@ -32,8 +27,8 @@ public class PaintingsController : BaseController
     [HttpGet]
     public async Task<ActionResult<List<PaintingDto>>> GetAll()
     {
-        // Note: GetAllPaintings query not yet implemented, returning empty list as placeholder
-        return Ok(new List<PaintingDto>());
+        var result = await _mediator.Send(new GetAllPaintings());
+        return Ok(result);
     }
 
     /// <summary>
@@ -44,8 +39,7 @@ public class PaintingsController : BaseController
     [HttpGet("{slug}")]
     public async Task<ActionResult<PaintingDto>> GetBySlug(string slug)
     {
-        var query = new GetPainting(slug);
-        var result = await _queryDispatcher.QueryAsync(query);
+        var result = await _mediator.Send(new GetPainting(slug));
         return OkOrNotFound(result);
     }
 
@@ -57,8 +51,7 @@ public class PaintingsController : BaseController
     [HttpGet("category/{categorySlug}")]
     public async Task<ActionResult<PaintingCategoryWithPaintingsDto>> GetByCategory(string categorySlug)
     {
-        var query = new GetPaintingCategoryWithPaintings(categorySlug);
-        var result = await _queryDispatcher.QueryAsync(query);
+        var result = await _mediator.Send(new GetPaintingCategoryWithPaintings(categorySlug));
         return OkOrNotFound(result);
     }
 
@@ -70,8 +63,8 @@ public class PaintingsController : BaseController
     [HttpPost]
     public async Task<IActionResult> Add([FromBody] AddPainting command)
     {
-        await _commandDispatcher.DispatchAsync(command);
-        return CreatedAtAction(nameof(GetBySlug), new { slug = "new" }, new { message = "Painting created successfully" });
+        var result = await _mediator.Send(command);
+        return CreatedAtAction(nameof(GetBySlug), new { slug = result.Slug }, result);
     }
 
     /// <summary>
@@ -82,7 +75,7 @@ public class PaintingsController : BaseController
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete([FromRoute] DeletePainting command)
     {
-        await _commandDispatcher.DispatchAsync(command);
+        await _mediator.Send(command);
         return NoContent();
     }
 }

@@ -2,6 +2,7 @@ namespace ServerApp.Application.DTOs;
 
 public class PaintingDto
 {
+    public Guid Id { get; init; }
     public string Title { get; init; } = string.Empty;
     public string? Description { get; init; }
     public string ImageUrl { get; init; } = string.Empty;

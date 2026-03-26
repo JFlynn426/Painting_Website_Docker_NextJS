@@ -1,22 +1,23 @@
 namespace ServerApp.Application.Queries.Handlers;
 
-using ServerApp.Shared.Abstractions.Queries;
+using MediatR;
 using ServerApp.Application.Queries;
 using ServerApp.Application.DTOs;
-using ServerApp.Domain.Repositories;
+using ServerApp.Domain.Repositories.Read;
 
-public class GetAllPaintingCategoriesHandler : IQueryHandler<GetAllPaintingCategories, List<PaintingCategoryDto>>
+public class GetAllPaintingCategoriesHandler : IRequestHandler<GetAllPaintingCategories, List<PaintingCategoryDto>>
 {
-    private readonly IPaintingCategoryRepository _repository;
+    private readonly IPaintingCategoryReadRepository _readRepository;
 
-    public GetAllPaintingCategoriesHandler(IPaintingCategoryRepository repository)
+    public GetAllPaintingCategoriesHandler(IPaintingCategoryReadRepository readRepository)
     {
-        _repository = repository;
+        _readRepository = readRepository;
     }
 
-    public async Task<List<PaintingCategoryDto>> HandleAsync(GetAllPaintingCategories query, CancellationToken cancellationToken = default)
+    public async Task<List<PaintingCategoryDto>> Handle(GetAllPaintingCategories query, CancellationToken cancellationToken = default)
     {
-        var categories = await _repository.GetAllAsync(cancellationToken);
+        var categories = await _readRepository.GetAllAsync(cancellationToken);
+
         return categories.Select(c => new PaintingCategoryDto
         {
             Id = c.Id,

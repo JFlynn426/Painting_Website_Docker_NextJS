@@ -1,6 +1,6 @@
 namespace ServerApp.Application.Queries;
 
-using ServerApp.Shared.Abstractions.Queries;
+using MediatR;
 using ServerApp.Application.DTOs;
 
-public record GetAllPaintingCategories : IQuery<List<PaintingCategoryDto>>;
+public record GetAllPaintingCategories : IRequest<List<PaintingCategoryDto>>;

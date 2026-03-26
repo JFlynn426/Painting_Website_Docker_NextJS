@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Shared\ServerApp.Shared.Abstractions\ServerApp.Shared.Abstractions.csproj" />
+    <ProjectReference Include="..\ServerApp.Shared\ServerApp.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

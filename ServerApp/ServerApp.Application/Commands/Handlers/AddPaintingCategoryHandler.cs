@@ -1,37 +1,58 @@
 namespace ServerApp.Application.Commands.Handlers;
 
-using ServerApp.Shared.Abstractions.Commands;
+using MediatR;
+using ServerApp.Shared.Persistence;
 using ServerApp.Application.Commands;
+using ServerApp.Application.DTOs;
 using ServerApp.Domain.Factories;
-using ServerApp.Domain.Repositories;
+using ServerApp.Domain.Repositories.Write;
+using ServerApp.Domain.Repositories.Read;
 using ServerApp.Domain.ValueObjects.PaintingCategory;
+using ServerApp.Application.Exceptions;
 
-public class AddPaintingCategoryHandler : ICommandHandler<AddPaintingCategory>
+public class AddPaintingCategoryHandler : IRequestHandler<AddPaintingCategory, PaintingCategoryCreatedResult>
 {
     private readonly IPaintingCategoryFactory _factory;
-    private readonly IPaintingCategoryRepository _repository;
+    private readonly IPaintingCategoryWriteRepository _writeRepository;
+    private readonly IPaintingCategoryReadRepository _readRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
     public AddPaintingCategoryHandler(
         IPaintingCategoryFactory factory,
-        IPaintingCategoryRepository repository)
+        IPaintingCategoryWriteRepository writeRepository,
+        IPaintingCategoryReadRepository readRepository,
+        IUnitOfWork unitOfWork)
     {
         _factory = factory;
-        _repository = repository;
+        _writeRepository = writeRepository;
+        _readRepository = readRepository;
+        _unitOfWork = unitOfWork;
     }
 
-    public async Task HandleAsync(AddPaintingCategory command, CancellationToken cancellationToken = default)
+    public async Task<PaintingCategoryCreatedResult> Handle(AddPaintingCategory command, CancellationToken cancellationToken = default)
     {
-        var (name, description) = command;
+        await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
-        // Auto-generate ID
-        var categoryId = new PaintingCategoryID();
+        try
+        {
+            var (name, description) = command;
 
-        var category = await _factory.CreateAsync(
-            categoryId,
-            name,
-            PaintingCategoryDescription.FromNullable(description),
-            cancellationToken);
+            // Create category using factory (includes validation)
+            var category = await _factory.CreateAsync(
+                new PaintingCategoryID(),
+                new PaintingCategoryName(name),
+                PaintingCategoryDescription.FromNullable(description),
+                cancellationToken);
 
-        await _repository.AddAsync(category, cancellationToken);
+            await _writeRepository.AddAsync(category, cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
+
+            return new PaintingCategoryCreatedResult(category.Id, category.Slug.Value, category.Name.Value);
+        }
+        catch
+        {
+            await _unitOfWork.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 }

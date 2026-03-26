@@ -1,8 +1,9 @@
 namespace ServerApp.Application.Commands;
 
-using ServerApp.Shared.Abstractions.Commands;
+using MediatR;
+using ServerApp.Application.DTOs;
 
 public record AddPaintingCategory(
     string Name,
     string? Description
-) : ICommand;
+) : IRequest<PaintingCategoryCreatedResult>;

@@ -1,6 +1,6 @@
 namespace ServerApp.Domain.Exceptions;
 
-using ServerApp.Shared.Abstractions.Exceptions;
+using ServerApp.Shared.Exceptions;
 using ServerApp.Domain.ValueObjects.Painting;
 
 public class PaintingYearOutOfRangeException : ServerAppException

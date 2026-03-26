@@ -1,35 +1,36 @@
 namespace ServerApp.Application.Queries.Handlers;
 
-using ServerApp.Shared.Abstractions.Queries;
+using MediatR;
 using ServerApp.Application.Queries;
 using ServerApp.Application.DTOs;
-using ServerApp.Domain.Repositories;
-using ServerApp.Domain.ValueObjects.PaintingCategory;
+using ServerApp.Domain.Repositories.Read;
 using ServerApp.Application.Exceptions;
+using ServerApp.Domain.ValueObjects.PaintingCategory;
 
-public class GetPaintingCategoryWithPaintingsHandler : IQueryHandler<GetPaintingCategoryWithPaintings, PaintingCategoryWithPaintingsDto>
+public class GetPaintingCategoryWithPaintingsHandler : IRequestHandler<GetPaintingCategoryWithPaintings, PaintingCategoryWithPaintingsDto>
 {
-    private readonly IPaintingCategoryRepository _categoryRepository;
-    private readonly IPaintingRepository _paintingRepository;
+    private readonly IPaintingCategoryReadRepository _categoryReadRepository;
+    private readonly IPaintingReadRepository _paintingReadRepository;
 
     public GetPaintingCategoryWithPaintingsHandler(
-        IPaintingCategoryRepository categoryRepository,
-        IPaintingRepository paintingRepository)
+        IPaintingCategoryReadRepository categoryReadRepository,
+        IPaintingReadRepository paintingReadRepository)
     {
-        _categoryRepository = categoryRepository;
-        _paintingRepository = paintingRepository;
+        _categoryReadRepository = categoryReadRepository;
+        _paintingReadRepository = paintingReadRepository;
     }
 
-    public async Task<PaintingCategoryWithPaintingsDto> HandleAsync(GetPaintingCategoryWithPaintings query, CancellationToken cancellationToken = default)
+    public async Task<PaintingCategoryWithPaintingsDto> Handle(GetPaintingCategoryWithPaintings query, CancellationToken cancellationToken = default)
     {
-        var category = await _categoryRepository.FindBySlugAsync(new PaintingCategorySlug(query.Slug), cancellationToken);
+        var slug = new PaintingCategorySlug(query.Slug);
+        var category = await _categoryReadRepository.FindBySlugAsync(slug, cancellationToken);
 
         if (category == null)
         {
             throw new PaintingCategoryNotFoundException(query.Slug);
         }
 
-        var paintings = await _paintingRepository.GetByCategoryAsync(category.Slug, cancellationToken);
+        var paintings = await _paintingReadRepository.GetByCategoryAsync(slug, cancellationToken);
 
         return new PaintingCategoryWithPaintingsDto
         {
@@ -39,6 +40,7 @@ public class GetPaintingCategoryWithPaintingsHandler : IQueryHandler<GetPainting
             Description = category.Description?.Value,
             Paintings = paintings.Select(p => new PaintingDto
             {
+                Id = p.Id,
                 Title = p.Title.Value,
                 Description = p.Description?.Value,
                 ImageUrl = p.ImageUrl.Value,

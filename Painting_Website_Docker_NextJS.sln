@@ -5,19 +5,15 @@ VisualStudioVersion = 18.1.11312.151
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose\docker-compose.dcproj", "{8D33F181-7DDE-04EB-E05A-075C5C0D4E39}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerApp.Api", "serverapp\ServerApp.Api\ServerApp.Api.csproj", "{121CE53B-2AF1-44E9-DC92-373891F9F84C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerApp.Api", "ServerApp\ServerApp.Api\ServerApp.Api.csproj", "{121CE53B-2AF1-44E9-DC92-373891F9F84C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerApp.Application", "serverapp\ServerApp.Application\ServerApp.Application.csproj", "{9CEB742E-7674-4D14-8ED8-11DC369B1972}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerApp.Application", "ServerApp\ServerApp.Application\ServerApp.Application.csproj", "{9CEB742E-7674-4D14-8ED8-11DC369B1972}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerApp.Domain", "serverapp\ServerApp.Domain\ServerApp.Domain.csproj", "{749D25EE-A83F-4F86-B1D2-790D1992AF88}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerApp.Domain", "ServerApp\ServerApp.Domain\ServerApp.Domain.csproj", "{749D25EE-A83F-4F86-B1D2-790D1992AF88}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerApp.Infrastructure", "serverapp\ServerApp.Infrastructure\ServerApp.Infrastructure.csproj", "{C06B2848-5A13-436A-BB2B-78E3E86EB827}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerApp.Infrastructure", "ServerApp\ServerApp.Infrastructure\ServerApp.Infrastructure.csproj", "{C06B2848-5A13-436A-BB2B-78E3E86EB827}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{1C829C06-154B-4339-8D69-28BB8FF8236C}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerApp.Shared", "serverapp\Shared\ServerApp.Shared\ServerApp.Shared.csproj", "{28B13B11-6113-4C38-8D38-84B7A8FC68FE}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerApp.Shared.Abstractions", "serverapp\Shared\ServerApp.Shared.Abstractions\ServerApp.Shared.Abstractions.csproj", "{63583051-255D-4BA7-985B-8C1B44CA86FE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerApp.Shared", "ServerApp\ServerApp.Shared\ServerApp.Shared.csproj", "{28B13B11-6113-4C38-8D38-84B7A8FC68FE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,17 +45,11 @@ Global
 		{28B13B11-6113-4C38-8D38-84B7A8FC68FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{28B13B11-6113-4C38-8D38-84B7A8FC68FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{28B13B11-6113-4C38-8D38-84B7A8FC68FE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{63583051-255D-4BA7-985B-8C1B44CA86FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{63583051-255D-4BA7-985B-8C1B44CA86FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{63583051-255D-4BA7-985B-8C1B44CA86FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{63583051-255D-4BA7-985B-8C1B44CA86FE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{28B13B11-6113-4C38-8D38-84B7A8FC68FE} = {1C829C06-154B-4339-8D69-28BB8FF8236C}
-		{63583051-255D-4BA7-985B-8C1B44CA86FE} = {1C829C06-154B-4339-8D69-28BB8FF8236C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {145809D4-D0AC-4FEC-8625-A57151E94532}

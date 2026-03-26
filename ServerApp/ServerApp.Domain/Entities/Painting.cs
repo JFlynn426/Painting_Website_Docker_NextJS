@@ -1,6 +1,6 @@
 namespace ServerApp.Domain.Entities;
 
-using ServerApp.Shared.Abstractions.Domain;
+using ServerApp.Shared.Domain;
 using ServerApp.Domain.ValueObjects.Painting;
 using ServerApp.Domain.ValueObjects.PaintingCategory;
 using ServerApp.Domain.Exceptions;
@@ -8,23 +8,29 @@ using ServerApp.Domain.Events;
 
 public class Painting : AggregateRoot<Guid>
 {
-    public PaintingName Title { get; protected set; } = new PaintingName();
-    public PaintingSlug Slug { get; protected set; } = new PaintingSlug();
-    public PaintingDescription? Description { get; protected set; }
-    public PaintingImageUrl ImageUrl { get; protected set; } = new PaintingImageUrl();
-    public PaintingThumbnailUrl? ThumbnailUrl { get; protected set; }
-    public PaintingCategorySlug CategorySlug { get; protected set; }
-    public PaintingWidth? Width { get; protected set; }
-    public PaintingHeight? Height { get; protected set; }
-    public PaintingDepth? Depth { get; protected set; }
-    public PaintingYear? Year { get; protected set; }
-    public PaintingPrice? Price { get; protected set; }
-    public PaintingIsAvailable IsAvailable { get; protected set; } = true;
+    public PaintingName Title { get; private set; } = new PaintingName();
+    public PaintingSlug Slug { get; private set; } = new PaintingSlug();
+    public PaintingDescription? Description { get; private set; }
+    public PaintingImageUrl ImageUrl { get; private set; } = new PaintingImageUrl();
+    public PaintingThumbnailUrl? ThumbnailUrl { get; private set; }
+    public PaintingCategorySlug CategorySlug { get; private set; }
+    public PaintingWidth? Width { get; private set; }
+    public PaintingHeight? Height { get; private set; }
+    public PaintingDepth? Depth { get; private set; }
+    public PaintingYear? Year { get; private set; }
+    public PaintingPrice? Price { get; private set; }
+    public PaintingIsAvailable IsAvailable { get; private set; } = true;
 
     // Navigation property for the category this painting belongs to
-    public PaintingCategory? Category { get; protected set; }
+    public PaintingCategory? Category { get; private set; }
 
-    // Constructor for creating a new painting
+    // Foreign key property for EF Core
+    public Guid? CategoryId { get; private set; }
+
+    // Parameterless constructor for EF Core
+    private Painting() { }
+
+    // Constructor for creating a new painting (domain creation path)
     public Painting(PaintingID id, PaintingName title, PaintingDescription? description, PaintingImageUrl imageUrl,
         PaintingThumbnailUrl? thumbnailUrl, PaintingCategorySlug categorySlug, PaintingPrice? price,
         PaintingWidth? width = null, PaintingHeight? height = null, PaintingDepth? depth = null,
@@ -46,9 +52,6 @@ public class Painting : AggregateRoot<Guid>
 
         AddEvent(new PaintingCreatedEvent(Id, title.Value, categorySlug.Value));
     }
-
-    // Parameterless constructor for ORM
-    protected Painting() { }
 
     // Method to update availability
     public void SetAvailability(PaintingIsAvailable isAvailable)

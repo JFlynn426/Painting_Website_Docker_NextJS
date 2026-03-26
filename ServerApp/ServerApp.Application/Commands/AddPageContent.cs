@@ -1,9 +1,10 @@
 namespace ServerApp.Application.Commands;
 
-using ServerApp.Shared.Abstractions.Commands;
+using MediatR;
+using ServerApp.Application.DTOs;
 
 public record AddPageContent(
     string Address,
     string Title,
     string Content
-) : ICommand;
+) : IRequest<PageContentCreatedResult>;

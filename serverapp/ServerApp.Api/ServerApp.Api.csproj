@@ -6,9 +6,17 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>057fab17-5d05-4ec1-ac09-53f9a5ae297f</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
   <ItemGroup>
+    <EditorConfigFiles Include="$(MSBuildThisFileDirectory)..\..\.editorconfig" Condition="Exists('$(MSBuildThisFileDirectory)..\..\.editorconfig')" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="12.4.1" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.1.6" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.6" />
@@ -17,8 +25,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ServerApp.Application\ServerApp.Application.csproj" />
     <ProjectReference Include="..\ServerApp.Infrastructure\ServerApp.Infrastructure.csproj" />
-    <ProjectReference Include="..\Shared\ServerApp.Shared.Abstractions\ServerApp.Shared.Abstractions.csproj" />
-    <ProjectReference Include="..\Shared\ServerApp.Shared\ServerApp.Shared.csproj" />
+    <ProjectReference Include="..\ServerApp.Shared\ServerApp.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

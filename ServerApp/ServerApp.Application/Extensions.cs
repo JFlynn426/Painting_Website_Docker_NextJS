@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
-using Scrutor;
-using ServerApp.Shared.Abstractions.Queries;
-using ServerApp.Application.Queries;
+using MediatR;
+using ServerApp.Application.Commands.Handlers;
+using ServerApp.Application.Queries.Handlers;
 
 namespace ServerApp.Application;
 
@@ -9,13 +9,8 @@ public static class ApplicationExtensions
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-        services.Scan(scan => scan
-            .FromAssemblyOf<GetAllPaintingCategories>()
-            .AddClasses(classes => classes
-                .AssignableTo(typeof(IQueryHandler<,>))
-            )
-            .AsImplementedInterfaces()
-            .WithScopedLifetime());
+        // Register MediatR for handling commands and queries
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AddPaintingHandler).Assembly));
 
         return services;
     }

@@ -1,24 +1,24 @@
 namespace ServerApp.Domain.Entities;
 
-using ServerApp.Shared.Abstractions.Domain;
+using ServerApp.Shared.Domain;
 using ServerApp.Domain.ValueObjects.Page;
 
 public class PageContent : AggregateRoot<Guid>
 {
-    public PageAddress Address { get; protected set; }
-    public PageTitle Title { get; protected set; }
-    public PageContentText Content { get; protected set; }
+    public PageAddress Address { get; private set; }
+    public PageTitle Title { get; private set; }
+    public PageContentText Content { get; private set; }
 
-    // Constructor for creating a new page content
+    // Parameterless constructor for EF Core
+    private PageContent() { }
+
+    // Constructor for creating a new page content (domain creation path)
     internal PageContent(PageAddress address, PageTitle title, PageContentText content)
     {
         Address = address;
         Title = title;
         Content = content;
     }
-
-    // Parameterless constructor for ORM
-    protected PageContent() { }
 
     // Method to update page content
     public void UpdateContent(PageTitle newTitle, PageContentText newContent)

@@ -1,24 +1,25 @@
 namespace ServerApp.Application.Queries.Handlers;
 
-using ServerApp.Shared.Abstractions.Queries;
+using MediatR;
 using ServerApp.Application.Queries;
 using ServerApp.Application.DTOs;
-using ServerApp.Domain.Repositories;
-using ServerApp.Domain.ValueObjects.Page;
+using ServerApp.Domain.Repositories.Read;
 using ServerApp.Application.Exceptions;
+using ServerApp.Domain.ValueObjects.Page;
 
-public class GetPageContentHandler : IQueryHandler<GetPageContent, PageContentDto>
+public class GetPageContentHandler : IRequestHandler<GetPageContent, PageContentDto>
 {
-    private readonly IPageContentRepository _repository;
+    private readonly IPageContentReadRepository _readRepository;
 
-    public GetPageContentHandler(IPageContentRepository repository)
+    public GetPageContentHandler(IPageContentReadRepository readRepository)
     {
-        _repository = repository;
+        _readRepository = readRepository;
     }
 
-    public async Task<PageContentDto> HandleAsync(GetPageContent query, CancellationToken cancellationToken = default)
+    public async Task<PageContentDto> Handle(GetPageContent query, CancellationToken cancellationToken = default)
     {
-        var pageContent = await _repository.GetByAddressAsync(new PageAddress(query.Address), cancellationToken);
+        var address = new PageAddress(query.Address);
+        var pageContent = await _readRepository.GetByAddressAsync(address, cancellationToken);
 
         if (pageContent == null)
         {

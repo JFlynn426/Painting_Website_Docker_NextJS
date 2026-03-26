@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using MediatR;
 using ServerApp.Application.Commands;
 using ServerApp.Application.DTOs;
 using ServerApp.Application.Queries;
-using ServerApp.Shared.Abstractions.Commands;
-using ServerApp.Shared.Abstractions.Queries;
 
 namespace ServerApp.Api.Controllers;
 
@@ -14,15 +13,11 @@ namespace ServerApp.Api.Controllers;
 [Route("api/[controller]")]
 public class PageContentController : BaseController
 {
-    private readonly ICommandDispatcher _commandDispatcher;
-    private readonly IQueryDispatcher _queryDispatcher;
+    private readonly IMediator _mediator;
 
-    public PageContentController(
-        ICommandDispatcher commandDispatcher,
-        IQueryDispatcher queryDispatcher)
+    public PageContentController(IMediator mediator)
     {
-        _commandDispatcher = commandDispatcher;
-        _queryDispatcher = queryDispatcher;
+        _mediator = mediator;
     }
 
     /// <summary>
@@ -33,8 +28,7 @@ public class PageContentController : BaseController
     [HttpGet("{address}")]
     public async Task<ActionResult<PageContentDto>> Get(string address)
     {
-        var query = new GetPageContent(address);
-        var result = await _queryDispatcher.QueryAsync(query);
+        var result = await _mediator.Send(new GetPageContent(address));
         return OkOrNotFound(result);
     }
 
@@ -46,8 +40,8 @@ public class PageContentController : BaseController
     [HttpPost]
     public async Task<IActionResult> Add([FromBody] AddPageContent command)
     {
-        await _commandDispatcher.DispatchAsync(command);
-        return CreatedAtAction(nameof(Get), new { address = command.Address }, new { message = "Page content created successfully" });
+        var result = await _mediator.Send(command);
+        return CreatedAtAction(nameof(Get), new { address = result.Address }, result);
     }
 
     /// <summary>
@@ -58,7 +52,7 @@ public class PageContentController : BaseController
     [HttpDelete("{address}")]
     public async Task<IActionResult> Delete([FromRoute] DeletePageContent command)
     {
-        await _commandDispatcher.DispatchAsync(command);
+        await _mediator.Send(command);
         return NoContent();
     }
 }

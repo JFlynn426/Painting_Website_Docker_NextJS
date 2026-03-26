@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.MicrosoftExtensions;
 using ServerApp.Application;
 using ServerApp.Infrastructure;
+using ServerApp.Api.Middleware;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -26,6 +27,9 @@ namespace ServerApp.Api
             builder.Services.AddInfrastructureServices(builder.Configuration);
 
             var app = builder.Build();
+
+            // Add exception handling middleware (must be early in pipeline)
+            app.UseExceptionMiddleware();
 
             app.UseSwagger();
             app.UseSwaggerUI();

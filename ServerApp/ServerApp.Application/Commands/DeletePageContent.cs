@@ -1,5 +1,5 @@
 namespace ServerApp.Application.Commands;
 
-using ServerApp.Shared.Abstractions.Commands;
+using MediatR;
 
-public record DeletePageContent(string Address) : ICommand;
+public record DeletePageContent(string Address) : IRequest;

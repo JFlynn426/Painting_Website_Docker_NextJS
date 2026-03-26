@@ -2,16 +2,16 @@ namespace ServerApp.Domain.Factories;
 
 using ServerApp.Domain.Entities;
 using ServerApp.Domain.Exceptions;
-using ServerApp.Domain.Repositories;
+using ServerApp.Domain.Repositories.Read;
 using ServerApp.Domain.ValueObjects.PaintingCategory;
 
 public class PaintingCategoryFactory : IPaintingCategoryFactory
 {
-    private readonly IPaintingCategoryRepository _repository;
+    private readonly IPaintingCategoryReadRepository _readRepository;
 
-    public PaintingCategoryFactory(IPaintingCategoryRepository repository)
+    public PaintingCategoryFactory(IPaintingCategoryReadRepository readRepository)
     {
-        _repository = repository;
+        _readRepository = readRepository;
     }
 
     public async Task<PaintingCategory> CreateAsync(
@@ -21,7 +21,7 @@ public class PaintingCategoryFactory : IPaintingCategoryFactory
         CancellationToken cancellationToken = default)
     {
         // Check if a category with this name already exists
-        bool exists = await _repository.ExistsByNameAsync(name, cancellationToken);
+        bool exists = await _readRepository.ExistsByNameAsync(name, cancellationToken);
         if (exists)
         {
             throw new PaintingCategoryNameAlreadyExistsException(name.Value);

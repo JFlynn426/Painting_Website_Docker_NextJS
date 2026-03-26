@@ -1,6 +1,6 @@
 namespace ServerApp.Domain.ValueObjects.Page;
 
-using ServerApp.Shared.Abstractions.Domain;
+using ServerApp.Shared.Domain;
 
 public record PageAddress : StringValueObject
 {
