@@ -25,6 +25,10 @@ internal sealed class AppInitializer : IHostedService
         // Migrate ReadDbContext
         var readDbContext = scope.ServiceProvider.GetRequiredService<ReadDbContext>();
         await readDbContext.Database.MigrateAsync(cancellationToken);
+
+        // Seed the database with initial data
+        var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+        await seeder.SeedAsync(cancellationToken);
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
