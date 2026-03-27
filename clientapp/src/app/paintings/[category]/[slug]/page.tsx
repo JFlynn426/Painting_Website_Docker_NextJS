@@ -1,6 +1,6 @@
 "use client";
 
-import { paintingsData } from "@/app/models/paintings";
+import { paintingsData, formatDimensions } from "@/app/models/paintings";
 import { paintingCategories } from "@/app/models/paintingCategories";
 import PaintingDetailImage from "@/components/PaintingDetailImage";
 import PaintingExamineModal from "@/components/PaintingExamineModal";
@@ -24,12 +24,10 @@ export default function PaintingDetailsPage({ params }: PaintingDetailsPageProps
     // Find the category from the model
     const categoryData = paintingCategories.find(cat => cat.slug === category);
 
-    // Find the painting by matching the slug with the filename
+    // Find the painting by matching the slug property
     const painting = paintingsData.find(p => {
-        if (p.category !== category) return false;
-        const filename = p.imageUrl.split('/').pop() || '';
-        const fileSlug = getPaintingSlugFromFilename(filename);
-        return fileSlug === slug;
+        if (p.categorySlug !== category) return false;
+        return p.slug === slug;
     });
 
     if (!categoryData || !painting) {
@@ -48,10 +46,13 @@ export default function PaintingDetailsPage({ params }: PaintingDetailsPageProps
     }
 
     // Format price in USD
-    const formattedPrice = new Intl.NumberFormat('en-US', {
+    const formattedPrice = painting.price ? new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD'
-    }).format(painting.price);
+    }).format(painting.price) : '';
+
+    // Format dimensions
+    const dimensions = formatDimensions(painting);
 
     return (
         <>
@@ -73,10 +74,10 @@ export default function PaintingDetailsPage({ params }: PaintingDetailsPageProps
                         )}
 
                         <div className={styles.infoGrid}>
-                            {painting.dimensions && (
+                            {dimensions && (
                                 <div className={styles.infoItem}>
                                     <span className={styles.infoLabel}>Dimensions:</span>
-                                    <span className={styles.infoValue}>{painting.dimensions}</span>
+                                    <span className={styles.infoValue}>{dimensions}</span>
                                 </div>
                             )}
 
@@ -87,10 +88,12 @@ export default function PaintingDetailsPage({ params }: PaintingDetailsPageProps
                                 </div>
                             )}
 
-                            <div className={styles.infoItem}>
-                                <span className={styles.infoLabel}>Price:</span>
-                                <span className={styles.price}>{formattedPrice}</span>
-                            </div>
+                            {painting.price && (
+                                <div className={styles.infoItem}>
+                                    <span className={styles.infoLabel}>Price:</span>
+                                    <span className={styles.price}>{formattedPrice}</span>
+                                </div>
+                            )}
 
                             <div className={styles.infoItem}>
                                 <span className={styles.infoLabel}>Availability:</span>
@@ -108,7 +111,7 @@ export default function PaintingDetailsPage({ params }: PaintingDetailsPageProps
                                 ← Back to {categoryData.name}
                             </Link>
 
-                            {painting.isAvailable && (
+                            {painting.isAvailable && painting.price && (
                                 <button className={styles.inquireButton}>
                                     Inquire About This Piece
                                 </button>
@@ -138,10 +141,4 @@ export default function PaintingDetailsPage({ params }: PaintingDetailsPageProps
             )}
         </>
     );
-}
-
-// Helper function to get painting slug from filename
-function getPaintingSlugFromFilename(filename: string): string {
-    // Convert filename to slug (e.g., "Aspens.jpg" -> "aspens")
-    return filename.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").trim();
 }

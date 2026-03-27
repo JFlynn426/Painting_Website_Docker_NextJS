@@ -31,14 +31,15 @@ public class Painting : AggregateRoot<Guid>
     private Painting() { }
 
     // Constructor for creating a new painting (domain creation path)
-    public Painting(PaintingID id, PaintingName title, PaintingDescription? description, PaintingImageUrl imageUrl,
+    // Internal constructor that accepts pre-computed slug (used by factory)
+    internal Painting(PaintingID id, PaintingName title, PaintingSlug slug, PaintingDescription? description, PaintingImageUrl imageUrl,
         PaintingThumbnailUrl? thumbnailUrl, PaintingCategorySlug categorySlug, PaintingPrice? price,
         PaintingWidth? width = null, PaintingHeight? height = null, PaintingDepth? depth = null,
         PaintingYear? year = null, PaintingIsAvailable isAvailable = default!)
     {
         Id = id.Value;
         Title = title;
-        Slug = PaintingSlug.FromTitle(title);
+        Slug = slug;
         Description = description;
         ImageUrl = imageUrl;
         ThumbnailUrl = thumbnailUrl;

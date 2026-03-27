@@ -2,20 +2,23 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 // ============================================================================
-// Data Interfaces
+// Data Interfaces - Match ServerApp DTOs
 // ============================================================================
 
 export interface Painting {
     id: string;
+    slug: string;
     title: string;
-    description: string;
+    description?: string;
     imageUrl: string;
     thumbnailUrl?: string;
-    category: string;
-    dimensions?: string;
+    categorySlug: string;
+    width?: number;
+    height?: number;
+    depth?: number;
     year?: number;
-    price: number;
-    isAvailable?: boolean;
+    price?: number;
+    isAvailable: boolean;
 }
 
 export interface PaintingCategory {
@@ -23,7 +26,20 @@ export interface PaintingCategory {
     name: string;
     slug: string;
     description?: string;
-    paintingCount?: number;
+}
+
+export interface PageContent {
+    address: string;
+    title: string;
+    content: string;
+}
+
+export interface PaintingCategoryWithPaintings {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string;
+    paintings: Painting[];
 }
 
 export interface CarouselImage {
@@ -84,7 +100,7 @@ export async function getPaintingsByCategory(categorySlug: string): Promise<Pain
  * Fetch category data including paintings
  * Cache duration: 1 hour
  */
-export async function getCategoryData(categorySlug: string): Promise<CategoryData> {
+export async function getCategoryData(categorySlug: string): Promise<PaintingCategoryWithPaintings> {
     const res = await fetch(`${API_BASE_URL}/categories/${categorySlug}`, {
         next: { revalidate: 3600 } // Cache for 1 hour
     });
@@ -132,13 +148,13 @@ export async function getPaintingById(id: string): Promise<Painting> {
  * Fetch a painting by category and slug
  * Cache duration: 24 hours (static content)
  */
-export async function getPaintingBySlug(category: string, slug: string): Promise<Painting> {
-    const res = await fetch(`${API_BASE_URL}/paintings/${category}/${slug}`, {
+export async function getPaintingBySlug(categorySlug: string, slug: string): Promise<Painting> {
+    const res = await fetch(`${API_BASE_URL}/paintings/${categorySlug}/${slug}`, {
         next: { revalidate: 86400 } // Cache for 24 hours
     });
 
     if (!res.ok) {
-        throw new Error(`Failed to fetch painting: ${category}/${slug}`);
+        throw new Error(`Failed to fetch painting: ${categorySlug}/${slug}`);
     }
 
     return res.json();

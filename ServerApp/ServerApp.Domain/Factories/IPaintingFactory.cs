@@ -7,7 +7,6 @@ using ServerApp.Domain.ValueObjects.PaintingCategory;
 public interface IPaintingFactory
 {
     Painting Create(
-        PaintingID id,
         PaintingName title,
         PaintingDescription? description,
         PaintingImageUrl imageUrl,

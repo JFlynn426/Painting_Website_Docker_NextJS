@@ -15,11 +15,13 @@ public class PaintingCategoryFactory : IPaintingCategoryFactory
     }
 
     public async Task<PaintingCategory> CreateAsync(
-        PaintingCategoryID id,
         PaintingCategoryName name,
         PaintingCategoryDescription? description,
         CancellationToken cancellationToken = default)
     {
+        // Auto-generate ID (single source of truth for ID generation)
+        var id = new PaintingCategoryID();
+
         // Check if a category with this name already exists
         bool exists = await _readRepository.ExistsByNameAsync(name, cancellationToken);
         if (exists)

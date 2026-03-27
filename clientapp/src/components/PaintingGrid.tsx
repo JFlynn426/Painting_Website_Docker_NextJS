@@ -9,10 +9,10 @@ export interface PaintingImageItem {
 
 interface PaintingGridProps {
     images: PaintingImageItem[];
-    category: string;
+    categorySlug: string;
 }
 
-export default function PaintingGrid({ images, category }: PaintingGridProps) {
+export default function PaintingGrid({ images, categorySlug }: PaintingGridProps) {
     if (images.length === 0) {
         return <p className={styles.noImages}>No images available for this category.</p>;
     }
@@ -25,7 +25,7 @@ export default function PaintingGrid({ images, category }: PaintingGridProps) {
                     src={image.src}
                     alt={image.alt}
                     filename={image.filename}
-                    category={category}
+                    categorySlug={categorySlug}
                     priority={index < 3}
                 />
             ))}

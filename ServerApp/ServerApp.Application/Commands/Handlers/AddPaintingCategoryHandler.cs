@@ -37,9 +37,8 @@ public class AddPaintingCategoryHandler : IRequestHandler<AddPaintingCategory, P
         {
             var (name, description) = command;
 
-            // Create category using factory (includes validation)
+            // Create category using factory (factory handles ID and slug generation internally)
             var category = await _factory.CreateAsync(
-                new PaintingCategoryID(),
                 new PaintingCategoryName(name),
                 PaintingCategoryDescription.FromNullable(description),
                 cancellationToken);

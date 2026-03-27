@@ -1,4 +1,20 @@
 services:
+  sqlserver:
+    image: mcr.microsoft.com/azure-sql-edge
+    container_name: artgallery-sql
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${SQLSERVER_SA_PASSWORD}
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${SQLSERVER_SA_PASSWORD}", "-Q", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   api:
     build:
       context: ../ServerApp
@@ -8,10 +24,16 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
+      DOTNET_USE_POLLING_FILE_WATCHER: true
+      ConnectionStrings__DefaultConnection: ${SQLSERVER_CONNECTION_STRING}
     volumes:
       - ../ServerApp:/app
+    depends_on:
+      sqlserver:
+        condition: service_healthy
     stdin_open: true
     tty: true
+    command: dotnet watch run --no-restore
 
   frontend:
     build:
@@ -39,3 +61,6 @@ services:
 
         - action: rebuild
           path: ../clientapp/Dockerfile
+
+volumes:
+  sqlserver_data:

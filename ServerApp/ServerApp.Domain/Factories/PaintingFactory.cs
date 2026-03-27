@@ -7,7 +7,6 @@ using ServerApp.Domain.ValueObjects.PaintingCategory;
 public class PaintingFactory : IPaintingFactory
 {
     public Painting Create(
-        PaintingID id,
         PaintingName title,
         PaintingDescription? description,
         PaintingImageUrl imageUrl,
@@ -20,7 +19,13 @@ public class PaintingFactory : IPaintingFactory
         PaintingYear? year = null,
         PaintingIsAvailable isAvailable = default!)
     {
-        var painting = new Painting(id, title, description, imageUrl, thumbnailUrl, categorySlug, price, width, height, depth, year, isAvailable);
+        // Auto-generate ID (single source of truth for ID generation)
+        var id = new PaintingID();
+
+        // Auto-generate slug from title (single source of truth for slug generation)
+        var slug = PaintingSlug.FromTitle(title);
+
+        var painting = new Painting(id, title, slug, description, imageUrl, thumbnailUrl, categorySlug, price, width, height, depth, year, isAvailable);
         return painting;
     }
 }

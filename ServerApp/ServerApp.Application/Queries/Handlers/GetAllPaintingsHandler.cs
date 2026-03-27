@@ -21,6 +21,7 @@ public class GetAllPaintingsHandler : IRequestHandler<GetAllPaintings, List<Pain
         return paintings.Select(p => new PaintingDto
         {
             Id = p.Id,
+            Slug = p.Slug.Value,
             Title = p.Title.Value,
             Description = p.Description?.Value,
             ImageUrl = p.ImageUrl.Value,

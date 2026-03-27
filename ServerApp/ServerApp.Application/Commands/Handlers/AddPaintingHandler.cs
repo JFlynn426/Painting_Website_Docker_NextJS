@@ -42,7 +42,7 @@ public class AddPaintingHandler : IRequestHandler<AddPainting, PaintingCreatedRe
         {
             var (title, description, imageUrl, thumbnailUrl, categorySlug, price, width, height, depth, year, isAvailable) = command;
 
-            // Validate that the category exists (moved from factory to handler)
+            // Validate that the category exists
             var categorySlugVO = new PaintingCategorySlug(categorySlug);
             var category = await _categoryReadRepository.FindBySlugAsync(categorySlugVO, cancellationToken);
             if (category == null)
@@ -50,7 +50,7 @@ public class AddPaintingHandler : IRequestHandler<AddPainting, PaintingCreatedRe
                 throw new PaintingMustHaveAnAssignedCategoryException();
             }
 
-            // Generate slug from title
+            // Generate slug from title for duplicate checking
             var paintingName = new PaintingName(title);
             var slug = PaintingSlug.FromTitle(paintingName);
 
@@ -61,12 +61,8 @@ public class AddPaintingHandler : IRequestHandler<AddPainting, PaintingCreatedRe
                 throw new PaintingSlugAlreadyExistsException();
             }
 
-            // Auto-generate ID
-            var id = new PaintingID();
-
-            // Create painting using synchronous factory (no async needed for pure domain logic)
+            // Create painting using factory (factory handles ID and slug generation internally)
             var painting = _factory.Create(
-                id,
                 paintingName,
                 PaintingDescription.FromNullable(description),
                 imageUrl,

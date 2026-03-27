@@ -2,18 +2,12 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
+import { Painting, formatDimensions } from "@/app/models/paintings";
 import styles from "./PaintingExamineModal.module.css";
 
 interface PaintingExamineModalProps {
     onClose: () => void;
-    painting: {
-        imageUrl: string;
-        title: string;
-        price: number;
-        dimensions?: string;
-        isAvailable?: boolean;
-        description?: string;
-    };
+    painting: Painting;
 }
 
 export default function PaintingExamineModal({ onClose, painting }: PaintingExamineModalProps) {
@@ -147,10 +141,12 @@ export default function PaintingExamineModal({ onClose, painting }: PaintingExam
         setPosition({ x: 0, y: 0 });
     };
 
-    const formattedPrice = new Intl.NumberFormat('en-US', {
+    const formattedPrice = painting.price ? new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD'
-    }).format(painting.price);
+    }).format(painting.price) : '';
+
+    const dimensions = formatDimensions(painting);
 
     return (
         <div className={styles.modalOverlay} onClick={onClose}>
@@ -218,10 +214,10 @@ export default function PaintingExamineModal({ onClose, painting }: PaintingExam
                 {/* Painting info */}
                 <div className={styles.infoPanel}>
                     <h2 className={styles.infoTitle}>{painting.title}</h2>
-                    <p className={styles.infoPrice}>{formattedPrice}</p>
-                    {painting.dimensions && <p className={styles.infoDimensions}>{painting.dimensions}</p>}
-                    <p className={`${styles.infoAvailability} ${painting.isAvailable !== false ? styles.available : styles.sold}`}>
-                        {painting.isAvailable !== false ? 'Available' : 'Sold'}
+                    {painting.price && <p className={styles.infoPrice}>{formattedPrice}</p>}
+                    {dimensions && <p className={styles.infoDimensions}>{dimensions}</p>}
+                    <p className={`${styles.infoAvailability} ${painting.isAvailable ? styles.available : styles.sold}`}>
+                        {painting.isAvailable ? 'Available' : 'Sold'}
                     </p>
                     {painting.description && <p className={styles.infoDescription}>{painting.description}</p>}
                 </div>

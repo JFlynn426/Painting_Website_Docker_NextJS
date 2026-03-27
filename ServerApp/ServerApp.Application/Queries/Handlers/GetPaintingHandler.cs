@@ -29,6 +29,7 @@ public class GetPaintingHandler : IRequestHandler<GetPainting, PaintingDto>
         return new PaintingDto
         {
             Id = painting.Id,
+            Slug = painting.Slug.Value,
             Title = painting.Title.Value,
             Description = painting.Description?.Value,
             ImageUrl = painting.ImageUrl.Value,

@@ -2,31 +2,32 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { paintingsData } from '@/app/models/paintings';
+import { paintingsData, formatDimensions } from '@/app/models/paintings';
 import styles from '../app/paintings/[category]/page.module.css';
 
 interface PaintingImageProps {
     src: string;
     alt: string;
     priority?: boolean;
-    category: string;
+    categorySlug: string;
     filename: string;
 }
 
-export default function PaintingImage({ src, alt, priority = false, category, filename }: PaintingImageProps) {
-    // Generate slug from filename (e.g., "Aspens.jpg" -> "aspens")
-    const slug = filename.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").trim();
-    const detailsUrl = `/paintings/${category}/${slug}`;
-
-    // Find painting data for hover info
+export default function PaintingImage({ src, alt, priority = false, categorySlug, filename }: PaintingImageProps) {
+    // Find painting data for hover info and get the slug
     const painting = paintingsData.find(p => {
         const fileSlug = p.imageUrl.split('/').pop()?.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").trim();
-        return fileSlug === slug && p.category === category;
+        const filenameSlug = filename.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").trim();
+        return fileSlug === filenameSlug && p.categorySlug === categorySlug;
     });
+
+    // Use the painting's slug property for navigation
+    const slug = painting?.slug || filename.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").trim();
+    const detailsUrl = `/paintings/${categorySlug}/${slug}`;
 
     const title = painting?.title || alt;
     const price = painting?.price ? `$${painting.price.toLocaleString()}` : '';
-    const dimensions = painting?.dimensions || '';
+    const dimensions = painting ? formatDimensions(painting) : '';
     const availability = painting?.isAvailable !== false ? 'Available' : 'Sold';
 
     return (

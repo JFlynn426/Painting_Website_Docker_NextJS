@@ -33,7 +33,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                 <p className={styles.description}>{categoryData.description}</p>
             )}
 
-            <PaintingGrid images={images} category={category} />
+            <PaintingGrid images={images} categorySlug={category} />
         </div>
     );
 }
@@ -41,9 +41,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 // Map slugs to folder names in public directory
 function getFolderNameFromSlug(slug: string): string {
     const slugToFolderMap: Record<string, string> = {
-        'landscapes': 'Landscapes and Cityscapes',
+        'landscapes-and-cityscapes': 'Landscapes and Cityscapes',
         'seascapes': 'Seascapes',
-        'animals': 'Animals',
+        'animals-and-people': 'Animals',
         'flowers': 'Flowers',
     };
     return slugToFolderMap[slug] || slug;

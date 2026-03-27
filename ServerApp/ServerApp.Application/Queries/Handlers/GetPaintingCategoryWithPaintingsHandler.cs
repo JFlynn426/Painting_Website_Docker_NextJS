@@ -41,6 +41,7 @@ public class GetPaintingCategoryWithPaintingsHandler : IRequestHandler<GetPainti
             Paintings = paintings.Select(p => new PaintingDto
             {
                 Id = p.Id,
+                Slug = p.Slug.Value,
                 Title = p.Title.Value,
                 Description = p.Description?.Value,
                 ImageUrl = p.ImageUrl.Value,
