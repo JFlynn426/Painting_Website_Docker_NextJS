@@ -1,4 +1,4 @@
-services:
+rservices:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2025-latest
     container_name: artgallery-sql
@@ -27,7 +27,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: Server=sqlserver,1433;Database=ArtGallery;User Id=sa;Password=${SQLSERVER_SA_PASSWORD};TrustServerCertificate=True;
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://frontend:3000}
     depends_on:
       sqlserver:
         condition: service_healthy

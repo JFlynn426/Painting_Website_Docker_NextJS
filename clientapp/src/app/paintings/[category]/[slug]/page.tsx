@@ -1,11 +1,10 @@
 "use client";
 
-import { paintingsData, formatDimensions } from "@/app/models/paintings";
-import { paintingCategories } from "@/app/models/paintingCategories";
+import { getPaintingBySlug, Painting } from "@/lib/api";
 import PaintingDetailImage from "@/components/PaintingDetailImage";
 import PaintingExamineModal from "@/components/PaintingExamineModal";
 import Link from "next/link";
-import { useState, use } from "react";
+import { useState, use, useEffect } from "react";
 import styles from "./page.module.css";
 
 interface PaintingDetailsPageProps {
@@ -17,20 +16,38 @@ interface PaintingDetailsPageProps {
 
 export default function PaintingDetailsPage({ params }: PaintingDetailsPageProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [painting, setPainting] = useState<Painting | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     // Unwrap params using React's use() for client components
     const { category, slug } = use(params);
 
-    // Find the category from the model
-    const categoryData = paintingCategories.find(cat => cat.slug === category);
+    // Fetch painting data from API
+    useEffect(() => {
+        async function fetchPainting() {
+            try {
+                const data = await getPaintingBySlug(slug);
+                setPainting(data);
+            } catch (err) {
+                setError('Failed to load painting');
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchPainting();
+    }, [slug]);
 
-    // Find the painting by matching the slug property
-    const painting = paintingsData.find(p => {
-        if (p.categorySlug !== category) return false;
-        return p.slug === slug;
-    });
+    if (loading) {
+        return (
+            <div className={styles.container}>
+                <p>Loading...</p>
+            </div>
+        );
+    }
 
-    if (!categoryData || !painting) {
+    if (error || !painting) {
         return (
             <div className={styles.container}>
                 <h1 className={styles.notFoundTitle}>Painting Not Found</h1>
@@ -39,7 +56,7 @@ export default function PaintingDetailsPage({ params }: PaintingDetailsPageProps
                     href={`/paintings/${category}`}
                     className={styles.backButton}
                 >
-                    Back to {categoryData?.name || 'Category'}
+                    Back to Category
                 </Link>
             </div>
         );
@@ -52,7 +69,9 @@ export default function PaintingDetailsPage({ params }: PaintingDetailsPageProps
     }).format(painting.price) : '';
 
     // Format dimensions
-    const dimensions = formatDimensions(painting);
+    const dimensions = painting.width && painting.height
+        ? `${painting.width}" x ${painting.height}"${painting.depth ? ` x ${painting.depth}"` : ''}`
+        : null;
 
     return (
         <>
@@ -108,7 +127,7 @@ export default function PaintingDetailsPage({ params }: PaintingDetailsPageProps
                                 href={`/paintings/${category}`}
                                 className={styles.backButton}
                             >
-                                ← Back to {categoryData.name}
+                                ← Back to Category
                             </Link>
 
                             {painting.isAvailable && painting.price && (
@@ -132,7 +151,7 @@ export default function PaintingDetailsPage({ params }: PaintingDetailsPageProps
                 </div>
             </div>
 
-            {isModalOpen && (
+            {isModalOpen && painting && (
                 <PaintingExamineModal
                     key={painting.title}
                     onClose={() => setIsModalOpen(false)}

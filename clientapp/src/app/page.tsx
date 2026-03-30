@@ -1,11 +1,9 @@
 import ArtCarousel from "../components/ArtCarousel";
-import { pageContentData } from "./models/pageContent";
+import { getPageContent } from "../lib/api";
 
 export default async function Home() {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  // Get home page content
-  const homeContent = pageContentData.find(p => p.address === 'home');
+  // Get home page content from API
+  const homeContent = await getPageContent('home');
 
   return (
     <div className="flex flex-col items-center justify-center p-4 sm:p-2 md:p-1 text-[var(--foreground)]">

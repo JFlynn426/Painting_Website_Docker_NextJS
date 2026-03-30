@@ -1,11 +1,12 @@
 // API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+// @ts-expect-error - process is a Node.js global provided by Next.js
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://api:8080/api';
 
 // ============================================================================
 // Data Source Configuration
 // Set to true to use dummy data from models, false to use API calls
 // ============================================================================
-export const USE_DUMMY_DATA = true;
+export const USE_DUMMY_DATA = false;
 
 // ============================================================================
 // Data Interfaces - Match ServerApp DTOs
@@ -34,7 +35,7 @@ export interface PaintingCategory {
     description?: string;
 }
 
-export interface PageContent {
+export interface PageContentDto {
     address: string;
     title: string;
     content: string;
@@ -73,7 +74,7 @@ export async function getPaintingCategories(): Promise<PaintingCategory[]> {
 
     const res = await fetch(`${API_BASE_URL}/paintingcategories`, {
         next: { revalidate: 86400 } // Cache for 24 hours
-    });
+    } as RequestInit & { next: { revalidate: number } });
 
     if (!res.ok) {
         throw new Error('Failed to fetch painting categories');
@@ -96,7 +97,7 @@ export async function getPaintingsByCategory(categorySlug: string): Promise<Pain
 
     const res = await fetch(`${API_BASE_URL}/paintings/category/${categorySlug}`, {
         next: { revalidate: 3600 } // Cache for 1 hour
-    });
+    } as RequestInit & { next: { revalidate: number } });
 
     if (!res.ok) {
         throw new Error(`Failed to fetch paintings for category: ${categorySlug}`);
@@ -130,7 +131,7 @@ export async function getCategoryData(categorySlug: string): Promise<PaintingCat
 
     const res = await fetch(`${API_BASE_URL}/paintingcategories/${categorySlug}`, {
         next: { revalidate: 3600 } // Cache for 1 hour
-    });
+    } as RequestInit & { next: { revalidate: number } });
 
     if (!res.ok) {
         throw new Error(`Failed to fetch category data for: ${categorySlug}`);
@@ -152,7 +153,7 @@ export async function getAllPaintings(): Promise<Painting[]> {
 
     const res = await fetch(`${API_BASE_URL}/paintings`, {
         next: { revalidate: 3600 } // Cache for 1 hour
-    });
+    } as RequestInit & { next: { revalidate: number } });
 
     if (!res.ok) {
         throw new Error('Failed to fetch all paintings');
@@ -178,7 +179,7 @@ export async function getPaintingBySlug(slug: string): Promise<Painting> {
 
     const res = await fetch(`${API_BASE_URL}/paintings/${slug}`, {
         next: { revalidate: 86400 } // Cache for 24 hours
-    });
+    } as RequestInit & { next: { revalidate: number } });
 
     if (!res.ok) {
         throw new Error(`Failed to fetch painting with slug: ${slug}`);
@@ -192,14 +193,14 @@ export async function getPaintingBySlug(slug: string): Promise<Painting> {
  * Server endpoint: GET /api/PageContent/{address}
  * Uses dummy data if USE_DUMMY_DATA is true, otherwise calls API
  */
-export async function getPageContent(address: string): Promise<PageContent | undefined> {
+export async function getPageContent(address: string): Promise<PageContentDto | undefined> {
     if (USE_DUMMY_DATA) {
         return dummyPageContent.find(p => p.address === address);
     }
 
     const res = await fetch(`${API_BASE_URL}/pagecontent/${address}`, {
         next: { revalidate: 86400 } // Cache for 24 hours
-    });
+    } as RequestInit & { next: { revalidate: number } });
 
     if (!res.ok) {
         if (res.status === 404) {

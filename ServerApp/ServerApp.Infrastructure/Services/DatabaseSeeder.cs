@@ -2,9 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ServerApp.Domain.Entities;
 using ServerApp.Domain.Factories;
+using ServerApp.Domain.ValueObjects.Page;
 using ServerApp.Domain.ValueObjects.Painting;
 using ServerApp.Domain.ValueObjects.PaintingCategory;
 using ServerApp.Infrastructure.EF.Contexts;
+using ServerApp.Infrastructure.SeedData;
 
 namespace ServerApp.Infrastructure.Services;
 
@@ -16,6 +18,7 @@ internal sealed class DatabaseSeeder
     private readonly ILogger<DatabaseSeeder> _logger;
     private readonly IPaintingCategoryFactory _categoryFactory;
     private readonly IPaintingFactory _paintingFactory;
+    private readonly IPageContentFactory _pageContentFactory;
     private readonly WriteDbContext _writeDbContext;
     private readonly ReadDbContext _readDbContext;
 
@@ -23,12 +26,14 @@ internal sealed class DatabaseSeeder
         ILogger<DatabaseSeeder> logger,
         IPaintingCategoryFactory categoryFactory,
         IPaintingFactory paintingFactory,
+        IPageContentFactory pageContentFactory,
         WriteDbContext writeDbContext,
         ReadDbContext readDbContext)
     {
         _logger = logger;
         _categoryFactory = categoryFactory;
         _paintingFactory = paintingFactory;
+        _pageContentFactory = pageContentFactory;
         _writeDbContext = writeDbContext;
         _readDbContext = readDbContext;
     }
@@ -40,38 +45,41 @@ internal sealed class DatabaseSeeder
     {
         _logger.LogInformation("Starting database seeding...");
 
-        // Seed Write database
-        await SeedDatabaseAsync(_writeDbContext, cancellationToken);
+        // Seed Write database if empty
+        await SeedDatabaseAsync(_writeDbContext, "Write", cancellationToken);
 
-        // Seed Read database
-        await SeedDatabaseAsync(_readDbContext, cancellationToken);
+        // Seed Read database if empty
+        await SeedDatabaseAsync(_readDbContext, "Read", cancellationToken);
 
         _logger.LogInformation("Database seeding completed successfully.");
     }
 
-    private async Task SeedDatabaseAsync(DbContext context, CancellationToken cancellationToken)
+    private async Task SeedDatabaseAsync(DbContext context, string databaseName, CancellationToken cancellationToken)
     {
         // Check if data already exists to avoid duplicate seeding
         var hasCategories = await context.Set<PaintingCategory>().AnyAsync(cancellationToken);
+        var hasPaintings = await context.Set<Painting>().AnyAsync(cancellationToken);
+        var hasPageContent = await context.Set<PageContent>().AnyAsync(cancellationToken);
 
-        if (hasCategories)
+        if (hasCategories || hasPaintings || hasPageContent)
         {
-            _logger.LogInformation("Database already contains data. Skipping seeding.");
+            _logger.LogInformation($"{databaseName} database already contains data. Skipping seeding.");
             return;
         }
 
         _logger.LogInformation("Database is empty. Seeding initial data...");
 
-        // Seed painting categories
-        var categories = new List<PaintingCategory>
+        // Seed painting categories from seed data
+        var categories = new Dictionary<string, PaintingCategory>();
+        foreach (var seedCategory in PaintingCategoriesSeedData.Categories)
         {
-            await CreateCategoryAsync("animals", "Animals", "Beautiful animal paintings featuring wildlife and domestic animals", cancellationToken),
-            await CreateCategoryAsync("flowers", "Flowers", "Vibrant floral paintings showcasing nature's beauty", cancellationToken),
-            await CreateCategoryAsync("seascapes", "Seascapes", "Stunning ocean and coastal scene paintings", cancellationToken)
-        };
-
-        foreach (var category in categories)
-        {
+            var category = await CreateCategoryAsync(
+                seedCategory.Slug,
+                seedCategory.Name,
+                seedCategory.Description ?? string.Empty,
+                cancellationToken
+            );
+            categories[seedCategory.Slug] = category;
             context.Set<PaintingCategory>().Add(category);
         }
 
@@ -79,50 +87,42 @@ internal sealed class DatabaseSeeder
 
         _logger.LogInformation($"Seeded {categories.Count} painting categories.");
 
-        // Seed sample paintings for each category
+        // Seed paintings from seed data
         var paintings = new List<Painting>();
-
-        // Animals paintings
-        paintings.AddRange(CreateSamplePaintings(
-            "animals",
-            new[]
-            {
-                ("Abby's Horse", "A beautiful horse painting"),
-                ("Fairy Wrens", "Colorful fairy wren birds"),
-                ("Green Turtle", "A majestic sea turtle")
-            }
-        ));
-
-        // Flowers paintings
-        paintings.AddRange(CreateSamplePaintings(
-            "flowers",
-            new[]
-            {
-                ("Bird of Paradise", "Tropical bird of paradise flower"),
-                ("Daffodils", "Bright yellow daffodils in spring"),
-                ("Coneflowers", "Purple coneflowers in a meadow")
-            }
-        ));
-
-        // Seascapes paintings
-        paintings.AddRange(CreateSamplePaintings(
-            "seascapes",
-            new[]
-            {
-                ("Morning Glory", "Sunrise over the ocean"),
-                ("Wave Blue", "Blue waves crashing on shore"),
-                ("Sailing Sunset", "Boats sailing into sunset")
-            }
-        ));
-
-        foreach (var painting in paintings)
+        foreach (var seedPainting in PaintingsSeedData.Paintings)
         {
-            context.Set<Painting>().Add(painting);
+            if (categories.TryGetValue(seedPainting.CategorySlug, out var category))
+            {
+                var painting = CreatePaintingFromSeed(seedPainting, category);
+                paintings.Add(painting);
+                context.Set<Painting>().Add(painting);
+            }
+            else
+            {
+                _logger.LogWarning($"Category '{seedPainting.CategorySlug}' not found for painting '{seedPainting.Title}'. Skipping.");
+            }
         }
 
         await context.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation($"Seeded {paintings.Count} sample paintings.");
+        _logger.LogInformation($"Seeded {paintings.Count} paintings.");
+
+        // Seed page content from seed data
+        var pageContents = new List<PageContent>();
+        foreach (var seedPageContent in PageContentsSeedData.PageContents)
+        {
+            var pageContent = _pageContentFactory.Create(
+                new PageAddress(seedPageContent.Address),
+                new PageTitle(seedPageContent.Title),
+                new PageContentText(seedPageContent.Content)
+            );
+            pageContents.Add(pageContent);
+            context.Set<PageContent>().Add(pageContent);
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation($"Seeded {pageContents.Count} page content entries.");
     }
 
     private async Task<PaintingCategory> CreateCategoryAsync(string slug, string name, string description, CancellationToken cancellationToken)
@@ -134,19 +134,16 @@ internal sealed class DatabaseSeeder
         );
     }
 
-    private IEnumerable<Painting> CreateSamplePaintings(string categorySlug, params (string title, string description)[] paintings)
+    private Painting CreatePaintingFromSeed(PaintingSeed seed, PaintingCategory category)
     {
-        foreach (var (title, description) in paintings)
-        {
-            yield return _paintingFactory.Create(
-                new PaintingName(title),
-                new PaintingDescription(description),
-                new PaintingImageUrl($"/{categorySlug}/{title.Replace(' ', '-').ToLower()}.jpg"),
-                thumbnailUrl: null,
-                new PaintingCategorySlug(categorySlug),
-                price: null,
-                isAvailable: new PaintingIsAvailable(true)
-            );
-        }
+        return _paintingFactory.Create(
+            new PaintingName(seed.Title),
+            new PaintingDescription(seed.Description ?? string.Empty),
+            new PaintingImageUrl(seed.ImageUrl),
+            thumbnailUrl: PaintingThumbnailUrl.FromNullable(seed.ThumbnailUrl),
+            new PaintingCategorySlug(seed.CategorySlug),
+            price: seed.Price,
+            isAvailable: new PaintingIsAvailable(seed.IsAvailable)
+        );
     }
 }

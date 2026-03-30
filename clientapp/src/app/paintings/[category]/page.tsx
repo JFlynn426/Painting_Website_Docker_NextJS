@@ -1,4 +1,4 @@
-import { paintingCategories } from "@/app/models/paintingCategories";
+import { getCategoryData, Painting, PaintingCategory } from "@/lib/api";
 import PaintingGrid, { PaintingImageItem } from "@/components/PaintingGrid";
 import styles from "./page.module.css";
 
@@ -11,12 +11,8 @@ interface CategoryPageProps {
 export default async function CategoryPage({ params }: CategoryPageProps) {
     const { category } = await params;
 
-    // Find the category from the model
-    const categoryData = paintingCategories.find(cat => cat.slug === category);
-
-    // Get images from the corresponding folder
-    const folderName = getFolderNameFromSlug(category);
-    const images = getImagesForCategory(folderName, categoryData?.name || 'Unknown');
+    // Fetch category data with paintings from API
+    const categoryData = await getCategoryData(category);
 
     if (!categoryData) {
         return (
@@ -25,6 +21,14 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             </div>
         );
     }
+
+    // Convert API paintings to PaintingImageItem format
+    const images: PaintingImageItem[] = categoryData.paintings.map(painting => ({
+        src: painting.imageUrl,
+        alt: painting.title,
+        filename: painting.slug,
+        href: `/paintings/${category}/${painting.slug}`
+    }));
 
     return (
         <div className={styles.container}>
@@ -36,109 +40,4 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             <PaintingGrid images={images} categorySlug={category} />
         </div>
     );
-}
-
-// Map slugs to folder names in public directory
-function getFolderNameFromSlug(slug: string): string {
-    const slugToFolderMap: Record<string, string> = {
-        'landscapes-and-cityscapes': 'Landscapes and Cityscapes',
-        'seascapes': 'Seascapes',
-        'animals-and-people': 'Animals',
-        'flowers': 'Flowers',
-    };
-    return slugToFolderMap[slug] || slug;
-}
-
-// Get list of images for a category folder
-function getImagesForCategory(folderName: string, categoryName: string): PaintingImageItem[] {
-    // Define images for each category based on the public folder structure
-    const imagesByCategory: Record<string, string[]> = {
-        'Landscapes and Cityscapes': [
-            'Aspens.jpg',
-            'Bahia Honda .jpg',
-            'BakedGoods.JPG',
-            'Banyans.jpg',
-            'Brady & Duke.jpg',
-            'Bridge world.jpg',
-            'Castelvetore .JPG',
-            'Cobblestone Way.JPG',
-            'Forest Mystery.jpg',
-            'Hydrangea Time.jpeg',
-            'Italian Church.jpg',
-            'Mine (1).jpg',
-            'New Inhabitants.jpeg',
-            'Rainbow River1.jpg',
-            'Sedona.JPG',
-            'The Path.jpg',
-            'The Pond.jpg',
-            'Window Jigsaw.jpg',
-        ],
-        'Seascapes': [
-            'Cloud Creatures2.jpg',
-            'Contemplation.jpeg',
-            'Double Roll.jpg',
-            'Even Cloudy Days are Better at the Beach.jpeg',
-            'Mangrove Village.jpg',
-            'Morning Glory.jpg',
-            'Pastel Morning.JPG',
-            'Rainbow River.jpg',
-            'Rowboat Waiting.jpg',
-            'Sailboat.jpg',
-            'Sailing Sunset.jpg',
-            'Seeing Red.jpg',
-            'Shore scene.JPG',
-            'Solitude.jpg',
-            'SunriseDrama.JPG',
-            'Wave Blue.jpg',
-            'Wind and Water1.JPG',
-        ],
-        'Animals': [
-            "Abby's Horse.jpg",
-            'Angelfish  & Purple Fan.jpg',
-            'Cruising.JPG',
-            'Dyptych Big Yellow.jpg',
-            'Dyptych Ocean butterflies.jpg',
-            'Ever Vigilant.jpg',
-            'Fairy Wrens.jpg',
-            'Green Turtle.JPG',
-            'Hiding.JPG',
-            'Leatherback .jpg',
-            'Manatees.jpg',
-            'Meadow.JPG',
-            'My Green Visitor.jpg',
-            'OctopusPurple.jpg',
-            'Painted Bunting .jpg',
-            'Peekaboo.jpg',
-            'Sam.JPG',
-            'Snail Kite .jpg',
-            'SnowyOwl.jpg',
-            'Spiny Lobster.jpg',
-            'Tigers.jpg',
-            "To the Light.jpg",
-            "What's for dinner.jpg",
-            'Wild White Majesty.jpg',
-            'ZsaZsa.jpeg',
-        ],
-        'Flowers': [
-            'Bird of Paradise.jpg',
-            'Bumblebee.jpg',
-            'Coneflowers.jpg',
-            'Daffodils.jpg',
-            'Flowers for Dee.jpg',
-            'Honey bee.jpeg',
-            'MilkweedHummingbird.jpg',
-            'Monarch Beginnings.JPG',
-            'Royal Poinciana.jpg',
-            'Squash blossoms1.JPG',
-            'The Bee.jpg',
-            'Water lilies.jpg',
-        ],
-    };
-
-    const imageNames = imagesByCategory[folderName] || [];
-    return imageNames.map(image => ({
-        src: `/${folderName}/${image}`,
-        alt: `${categoryName} - ${image}`,
-        filename: image
-    }));
 }
