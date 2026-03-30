@@ -22,6 +22,10 @@ internal sealed class AppInitializer : IHostedService
         var writeDbContext = scope.ServiceProvider.GetRequiredService<WriteDbContext>();
         await writeDbContext.Database.MigrateAsync(cancellationToken);
 
+        // Migrate ReadDbContext
+        var readDbContext = scope.ServiceProvider.GetRequiredService<ReadDbContext>();
+        await readDbContext.Database.MigrateAsync(cancellationToken);
+
         // Seed the database with initial data
         var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
         await seeder.SeedAsync(cancellationToken);
