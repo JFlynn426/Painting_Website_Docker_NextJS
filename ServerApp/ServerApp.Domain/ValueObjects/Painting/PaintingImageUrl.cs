@@ -4,11 +4,13 @@ using ServerApp.Shared.Domain;
 
 public record PaintingImageUrl : StringValueObject
 {
+    public const int MaxLength = 500;
+
     public PaintingImageUrl() : base()
     {
     }
 
-    public PaintingImageUrl(string value) : base(value, int.MaxValue, allowEmpty: false, enforceMaxLength: false)
+    public PaintingImageUrl(string value) : base(value, MaxLength, allowEmpty: false)
     {
     }
 

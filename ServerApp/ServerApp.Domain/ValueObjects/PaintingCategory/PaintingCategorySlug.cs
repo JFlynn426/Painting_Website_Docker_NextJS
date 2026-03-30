@@ -4,7 +4,7 @@ using ServerApp.Shared.Domain;
 
 public record PaintingCategorySlug : StringValueObject
 {
-    public const int MaxLength = 200;
+    public const int MaxLength = 100;
 
     public PaintingCategorySlug() : base()
     {
@@ -33,7 +33,7 @@ public record PaintingCategorySlug : StringValueObject
     {
         if (name == null || string.IsNullOrWhiteSpace(name.Value))
         {
-            throw new ArgumentException("Name cannot be null or empty.", nameof(name));
+            throw new ArgumentException("Title cannot be null or empty.", nameof(name));
         }
 
         // Convert to lowercase
@@ -50,13 +50,10 @@ public record PaintingCategorySlug : StringValueObject
         // Replace spaces and multiple spaces with single hyphen
         slug = System.Text.RegularExpressions.Regex.Replace(slug, @"\s+", "-");
 
-        // Remove any characters that are not lowercase letters, numbers, or hyphens
-        slug = System.Text.RegularExpressions.Regex.Replace(slug, @"[^a-z0-9-]", "");
-
-        // Remove leading/trailing hyphens
+        // Remove leading and trailing hyphens
         slug = slug.Trim('-');
 
-        // Collapse multiple consecutive hyphens
+        // Remove consecutive hyphens
         slug = System.Text.RegularExpressions.Regex.Replace(slug, @"-+", "-");
 
         return new PaintingCategorySlug(slug);

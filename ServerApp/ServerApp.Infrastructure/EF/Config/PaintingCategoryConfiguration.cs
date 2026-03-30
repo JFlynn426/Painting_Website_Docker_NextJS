@@ -22,7 +22,7 @@ public class PaintingCategoryConfiguration : IEntityTypeConfiguration<PaintingCa
         // Value object with a non-null backing primitive
         builder.Property(e => e.Name)
             .HasColumnName("Name")
-            .HasColumnType("nvarchar(100)")
+            .HasColumnType("nvarchar(50)")
             .IsRequired()
             .HasConversion(
                 n => n.Value,
