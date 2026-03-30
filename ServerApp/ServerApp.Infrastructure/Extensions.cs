@@ -37,6 +37,9 @@ public static class InfrastructureExtensions
         services.AddScoped<IPaintingCategoryFactory, PaintingCategoryFactory>();
         services.AddScoped<IPageContentFactory, PageContentFactory>();
 
+        // Register the database seeder
+        services.AddScoped<DatabaseSeeder>();
+
         // Register the app initializer for database migrations
         services.AddHostedService<AppInitializer>();
 

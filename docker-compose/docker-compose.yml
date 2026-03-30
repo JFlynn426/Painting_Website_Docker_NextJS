@@ -1,66 +1,72 @@
 services:
   sqlserver:
-    image: mcr.microsoft.com/azure-sql-edge
+    image: mcr.microsoft.com/mssql/server:2025-latest
     container_name: artgallery-sql
     environment:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=${SQLSERVER_SA_PASSWORD}
+      - MSSQL_PID=Developer
     ports:
       - "1433:1433"
     volumes:
       - sqlserver_data:/var/opt/mssql
     healthcheck:
-      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${SQLSERVER_SA_PASSWORD}", "-Q", "SELECT 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${SQLSERVER_SA_PASSWORD} -C -Q 'SELECT 1' -b -o /dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
 
   api:
     build:
       context: ../ServerApp
-      dockerfile: Dockerfile
+      dockerfile: ServerApp.Api/Dockerfile
     ports:
-      - "5000:8080"
+      - "${API_PORT:-5000}:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      DOTNET_USE_POLLING_FILE_WATCHER: true
-      ConnectionStrings__DefaultConnection: ${SQLSERVER_CONNECTION_STRING}
-    volumes:
-      - ../ServerApp:/app
+      ConnectionStrings__DefaultConnection: Server=sqlserver,1433;Database=ArtGallery;User Id=sa;Password=${SQLSERVER_SA_PASSWORD};TrustServerCertificate=True;
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
     depends_on:
       sqlserver:
         condition: service_healthy
     stdin_open: true
     tty: true
-    command: dotnet watch run --no-restore
 
   frontend:
     build:
       context: ../clientapp
       dockerfile: Dockerfile
+      target: development
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT:-3000}:3000"
     depends_on:
       - api
     volumes:
-      - ../clientapp:/app
-      - /app/node_modules
+      # Mount source code for hot reload (exclude node_modules and .next)
+      - ../clientapp/src:/app/src
+      - ../clientapp/public:/app/public
+      - ../clientapp/package.json:/app/package.json
+      - ../clientapp/package-lock.json:/app/package-lock.json
+      - ../clientapp/next.config.ts:/app/next.config.ts
+      - ../clientapp/tsconfig.json:/app/tsconfig.json
+      - ../clientapp/tailwind.config.js:/app/tailwind.config.js
+      - ../clientapp/postcss.config.js:/app/postcss.config.js
+      - ../clientapp/eslint.config.mjs:/app/eslint.config.mjs
+      # Named volumes for generated files (prevents path issues)
+      - frontend_node_modules:/app/node_modules
+      - frontend_next:/app/.next
     environment:
       NODE_ENV: development
-      NEXT_PUBLIC_API_URL: http://api:5000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:5000}
+      HOST: 0.0.0.0
+      PORT: 3000
     stdin_open: true
     tty: true
-    command: sh -c "npm run dev"
-
-    develop:
-      watch:
-        - action: sync
-          path: ../clientapp
-          target: /app
-
-        - action: rebuild
-          path: ../clientapp/Dockerfile
+    command: npm run dev
 
 volumes:
   sqlserver_data:
+  frontend_node_modules:
+  frontend_next:

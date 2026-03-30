@@ -20,6 +20,21 @@ namespace ServerApp.Api
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            // Add CORS configuration
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend", policy =>
+                {
+                    var allowedOrigins = builder.Configuration["CORS_ALLOWED_ORIGINS"]?
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .ToList() ?? new List<string>();
+
+                    policy.WithOrigins(allowedOrigins.ToArray())
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+            });
+
             // Add Application layer services
             builder.Services.AddApplicationServices();
 
@@ -30,6 +45,9 @@ namespace ServerApp.Api
 
             // Add exception handling middleware (must be early in pipeline)
             app.UseExceptionMiddleware();
+
+            // Enable CORS
+            app.UseCors("AllowFrontend");
 
             app.UseSwagger();
             app.UseSwaggerUI();
