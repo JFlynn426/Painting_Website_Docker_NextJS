@@ -167,16 +167,43 @@
     height: 20px;
 }
 
+.errorContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    text-align: center;
+    padding: 40px 20px;
+}
+
 .notFoundTitle {
     font-size: 2rem;
     color: var(--title-color);
     text-align: center;
-    margin-bottom: 16px;
+    margin: 0;
 }
 
 .notFoundText {
     font-size: 1.1rem;
     color: var(--foreground);
     text-align: center;
-    margin-bottom: 24px;
+    margin: 0;
+}
+
+.errorBackButton {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: transparent;
+    color: var(--title-color);
+    text-decoration: none;
+    border: 1px solid var(--title-color);
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.errorBackButton:hover {
+    background-color: var(--title-color);
+    color: white;
 }

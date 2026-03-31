@@ -50,14 +50,16 @@ export default function PaintingDetailsPage({ params }: PaintingDetailsPageProps
     if (error || !painting) {
         return (
             <div className={styles.container}>
-                <h1 className={styles.notFoundTitle}>Painting Not Found</h1>
-                <p className={styles.notFoundText}>Sorry, the painting you are looking for does not exist.</p>
-                <Link
-                    href={`/paintings/${category}`}
-                    className={styles.backButton}
-                >
-                    Back to Category
-                </Link>
+                <div className={styles.errorContainer}>
+                    <h1 className={styles.notFoundTitle}>Painting Not Found</h1>
+                    <p className={styles.notFoundText}>Sorry, the painting you are looking for does not exist.</p>
+                    <Link
+                        href={`/paintings/${category}`}
+                        className={styles.errorBackButton}
+                    >
+                        Back to Category
+                    </Link>
+                </div>
             </div>
         );
     }

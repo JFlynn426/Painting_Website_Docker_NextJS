@@ -27,7 +27,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         src: painting.imageUrl,
         alt: painting.title,
         filename: painting.slug,
-        href: `/paintings/${category}/${painting.slug}`
+        width: painting.width,
+        height: painting.height
     }));
 
     return (

@@ -1,13 +1,27 @@
 // API Configuration
+// Client-side API URL (used by browser)
 // @ts-expect-error - process is a Node.js global provided by Next.js
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const CLIENT_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+
+// Server-side API URL (used by Next.js server components running in Docker)
+// @ts-expect-error - process is a Node.js global provided by Next.js
+const SERVER_API_URL = process.env.NEXT_PUBLIC_SERVER_API_URL || 'http://api:8080/api';
+
+// Determine which URL to use based on execution context
+// Server components run on the server, client components run in the browser
+const isServer = typeof window === 'undefined';
+const API_BASE_URL = isServer ? SERVER_API_URL : CLIENT_API_URL;
 
 // Log the API base URL for debugging
 console.log('=== [API Config] ===');
 console.log('API_BASE_URL:', API_BASE_URL);
+console.log('CLIENT_API_URL:', CLIENT_API_URL);
+console.log('SERVER_API_URL:', SERVER_API_URL);
+console.log('Is running on server:', isServer);
 // @ts-expect-error - process is a Node.js global provided by Next.js
 console.log('NEXT_PUBLIC_API_URL env var:', process.env.NEXT_PUBLIC_API_URL);
-console.log('Is running in browser:', typeof window !== 'undefined');
+// @ts-expect-error - process is a Node.js global provided by Next.js
+console.log('NEXT_PUBLIC_SERVER_API_URL env var:', process.env.NEXT_PUBLIC_SERVER_API_URL);
 console.log('===================');
 
 // ============================================================================
@@ -216,9 +230,7 @@ export async function getPaintingBySlug(slug: string): Promise<Painting> {
         return painting;
     }
 
-    const res = await fetch(`${API_BASE_URL}/paintings/${slug}`, {
-        next: { revalidate: 86400 } // Cache for 24 hours
-    } as RequestInit & { next: { revalidate: number } });
+    const res = await fetch(`${API_BASE_URL}/paintings/${slug}`);
 
     if (!res.ok) {
         throw new Error(`Failed to fetch painting with slug: ${slug}`);
