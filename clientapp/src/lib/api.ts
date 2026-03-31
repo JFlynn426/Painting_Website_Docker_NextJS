@@ -1,6 +1,14 @@
 // API Configuration
 // @ts-expect-error - process is a Node.js global provided by Next.js
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://api:8080/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+// Log the API base URL for debugging
+console.log('=== [API Config] ===');
+console.log('API_BASE_URL:', API_BASE_URL);
+// @ts-expect-error - process is a Node.js global provided by Next.js
+console.log('NEXT_PUBLIC_API_URL env var:', process.env.NEXT_PUBLIC_API_URL);
+console.log('Is running in browser:', typeof window !== 'undefined');
+console.log('===================');
 
 // ============================================================================
 // Data Source Configuration
@@ -69,18 +77,28 @@ import { pageContentData as dummyPageContent } from '../app/models/pageContent';
  */
 export async function getPaintingCategories(): Promise<PaintingCategory[]> {
     if (USE_DUMMY_DATA) {
+        console.log('[getPaintingCategories] Using dummy data');
         return dummyCategories;
     }
 
-    const res = await fetch(`${API_BASE_URL}/paintingcategories`, {
+    const url = `${API_BASE_URL}/paintingcategories`;
+    console.log('[getPaintingCategories] Fetching from URL:', url);
+
+    const res = await fetch(url, {
         next: { revalidate: 86400 } // Cache for 24 hours
     } as RequestInit & { next: { revalidate: number } });
 
+    console.log('[getPaintingCategories] Response status:', res.status, res.statusText);
+
     if (!res.ok) {
-        throw new Error('Failed to fetch painting categories');
+        const errorText = await res.text();
+        console.error('[getPaintingCategories] Error response body:', errorText);
+        throw new Error('Failed to fetch painting categories (Status: ' + res.status + ')');
     }
 
-    return res.json();
+    const data = await res.json();
+    console.log('[getPaintingCategories] Successfully fetched', data.length, 'categories');
+    return data;
 }
 
 /**
@@ -116,6 +134,7 @@ export async function getPaintingsByCategory(categorySlug: string): Promise<Pain
  */
 export async function getCategoryData(categorySlug: string): Promise<PaintingCategoryWithPaintings> {
     if (USE_DUMMY_DATA) {
+        console.log('[getCategoryData] Using dummy data for category:', categorySlug);
         const category = dummyCategories.find(cat => cat.slug === categorySlug);
         const paintings = getDummyPaintingsByCategory(categorySlug);
 
@@ -129,15 +148,35 @@ export async function getCategoryData(categorySlug: string): Promise<PaintingCat
         };
     }
 
-    const res = await fetch(`${API_BASE_URL}/paintingcategories/${categorySlug}`, {
-        next: { revalidate: 3600 } // Cache for 1 hour
-    } as RequestInit & { next: { revalidate: number } });
+    const url = `${API_BASE_URL}/paintingcategories/${categorySlug}`;
+    console.log('=== [getCategoryData] DEBUG ===');
+    console.log('API_BASE_URL:', API_BASE_URL);
+    console.log('categorySlug:', categorySlug);
+    console.log('Full URL:', url);
+    console.log('Is server component:', typeof window === 'undefined');
+    console.log('===========================');
 
-    if (!res.ok) {
-        throw new Error(`Failed to fetch category data for: ${categorySlug}`);
+    try {
+        const res = await fetch(url, {
+            next: { revalidate: 3600 } // Cache for 1 hour
+        } as RequestInit & { next: { revalidate: number } });
+
+        console.log('[getCategoryData] Response status:', res.status, res.statusText);
+        console.log('[getCategoryData] Response headers:', Object.fromEntries(res.headers.entries()));
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error('[getCategoryData] Error response body:', errorText || '(empty)');
+            throw new Error(`Failed to fetch category data for: ${categorySlug} (Status: ${res.status})`);
+        }
+
+        const data = await res.json();
+        console.log('[getCategoryData] Successfully fetched data for category:', categorySlug, 'with', data.paintings?.length || 0, 'paintings');
+        return data;
+    } catch (error) {
+        console.error('[getCategoryData] Fetch error:', error);
+        throw error;
     }
-
-    return res.json();
 }
 
 /**
