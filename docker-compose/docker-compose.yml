@@ -63,6 +63,8 @@ services:
       NODE_ENV: development
       HOST: 0.0.0.0
       PORT: 3000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      SERVER_API_URL: ${SERVER_API_URL}
     stdin_open: true
     tty: true
     command: npm run dev

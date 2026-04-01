@@ -9,15 +9,15 @@ export default function ArtCarousel() {
     // Image data
     const images = [
         {
-            src: "/Carousel Paintings/Cloud Creatures23crop.jpg",
+            src: "/Carousel-Paintings/Cloud Creatures23crop.jpg",
             alt: "Cloud Creatures"
         },
         {
-            src: "/Carousel Paintings/Turtle_Painting23crop.jpg",
+            src: "/Carousel-Paintings/Turtle_Painting23crop.jpg",
             alt: "Turtle Painting"
         },
         {
-            src: "/Carousel Paintings/VioletCuryPreserve.jpg",
+            src: "/Carousel-Paintings/VioletCuryPreserve.jpg",
             alt: "Violet Cury Preserve"
         }
     ];
@@ -63,7 +63,8 @@ export default function ArtCarousel() {
                                 alt={image.alt}
                                 width={800}
                                 height={600}
-                                className="object-contain h-full w-full"
+                                className="object-contain h-full"
+                                style={{ width: 'auto' }}
                                 priority={index === 0}
                             />
                         </div>

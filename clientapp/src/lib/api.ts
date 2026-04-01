@@ -1,264 +1,199 @@
 // API Configuration
-// Client-side API URL (used by browser)
-// @ts-expect-error - process is a Node.js global provided by Next.js
+// ============================================================================
+// In Next.js, we need to handle API URLs differently for server vs client:
+// - Server components run on the server and can reach Docker internal URLs
+// - Client components run in the browser and need public URLs
+// ============================================================================
+
+// Client-side API URL (used by browser) - must be NEXT_PUBLIC_ to be exposed to client
 const CLIENT_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
-// Server-side API URL (used by Next.js server components running in Docker)
-// @ts-expect-error - process is a Node.js global provided by Next.js
-const SERVER_API_URL = process.env.NEXT_PUBLIC_SERVER_API_URL || 'http://api:8080/api';
+// Server-side API URL (used by Next.js server components running inside Docker)
+// This is NOT prefixed with NEXT_PUBLIC_ so it's only available on the server
+const SERVER_API_URL = process.env.SERVER_API_URL || 'http://api:8080/api';
 
-// Determine which URL to use based on execution context
-// Server components run on the server, client components run in the browser
-const isServer = typeof window === 'undefined';
-const API_BASE_URL = isServer ? SERVER_API_URL : CLIENT_API_URL;
+/**
+ * Get the appropriate API base URL based on execution context
+ * This function must be called at runtime, not at module load time
+ */
+function getApiBaseUrl(): string {
+    // Check if we're running on the server (window is undefined)
+    const isServer = typeof window === 'undefined';
 
-// Log the API base URL for debugging
-console.log('=== [API Config] ===');
-console.log('API_BASE_URL:', API_BASE_URL);
-console.log('CLIENT_API_URL:', CLIENT_API_URL);
-console.log('SERVER_API_URL:', SERVER_API_URL);
-console.log('Is running on server:', isServer);
-// @ts-expect-error - process is a Node.js global provided by Next.js
-console.log('NEXT_PUBLIC_API_URL env var:', process.env.NEXT_PUBLIC_API_URL);
-// @ts-expect-error - process is a Node.js global provided by Next.js
-console.log('NEXT_PUBLIC_SERVER_API_URL env var:', process.env.NEXT_PUBLIC_SERVER_API_URL);
-console.log('===================');
-
-// ============================================================================
-// Data Source Configuration
-// Set to true to use dummy data from models, false to use API calls
-// ============================================================================
-export const USE_DUMMY_DATA = false;
-
-// ============================================================================
-// Data Interfaces - Match ServerApp DTOs
-// ============================================================================
-
-export interface Painting {
-    id: string;
-    slug: string;
-    title: string;
-    description?: string;
-    imageUrl: string;
-    thumbnailUrl?: string;
-    categorySlug: string;
-    width?: number;
-    height?: number;
-    depth?: number;
-    year?: number;
-    price?: number;
-    isAvailable: boolean;
-}
-
-export interface PaintingCategory {
-    id: string;
-    name: string;
-    slug: string;
-    description?: string;
-}
-
-export interface PageContentDto {
-    address: string;
-    title: string;
-    content: string;
-}
-
-export interface PaintingCategoryWithPaintings {
-    id: string;
-    name: string;
-    slug: string;
-    description?: string;
-    paintings: Painting[];
+    if (isServer) {
+        // Server-side: use the server API URL (Docker internal URL when in Docker)
+        return SERVER_API_URL;
+    } else {
+        // Client-side: use the client API URL (public URL accessible from browser)
+        return CLIENT_API_URL;
+    }
 }
 
 // ============================================================================
-// Dummy Data Imports (used when USE_DUMMY_DATA is true)
+// API Service Functions
 // ============================================================================
 
-import { paintingCategories as dummyCategories } from '../app/models/paintingCategories';
-import { paintingsData as dummyPaintings, getPaintingById as getDummyPaintingById, getPaintingsByCategory as getDummyPaintingsByCategory } from '../app/models/paintings';
-import { pageContentData as dummyPageContent } from '../app/models/pageContent';
-
-// ============================================================================
-// API Service Functions - Match ServerApp Controllers
-// ============================================================================
+import {
+    Painting,
+    PaintingCategory,
+    PaintingCategoryWithPaintings,
+    PageContent,
+    CarouselImage
+} from '@/types';
 
 /**
  * Fetch all painting categories
- * Server endpoint: GET /api/PaintingCategories
- * Uses dummy data if USE_DUMMY_DATA is true, otherwise calls API
- * Cache duration: 24 hours (categories rarely change)
+ * Endpoint: GET api/paintingcategories
  */
-export async function getPaintingCategories(): Promise<PaintingCategory[]> {
-    if (USE_DUMMY_DATA) {
-        console.log('[getPaintingCategories] Using dummy data');
-        return dummyCategories;
-    }
-
-    const url = `${API_BASE_URL}/paintingcategories`;
-    console.log('[getPaintingCategories] Fetching from URL:', url);
-
-    const res = await fetch(url, {
-        next: { revalidate: 86400 } // Cache for 24 hours
-    } as RequestInit & { next: { revalidate: number } });
-
-    console.log('[getPaintingCategories] Response status:', res.status, res.statusText);
-
-    if (!res.ok) {
-        const errorText = await res.text();
-        console.error('[getPaintingCategories] Error response body:', errorText);
-        throw new Error('Failed to fetch painting categories (Status: ' + res.status + ')');
-    }
-
-    const data = await res.json();
-    console.log('[getPaintingCategories] Successfully fetched', data.length, 'categories');
-    return data;
-}
-
-/**
- * Fetch paintings by category slug
- * Server endpoint: GET /api/Paintings/category/{categorySlug}
- * Returns PaintingCategoryWithPaintingsDto, extracts paintings array
- * Uses dummy data if USE_DUMMY_DATA is true, otherwise calls API
- * Cache duration: 1 hour (paintings may change daily)
- */
-export async function getPaintingsByCategory(categorySlug: string): Promise<Painting[]> {
-    if (USE_DUMMY_DATA) {
-        return getDummyPaintingsByCategory(categorySlug);
-    }
-
-    const res = await fetch(`${API_BASE_URL}/paintings/category/${categorySlug}`, {
-        next: { revalidate: 3600 } // Cache for 1 hour
-    } as RequestInit & { next: { revalidate: number } });
-
-    if (!res.ok) {
-        throw new Error(`Failed to fetch paintings for category: ${categorySlug}`);
-    }
-
-    const data: PaintingCategoryWithPaintings = await res.json();
-    return data.paintings;
-}
-
-/**
- * Fetch category data including paintings
- * Server endpoint: GET /api/PaintingCategories/{slug}
- * Returns PaintingCategoryWithPaintingsDto
- * Uses dummy data if USE_DUMMY_DATA is true, otherwise calls API
- * Cache duration: 1 hour
- */
-export async function getCategoryData(categorySlug: string): Promise<PaintingCategoryWithPaintings> {
-    if (USE_DUMMY_DATA) {
-        console.log('[getCategoryData] Using dummy data for category:', categorySlug);
-        const category = dummyCategories.find(cat => cat.slug === categorySlug);
-        const paintings = getDummyPaintingsByCategory(categorySlug);
-
-        if (!category) {
-            throw new Error(`Category not found: ${categorySlug}`);
-        }
-
-        return {
-            ...category,
-            paintings
-        };
-    }
-
-    const url = `${API_BASE_URL}/paintingcategories/${categorySlug}`;
-    console.log('=== [getCategoryData] DEBUG ===');
-    console.log('API_BASE_URL:', API_BASE_URL);
-    console.log('categorySlug:', categorySlug);
-    console.log('Full URL:', url);
-    console.log('Is server component:', typeof window === 'undefined');
-    console.log('===========================');
-
+export async function getAllPaintingCategories(): Promise<PaintingCategory[]> {
     try {
-        const res = await fetch(url, {
-            next: { revalidate: 3600 } // Cache for 1 hour
-        } as RequestInit & { next: { revalidate: number } });
+        const API_BASE_URL = getApiBaseUrl();
+        const response = await fetch(`${API_BASE_URL}/paintingcategories`, {
+            next: { revalidate: 86400 } // Cache for 24 hours
+        });
 
-        console.log('[getCategoryData] Response status:', res.status, res.statusText);
-        console.log('[getCategoryData] Response headers:', Object.fromEntries(res.headers.entries()));
-
-        if (!res.ok) {
-            const errorText = await res.text();
-            console.error('[getCategoryData] Error response body:', errorText || '(empty)');
-            throw new Error(`Failed to fetch category data for: ${categorySlug} (Status: ${res.status})`);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch painting categories: ${response.statusText}`);
         }
 
-        const data = await res.json();
-        console.log('[getCategoryData] Successfully fetched data for category:', categorySlug, 'with', data.paintings?.length || 0, 'paintings');
-        return data;
+        return await response.json();
     } catch (error) {
-        console.error('[getCategoryData] Fetch error:', error);
+        console.error('Error fetching painting categories:', error);
         throw error;
     }
 }
 
 /**
- * Fetch all paintings across all categories
- * Server endpoint: GET /api/Paintings
- * Uses dummy data if USE_DUMMY_DATA is true, otherwise calls API
- * Cache duration: 1 hour
+ * Fetch a specific painting category with its paintings
+ * Endpoint: GET api/paintingcategories/{slug}
+ */
+export async function getCategoryData(categorySlug: string): Promise<PaintingCategoryWithPaintings | null> {
+    try {
+        const API_BASE_URL = getApiBaseUrl();
+        const response = await fetch(`${API_BASE_URL}/paintingcategories/${categorySlug}`, {
+            next: { revalidate: 3600 } // Cache for 1 hour
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch category data: ${response.statusText}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error(`Error fetching category data for ${categorySlug}:`, error);
+        throw error;
+    }
+}
+
+/**
+ * Fetch all paintings
+ * Endpoint: GET api/paintings
  */
 export async function getAllPaintings(): Promise<Painting[]> {
-    if (USE_DUMMY_DATA) {
-        return dummyPaintings;
+    try {
+        const API_BASE_URL = getApiBaseUrl();
+        const response = await fetch(`${API_BASE_URL}/paintings`, {
+            next: { revalidate: 3600 } // Cache for 1 hour
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch paintings: ${response.statusText}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching paintings:', error);
+        throw error;
     }
-
-    const res = await fetch(`${API_BASE_URL}/paintings`, {
-        next: { revalidate: 3600 } // Cache for 1 hour
-    } as RequestInit & { next: { revalidate: number } });
-
-    if (!res.ok) {
-        throw new Error('Failed to fetch all paintings');
-    }
-
-    return res.json();
 }
 
 /**
- * Fetch a single painting by slug
- * Server endpoint: GET /api/Paintings/{slug}
- * Uses dummy data if USE_DUMMY_DATA is true, otherwise calls API
- * Cache duration: 24 hours (static content)
+ * Fetch a specific painting by slug
+ * Endpoint: GET api/paintings/{slug}
  */
-export async function getPaintingBySlug(slug: string): Promise<Painting> {
-    if (USE_DUMMY_DATA) {
-        const painting = dummyPaintings.find(p => p.slug === slug);
-        if (!painting) {
-            throw new Error(`Painting not found with slug: ${slug}`);
+export async function getPaintingBySlug(slug: string): Promise<Painting | null> {
+    try {
+        const API_BASE_URL = getApiBaseUrl();
+        const response = await fetch(`${API_BASE_URL}/paintings/${slug}`, {
+            next: { revalidate: 3600 } // Cache for 1 hour
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch painting: ${response.statusText}`);
         }
-        return painting;
+
+        return await response.json();
+    } catch (error) {
+        console.error(`Error fetching painting ${slug}:`, error);
+        throw error;
     }
-
-    const res = await fetch(`${API_BASE_URL}/paintings/${slug}`);
-
-    if (!res.ok) {
-        throw new Error(`Failed to fetch painting with slug: ${slug}`);
-    }
-
-    return res.json();
 }
 
 /**
- * Fetch page content by address
- * Server endpoint: GET /api/PageContent/{address}
- * Uses dummy data if USE_DUMMY_DATA is true, otherwise calls API
+ * Fetch paintings by category slug
+ * Endpoint: GET api/paintings/category/{categorySlug}
  */
-export async function getPageContent(address: string): Promise<PageContentDto | undefined> {
-    if (USE_DUMMY_DATA) {
-        return dummyPageContent.find(p => p.address === address);
-    }
+export async function getPaintingsByCategory(categorySlug: string): Promise<PaintingCategoryWithPaintings | null> {
+    try {
+        const API_BASE_URL = getApiBaseUrl();
+        const response = await fetch(`${API_BASE_URL}/paintings/category/${categorySlug}`, {
+            next: { revalidate: 3600 } // Cache for 1 hour
+        });
 
-    const res = await fetch(`${API_BASE_URL}/pagecontent/${address}`, {
-        next: { revalidate: 86400 } // Cache for 24 hours
-    } as RequestInit & { next: { revalidate: number } });
-
-    if (!res.ok) {
-        if (res.status === 404) {
-            return undefined;
+        if (!response.ok) {
+            throw new Error(`Failed to fetch paintings for category: ${response.statusText}`);
         }
-        throw new Error(`Failed to fetch page content for address: ${address}`);
-    }
 
-    return res.json();
+        return await response.json();
+    } catch (error) {
+        console.error(`Error fetching paintings for category ${categorySlug}:`, error);
+        throw error;
+    }
+}
+
+// Alias for backward compatibility
+export { getPaintingBySlug as getPainting };
+
+/**
+ * Fetch carousel images
+ * Endpoint: GET api/carousel
+ */
+export async function getCarouselImages(): Promise<CarouselImage[]> {
+    try {
+        const API_BASE_URL = getApiBaseUrl();
+        const response = await fetch(`${API_BASE_URL}/carousel`, {
+            next: { revalidate: 7200 } // Cache for 2 hours
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch carousel images: ${response.statusText}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching carousel images:', error);
+        throw error;
+    }
+}
+
+/**
+ * Fetch page content by slug
+ * Endpoint: GET api/pagecontent/{slug}
+ */
+export async function getPageContent(slug: string): Promise<PageContent | null> {
+    try {
+        const API_BASE_URL = getApiBaseUrl();
+        const response = await fetch(`${API_BASE_URL}/pagecontent/${slug}`, {
+            next: { revalidate: 86400 } // Cache for 24 hours
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch page content: ${response.statusText}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error(`Error fetching page content for ${slug}:`, error);
+        throw error;
+    }
 }

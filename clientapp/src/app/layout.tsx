@@ -11,7 +11,7 @@ const font = localFont({
     },
   ],
   variable: "--font-local",
-  display: "swap",
+  display: "optional",
 });
 
 export const metadata: Metadata = {

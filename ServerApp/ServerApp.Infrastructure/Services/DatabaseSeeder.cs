@@ -143,6 +143,10 @@ internal sealed class DatabaseSeeder
             thumbnailUrl: PaintingThumbnailUrl.FromNullable(seed.ThumbnailUrl),
             new PaintingCategorySlug(seed.CategorySlug),
             price: seed.Price,
+            width: seed.Width.HasValue ? new PaintingWidth(seed.Width.Value) : null,
+            height: seed.Height.HasValue ? new PaintingHeight(seed.Height.Value) : null,
+            depth: seed.Depth.HasValue ? new PaintingDepth(seed.Depth.Value) : null,
+            year: seed.Year.HasValue ? new PaintingYear(seed.Year.Value) : null,
             isAvailable: new PaintingIsAvailable(seed.IsAvailable)
         );
     }

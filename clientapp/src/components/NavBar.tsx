@@ -1,30 +1,10 @@
-'use client'
-
-import { useState, useEffect, useRef } from 'react';
+import { getAllPaintingCategories } from '@/lib/api';
+import PaintingsDropdown from './PaintingsDropdown';
 import Link from 'next/link';
-import { paintingCategories } from '../app/models/paintingCategories';
 
-export default function NavBar() {
-    const [isPaintingsOpen, setIsPaintingsOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-
-    const closePaintingsDropdown = () => {
-        setIsPaintingsOpen(false);
-    };
-
-    // Close dropdown when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsPaintingsOpen(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
+export default async function NavBar() {
+    // Fetch painting categories from API on the server
+    const categories = await getAllPaintingCategories();
 
     return (
         <nav className="bg-[var(--navbar-footer-bg)] text-white sticky-top">
@@ -47,41 +27,7 @@ export default function NavBar() {
                     >
                         About
                     </Link>
-                    <div className="relative" ref={dropdownRef}>
-                        <button
-                            onClick={() => setIsPaintingsOpen(!isPaintingsOpen)}
-                            className="pl-3 py-2 rounded flex items-center hover:text-blue-400 justify-center transition duration-200 ease-in-out w-full"
-                        >
-                            Paintings
-                            <span style={{
-                                display: 'inline-block',
-                                transform: isPaintingsOpen ? 'rotate(0deg) scale(0.6)' : 'rotate(90deg) scale(0.6)',
-                                marginLeft: '0.25rem',
-                                transition: 'transform 0.2s ease',
-                                transformOrigin: 'center',
-                                position: 'relative',
-                                top: '-2px',
-                                width: '3rem',
-                                right: '1rem'
-                            }}>
-                                ▼
-                            </span>
-                        </button>
-                        {isPaintingsOpen && (
-                            <div className="relative w-full md:absolute left-0 mt-2 bg-[#3a3a3a] rounded-md shadow-lg py-1 z-10">
-                                {paintingCategories.map((category) => (
-                                    <Link
-                                        key={category.id}
-                                        href={`/paintings/${category.slug}`}
-                                        onClick={closePaintingsDropdown}
-                                        className="block px-4 py-2 transition duration-200 ease-in-out hover:bg-[#1e3a8a] text-center w-full"
-                                    >
-                                        {category.name}
-                                    </Link>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    <PaintingsDropdown categories={categories} />
                     <Link
                         href="/new_paintings"
                         className="pr-3 py-2 rounded transition duration-200 ease-in-out hover:text-blue-400 text-center w-full md:w-auto"

@@ -1,9 +1,6 @@
-"use client";
-
 import Image from 'next/image';
 import Link from 'next/link';
-import { paintingsData, formatDimensions } from '@/app/models/paintings';
-import styles from '../app/paintings/[category]/page.module.css';
+import styles from './PaintingImage.module.css';
 
 interface PaintingImageProps {
     src: string;
@@ -11,24 +8,46 @@ interface PaintingImageProps {
     priority?: boolean;
     categorySlug: string;
     filename: string;
+    orientation?: 'landscape' | 'portrait' | 'square';
+    title?: string;
+    price?: number;
+    width?: number;
+    height?: number;
+    depth?: number;
+    isAvailable?: boolean;
 }
 
-export default function PaintingImage({ src, alt, priority = false, categorySlug, filename }: PaintingImageProps) {
-    // Find painting data for hover info and get the slug
-    const painting = paintingsData.find(p => {
-        const fileSlug = p.imageUrl.split('/').pop()?.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").trim();
-        const filenameSlug = filename.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").trim();
-        return fileSlug === filenameSlug && p.categorySlug === categorySlug;
-    });
-
-    // Use the painting's slug property for navigation
-    const slug = painting?.slug || filename.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").trim();
+export default function PaintingImage({
+    src,
+    alt,
+    priority = false,
+    categorySlug,
+    filename,
+    orientation,
+    title,
+    price,
+    width,
+    height,
+    depth,
+    isAvailable = true
+}: PaintingImageProps) {
+    // Generate slug from filename
+    const slug = filename.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").trim();
     const detailsUrl = `/paintings/${categorySlug}/${slug}`;
 
-    const title = painting?.title || alt;
-    const price = painting?.price ? `$${painting.price.toLocaleString()}` : '';
-    const dimensions = painting ? formatDimensions(painting) : '';
-    const availability = painting?.isAvailable !== false ? 'Available' : 'Sold';
+    // Format dimensions
+    const dimensions = width && height
+        ? `${width}" x ${height}"${depth ? ` x ${depth}"` : ''}`
+        : '';
+
+    // Format price
+    const formattedPrice = price ? `$${price.toLocaleString()}` : '';
+
+    // Determine availability
+    const availability = isAvailable ? 'Available' : 'Sold';
+
+    // Determine the orientation class
+    const orientationClass = orientation ? styles[`paintingImage${orientation.charAt(0).toUpperCase() + orientation.slice(1)}`] : '';
 
     return (
         <Link href={detailsUrl} className={styles.imageWrapper}>
@@ -38,13 +57,15 @@ export default function PaintingImage({ src, alt, priority = false, categorySlug
                     alt={alt}
                     width={400}
                     height={400}
-                    className={styles.paintingImage}
+                    className={`${styles.paintingImage} ${orientationClass}`}
                     priority={priority}
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    quality={60}
                 />
                 <div className={styles.hoverOverlay}>
                     <div className={styles.hoverContent}>
-                        <h3 className={styles.hoverTitle}>{title}</h3>
-                        {price && <p className={styles.hoverPrice}>{price}</p>}
+                        <h3 className={styles.hoverTitle}>{title || alt}</h3>
+                        {formattedPrice && <p className={styles.hoverPrice}>{formattedPrice}</p>}
                         {dimensions && <p className={styles.hoverDimensions}>{dimensions}</p>}
                         <p className={`${styles.hoverAvailability} ${availability === 'Available' ? styles.available : styles.sold}`}>
                             {availability}

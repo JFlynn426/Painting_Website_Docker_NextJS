@@ -54,6 +54,7 @@ export default function PaintingDetailImage({ src, alt, className }: PaintingDet
             className={className}
             priority
             sizes="100vw"
+            quality={95}
         />
     );
 }
