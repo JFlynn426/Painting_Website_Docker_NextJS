@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { Painting } from "@/types";
 import styles from "./PaintingExamineModal.module.css";
@@ -89,15 +89,6 @@ export default function PaintingExamineModal({ onClose, painting }: PaintingExam
         document.addEventListener("keydown", handleKeyDown);
         return () => document.removeEventListener("keydown", handleKeyDown);
     }, [onClose]);
-
-    // Handle zoom with mouse wheel
-    const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        const zoomSensitivity = 0.001;
-        const delta = -e.deltaY * zoomSensitivity;
-        const newScale = Math.max(0.01, Math.min(scale + delta, 5));
-        setScale(newScale);
-    }, [scale]);
 
     // Add wheel event listener with passive: false to allow preventDefault
     useEffect(() => {

@@ -17,8 +17,13 @@ namespace ServerApp.Api
 
             // Register services
             builder.Services.AddControllers();
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+
+            // Add Swagger only in Development environment
+            if (builder.Environment.IsDevelopment())
+            {
+                builder.Services.AddEndpointsApiExplorer();
+                builder.Services.AddSwaggerGen();
+            }
 
             // Add CORS configuration
             builder.Services.AddCors(options =>
@@ -49,11 +54,12 @@ namespace ServerApp.Api
             // Enable CORS
             app.UseCors("AllowFrontend");
 
-            app.UseSwagger();
-            app.UseSwaggerUI();
-
-            //remove before production - not using dev environment yet: add https too.
-            app.UseAuthorization();
+            // Enable Swagger only in Development environment
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
 
             app.MapControllers();
 

@@ -8,7 +8,7 @@ public class PaintingCategory : AggregateRoot<Guid>
 {
     public PaintingCategoryName Name { get; private set; }
     public PaintingCategorySlug Slug { get; private set; }
-    public PaintingCategoryDescription? Description { get; private set; }
+    public string? Description { get; private set; }
 
     // Navigation property for Paintings in this category
     public ICollection<Painting> Paintings { get; private set; } = new List<Painting>();
@@ -17,7 +17,7 @@ public class PaintingCategory : AggregateRoot<Guid>
     private PaintingCategory() { }
 
     // Constructor for creating a new category (domain creation path)
-    internal PaintingCategory(PaintingCategoryID id, PaintingCategoryName name, PaintingCategorySlug slug, PaintingCategoryDescription? description = null)
+    internal PaintingCategory(PaintingCategoryID id, PaintingCategoryName name, PaintingCategorySlug slug, string? description = null)
     {
         Id = id.Value;
         Name = name;

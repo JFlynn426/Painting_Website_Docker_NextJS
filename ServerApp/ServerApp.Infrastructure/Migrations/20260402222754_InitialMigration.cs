@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ServerApp.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialWriteMigration : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,7 +17,7 @@ namespace ServerApp.Infrastructure.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Address = table.Column<string>(type: "nvarchar(200)", nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(200)", nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(200)", nullable: true),
                     Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Version = table.Column<int>(type: "int", nullable: false)
                 },
@@ -31,7 +31,7 @@ namespace ServerApp.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(100)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(50)", nullable: false),
                     Slug = table.Column<string>(type: "nvarchar(100)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Version = table.Column<int>(type: "int", nullable: false)
@@ -58,6 +58,7 @@ namespace ServerApp.Infrastructure.Migrations
                     Year = table.Column<int>(type: "int", nullable: true),
                     Price = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     IsAvailable = table.Column<bool>(type: "bit", nullable: false),
+                    IsNew = table.Column<bool>(type: "bit", nullable: false),
                     CategoryId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Version = table.Column<int>(type: "int", nullable: false)
                 },

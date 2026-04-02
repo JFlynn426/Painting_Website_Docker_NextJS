@@ -58,7 +58,6 @@ export async function getAllPaintingCategories(): Promise<PaintingCategory[]> {
 
         return await response.json();
     } catch (error) {
-        console.error('Error fetching painting categories:', error);
         throw error;
     }
 }
@@ -80,7 +79,6 @@ export async function getCategoryData(categorySlug: string): Promise<PaintingCat
 
         return await response.json();
     } catch (error) {
-        console.error(`Error fetching category data for ${categorySlug}:`, error);
         throw error;
     }
 }
@@ -102,7 +100,6 @@ export async function getAllPaintings(): Promise<Painting[]> {
 
         return await response.json();
     } catch (error) {
-        console.error('Error fetching paintings:', error);
         throw error;
     }
 }
@@ -124,7 +121,6 @@ export async function getPaintingBySlug(slug: string): Promise<Painting | null> 
 
         return await response.json();
     } catch (error) {
-        console.error(`Error fetching painting ${slug}:`, error);
         throw error;
     }
 }
@@ -146,13 +142,33 @@ export async function getPaintingsByCategory(categorySlug: string): Promise<Pain
 
         return await response.json();
     } catch (error) {
-        console.error(`Error fetching paintings for category ${categorySlug}:`, error);
         throw error;
     }
 }
 
 // Alias for backward compatibility
 export { getPaintingBySlug as getPainting };
+
+/**
+ * Fetch all new paintings (where IsNew=true)
+ * Endpoint: GET api/paintings/new
+ */
+export async function getNewPaintings(): Promise<Painting[]> {
+    try {
+        const API_BASE_URL = getApiBaseUrl();
+        const response = await fetch(`${API_BASE_URL}/paintings/new`, {
+            next: { revalidate: 3600 } // Cache for 1 hour
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch new paintings: ${response.statusText}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        throw error;
+    }
+}
 
 /**
  * Fetch carousel images
@@ -171,7 +187,6 @@ export async function getCarouselImages(): Promise<CarouselImage[]> {
 
         return await response.json();
     } catch (error) {
-        console.error('Error fetching carousel images:', error);
         throw error;
     }
 }
@@ -193,7 +208,6 @@ export async function getPageContent(slug: string): Promise<PageContent | null> 
 
         return await response.json();
     } catch (error) {
-        console.error(`Error fetching page content for ${slug}:`, error);
         throw error;
     }
 }

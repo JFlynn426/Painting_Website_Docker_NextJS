@@ -74,9 +74,8 @@ internal sealed class DatabaseSeeder
         foreach (var seedCategory in PaintingCategoriesSeedData.Categories)
         {
             var category = await CreateCategoryAsync(
-                seedCategory.Slug,
                 seedCategory.Name,
-                seedCategory.Description ?? string.Empty,
+                seedCategory.Description,
                 cancellationToken
             );
             categories[seedCategory.Slug] = category;
@@ -113,7 +112,7 @@ internal sealed class DatabaseSeeder
         {
             var pageContent = _pageContentFactory.Create(
                 new PageAddress(seedPageContent.Address),
-                new PageTitle(seedPageContent.Title),
+                PageTitle.FromNullable(seedPageContent.Title),
                 new PageContentText(seedPageContent.Content)
             );
             pageContents.Add(pageContent);
@@ -125,11 +124,11 @@ internal sealed class DatabaseSeeder
         _logger.LogInformation($"Seeded {pageContents.Count} page content entries.");
     }
 
-    private async Task<PaintingCategory> CreateCategoryAsync(string slug, string name, string description, CancellationToken cancellationToken)
+    private async Task<PaintingCategory> CreateCategoryAsync(string name, string? description, CancellationToken cancellationToken)
     {
         return await _categoryFactory.CreateAsync(
-            new PaintingCategoryName(name),
-            new PaintingCategoryDescription(description),
+            name,
+            description,
             cancellationToken
         );
     }
@@ -147,7 +146,8 @@ internal sealed class DatabaseSeeder
             height: seed.Height.HasValue ? new PaintingHeight(seed.Height.Value) : null,
             depth: seed.Depth.HasValue ? new PaintingDepth(seed.Depth.Value) : null,
             year: seed.Year.HasValue ? new PaintingYear(seed.Year.Value) : null,
-            isAvailable: new PaintingIsAvailable(seed.IsAvailable)
+            isAvailable: new PaintingIsAvailable(seed.IsAvailable),
+            isNew: new PaintingIsNew(seed.IsNew)
         );
     }
 }

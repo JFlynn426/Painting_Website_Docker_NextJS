@@ -15,4 +15,5 @@ public class PaintingDto
     public int? Year { get; init; }
     public decimal? Price { get; init; }
     public bool IsAvailable { get; init; }
+    public bool IsNew { get; init; }
 }

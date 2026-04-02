@@ -1,6 +1,6 @@
 import PaintingImage from './PaintingImage';
 import styles from './PaintingGrid.module.css';
-import { buildSmartRows, PaintingRow } from '@/lib/paintingGridHelpers';
+import { buildSmartRows } from '@/lib/paintingGridHelpers';
 
 export interface PaintingImageItem {
     src: string;

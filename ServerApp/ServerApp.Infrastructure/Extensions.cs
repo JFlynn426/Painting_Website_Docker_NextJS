@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ServerApp.Domain.Factories;
+using ServerApp.Domain.Services;
 using ServerApp.Infrastructure.EF;
 using ServerApp.Infrastructure.Persistence;
 using ServerApp.Infrastructure.Services;
@@ -36,6 +37,9 @@ public static class InfrastructureExtensions
         services.AddScoped<IPaintingFactory, PaintingFactory>();
         services.AddScoped<IPaintingCategoryFactory, PaintingCategoryFactory>();
         services.AddScoped<IPageContentFactory, PageContentFactory>();
+
+        // Register HTML sanitizer service
+        services.AddScoped<IHtmlSanitizer, HtmlSanitizer>();
 
         // Register the database seeder
         services.AddScoped<DatabaseSeeder>();

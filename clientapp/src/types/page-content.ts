@@ -4,6 +4,6 @@
 export interface PageContent {
     id: string;
     slug: string;
-    title: string;
+    title?: string;
     content: string;
 }

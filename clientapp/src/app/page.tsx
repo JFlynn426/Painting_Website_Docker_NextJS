@@ -1,5 +1,6 @@
 import ArtCarousel from "../components/ArtCarousel";
 import { getPageContent } from "../lib/api";
+import { sanitizeHtml } from "../lib/sanitization";
 
 export default async function Home() {
   // Get home page content from API
@@ -18,9 +19,7 @@ export default async function Home() {
 
       {/* Content below carousel */}
       {homeContent && (
-        <p className="text-center max-w-2xl mb-8">
-          {homeContent.content}
-        </p>
+        <div className="text-center max-w-2xl mb-8" dangerouslySetInnerHTML={{ __html: sanitizeHtml(homeContent.content) }} />
       )}
     </div>
   );

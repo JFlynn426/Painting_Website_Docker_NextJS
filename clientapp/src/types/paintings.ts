@@ -15,6 +15,7 @@ export interface Painting {
     year?: number;
     price?: number;
     isAvailable: boolean;
+    isNew: boolean;
 }
 
 /**

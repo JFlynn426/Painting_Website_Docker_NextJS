@@ -56,16 +56,18 @@ export default function PaintingsDropdown({ categories }: PaintingsDropdownProps
             </button>
             {isPaintingsOpen && (
                 <div className="absolute left-0 top-full mt-1 bg-[#3a3a3a] rounded-md shadow-lg py-1 z-50 min-w-[200px]">
-                    {categories.map((category) => (
-                        <Link
-                            key={category.id}
-                            href={`/paintings/${category.slug}`}
-                            onClick={closePaintingsDropdown}
-                            className="block px-4 py-2 transition duration-200 ease-in-out hover:bg-[#1e3a8a] text-center"
-                        >
-                            {category.name}
-                        </Link>
-                    ))}
+                    {categories
+                        .filter(category => category.slug !== 'new-paintings')
+                        .map((category) => (
+                            <Link
+                                key={category.id}
+                                href={`/paintings/${category.slug}`}
+                                onClick={closePaintingsDropdown}
+                                className="block px-4 py-2 transition duration-200 ease-in-out hover:bg-[#1e3a8a] text-center"
+                            >
+                                {category.name}
+                            </Link>
+                        ))}
                 </div>
             )}
         </div>

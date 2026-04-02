@@ -5,6 +5,6 @@ using ServerApp.Application.DTOs;
 
 public record AddPageContent(
     string Address,
-    string Title,
+    string? Title,
     string Content
 ) : IRequest<PageContentCreatedResult>;

@@ -128,6 +128,15 @@ public class PaintingConfiguration : IEntityTypeConfiguration<Painting>
                 a => a.Value,
                 value => new PaintingIsAvailable(value));
 
+        // Value object for boolean
+        builder.Property(e => e.IsNew)
+            .HasColumnName("IsNew")
+            .HasColumnType("bit")
+            .IsRequired()
+            .HasConversion(
+                a => a.Value,
+                value => new PaintingIsNew(value));
+
         // Navigation property
         builder.Property(e => e.CategoryId)
             .HasColumnName("CategoryId")

@@ -12,8 +12,8 @@ using ServerApp.Infrastructure.EF.Contexts;
 namespace ServerApp.Infrastructure.Migrations
 {
     [DbContext(typeof(WriteDbContext))]
-    [Migration("20260330212440_UpdateValueObjectLengths")]
-    partial class UpdateValueObjectLengths
+    [Migration("20260402222754_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -43,7 +43,6 @@ namespace ServerApp.Infrastructure.Migrations
                         .HasColumnName("Content");
 
                     b.Property<string>("Title")
-                        .IsRequired()
                         .HasColumnType("nvarchar(200)")
                         .HasColumnName("Title");
 
@@ -94,6 +93,10 @@ namespace ServerApp.Infrastructure.Migrations
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("bit")
                         .HasColumnName("IsAvailable");
+
+                    b.Property<bool>("IsNew")
+                        .HasColumnType("bit")
+                        .HasColumnName("IsNew");
 
                     b.Property<decimal?>("Price")
                         .HasColumnType("decimal(18, 2)")

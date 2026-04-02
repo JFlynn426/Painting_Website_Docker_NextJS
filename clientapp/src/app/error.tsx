@@ -8,6 +8,11 @@ interface ErrorProps {
 }
 
 export default function Error({ error, reset }: ErrorProps) {
+    // Intentionally not using error and reset props
+    // error is available for logging if needed
+    // reset can be used to recover from error if needed
+    void error;
+    void reset;
     return (
         <div style={{ textAlign: 'center', padding: '2rem' }}>
             <h1 style={{ color: 'var(--title-color)', fontSize: '2.5rem', marginBottom: '1rem' }}>

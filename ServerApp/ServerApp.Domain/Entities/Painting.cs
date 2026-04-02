@@ -8,18 +8,19 @@ using ServerApp.Domain.Events;
 
 public class Painting : AggregateRoot<Guid>
 {
-    public PaintingName Title { get; private set; } = new PaintingName();
-    public PaintingSlug Slug { get; private set; } = new PaintingSlug();
+    public PaintingName Title { get; private set; } = default!;
+    public PaintingSlug Slug { get; private set; } = default!;
     public PaintingDescription? Description { get; private set; }
-    public PaintingImageUrl ImageUrl { get; private set; } = new PaintingImageUrl();
+    public PaintingImageUrl ImageUrl { get; private set; } = default!;
     public PaintingThumbnailUrl? ThumbnailUrl { get; private set; }
-    public PaintingCategorySlug CategorySlug { get; private set; }
+    public PaintingCategorySlug CategorySlug { get; private set; } = default!;
     public PaintingWidth? Width { get; private set; }
     public PaintingHeight? Height { get; private set; }
     public PaintingDepth? Depth { get; private set; }
     public PaintingYear? Year { get; private set; }
     public PaintingPrice? Price { get; private set; }
-    public PaintingIsAvailable IsAvailable { get; private set; } = true;
+    public PaintingIsAvailable IsAvailable { get; private set; } = default!;
+    public PaintingIsNew IsNew { get; private set; } = default!;
 
     // Navigation property for the category this painting belongs to
     public PaintingCategory? Category { get; private set; }
@@ -35,7 +36,7 @@ public class Painting : AggregateRoot<Guid>
     internal Painting(PaintingID id, PaintingName title, PaintingSlug slug, PaintingDescription? description, PaintingImageUrl imageUrl,
         PaintingThumbnailUrl? thumbnailUrl, PaintingCategorySlug categorySlug, PaintingPrice? price,
         PaintingWidth? width = null, PaintingHeight? height = null, PaintingDepth? depth = null,
-        PaintingYear? year = null, PaintingIsAvailable isAvailable = default!)
+        PaintingYear? year = null, PaintingIsAvailable isAvailable = default!, PaintingIsNew isNew = default!)
     {
         Id = id.Value;
         Title = title;
@@ -50,6 +51,7 @@ public class Painting : AggregateRoot<Guid>
         Depth = depth;
         Year = year;
         IsAvailable = isAvailable;
+        IsNew = isNew;
 
         AddEvent(new PaintingCreatedEvent(Id, title.Value, categorySlug.Value));
     }
@@ -116,5 +118,12 @@ public class Painting : AggregateRoot<Guid>
     public void MarkAsDeleted()
     {
         AddEvent(new PaintingDeletedEvent(Id, Title.Value));
+    }
+
+    // Method to update IsNew status
+    public void SetIsNew(PaintingIsNew isNew)
+    {
+        IsNew = isNew;
+        AddEvent(new PaintingUpdatedEvent(Id, Title.Value, CategorySlug.Value));
     }
 }

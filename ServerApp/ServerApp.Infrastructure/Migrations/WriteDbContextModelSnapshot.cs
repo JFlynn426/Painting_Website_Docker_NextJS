@@ -40,7 +40,6 @@ namespace ServerApp.Infrastructure.Migrations
                         .HasColumnName("Content");
 
                     b.Property<string>("Title")
-                        .IsRequired()
                         .HasColumnType("nvarchar(200)")
                         .HasColumnName("Title");
 
@@ -91,6 +90,10 @@ namespace ServerApp.Infrastructure.Migrations
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("bit")
                         .HasColumnName("IsAvailable");
+
+                    b.Property<bool>("IsNew")
+                        .HasColumnType("bit")
+                        .HasColumnName("IsNew");
 
                     b.Property<decimal?>("Price")
                         .HasColumnType("decimal(18, 2)")

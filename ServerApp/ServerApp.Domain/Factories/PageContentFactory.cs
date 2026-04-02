@@ -7,7 +7,7 @@ public class PageContentFactory : IPageContentFactory
 {
     public PageContent Create(
         PageAddress address,
-        PageTitle title,
+        PageTitle? title,
         PageContentText content)
     {
         return new PageContent(address, title, content);

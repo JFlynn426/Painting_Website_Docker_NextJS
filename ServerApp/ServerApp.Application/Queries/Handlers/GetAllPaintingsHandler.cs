@@ -32,7 +32,8 @@ public class GetAllPaintingsHandler : IRequestHandler<GetAllPaintings, List<Pain
             Depth = p.Depth?.Value,
             Year = p.Year?.Value,
             Price = p.Price?.Value,
-            IsAvailable = p.IsAvailable.Value
+            IsAvailable = p.IsAvailable.Value,
+            IsNew = p.IsNew.Value
         }).ToList();
     }
 }

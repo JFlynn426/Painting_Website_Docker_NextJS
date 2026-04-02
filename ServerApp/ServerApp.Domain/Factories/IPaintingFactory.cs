@@ -17,5 +17,6 @@ public interface IPaintingFactory
         PaintingHeight? height = null,
         PaintingDepth? depth = null,
         PaintingYear? year = null,
-        PaintingIsAvailable isAvailable = default!);
+        PaintingIsAvailable isAvailable = default!,
+        PaintingIsNew isNew = default!);
 }

@@ -7,6 +7,6 @@ public interface IPageContentFactory
 {
     PageContent Create(
         PageAddress address,
-        PageTitle title,
+        PageTitle? title,
         PageContentText content);
 }

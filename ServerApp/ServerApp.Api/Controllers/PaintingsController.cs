@@ -56,6 +56,17 @@ public class PaintingsController : BaseController
     }
 
     /// <summary>
+    /// Gets all new paintings (where IsNew=true).
+    /// </summary>
+    /// <returns>List of new paintings.</returns>
+    [HttpGet("new")]
+    public async Task<ActionResult<List<PaintingDto>>> GetNewPaintings()
+    {
+        var result = await _mediator.Send(new GetNewPaintings());
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Adds a new painting.
     /// </summary>
     /// <param name="command">The add painting command from the Application layer.</param>

@@ -15,23 +15,23 @@ public class PaintingCategoryFactory : IPaintingCategoryFactory
     }
 
     public async Task<PaintingCategory> CreateAsync(
-        PaintingCategoryName name,
-        PaintingCategoryDescription? description,
+        string name,
+        string? description,
         CancellationToken cancellationToken = default)
     {
         // Auto-generate ID (single source of truth for ID generation)
         var id = new PaintingCategoryID();
 
         // Check if a category with this name already exists
-        bool exists = await _readRepository.ExistsByNameAsync(name, cancellationToken);
+        bool exists = await _readRepository.ExistsByNameAsync(new PaintingCategoryName(name), cancellationToken);
         if (exists)
         {
-            throw new PaintingCategoryNameAlreadyExistsException(name.Value);
+            throw new PaintingCategoryNameAlreadyExistsException(name);
         }
 
         // Auto-generate slug from name
-        var slug = PaintingCategorySlug.FromName(name);
+        var slug = PaintingCategorySlug.FromName(new PaintingCategoryName(name));
 
-        return new PaintingCategory(id, name, slug, description);
+        return new PaintingCategory(id, new PaintingCategoryName(name), slug, description);
     }
 }

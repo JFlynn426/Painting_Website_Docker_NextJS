@@ -7,7 +7,7 @@ using ServerApp.Application.DTOs;
 using ServerApp.Domain.Factories;
 using ServerApp.Domain.Repositories.Write;
 using ServerApp.Domain.Repositories.Read;
-using ServerApp.Domain.ValueObjects.PaintingCategory;
+using ServerApp.Domain.Services;
 using ServerApp.Application.Exceptions;
 
 public class AddPaintingCategoryHandler : IRequestHandler<AddPaintingCategory, PaintingCategoryCreatedResult>
@@ -16,17 +16,20 @@ public class AddPaintingCategoryHandler : IRequestHandler<AddPaintingCategory, P
     private readonly IPaintingCategoryWriteRepository _writeRepository;
     private readonly IPaintingCategoryReadRepository _readRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IHtmlSanitizer _htmlSanitizer;
 
     public AddPaintingCategoryHandler(
         IPaintingCategoryFactory factory,
         IPaintingCategoryWriteRepository writeRepository,
         IPaintingCategoryReadRepository readRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IHtmlSanitizer htmlSanitizer)
     {
         _factory = factory;
         _writeRepository = writeRepository;
         _readRepository = readRepository;
         _unitOfWork = unitOfWork;
+        _htmlSanitizer = htmlSanitizer;
     }
 
     public async Task<PaintingCategoryCreatedResult> Handle(AddPaintingCategory command, CancellationToken cancellationToken = default)
@@ -37,10 +40,13 @@ public class AddPaintingCategoryHandler : IRequestHandler<AddPaintingCategory, P
         {
             var (name, description) = command;
 
+            // Sanitize the description to prevent XSS attacks
+            var sanitizedDescription = description != null ? _htmlSanitizer.Sanitize(description) : null;
+
             // Create category using factory (factory handles ID and slug generation internally)
             var category = await _factory.CreateAsync(
-                new PaintingCategoryName(name),
-                PaintingCategoryDescription.FromNullable(description),
+                name,
+                sanitizedDescription,
                 cancellationToken);
 
             await _writeRepository.AddAsync(category, cancellationToken);

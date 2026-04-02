@@ -29,7 +29,7 @@ export default async function NavBar() {
                     </Link>
                     <PaintingsDropdown categories={categories} />
                     <Link
-                        href="/new_paintings"
+                        href="/paintings/new-paintings"
                         className="pr-3 py-2 rounded transition duration-200 ease-in-out hover:text-blue-400 text-center w-full md:w-auto"
                     >
                         New Paintings

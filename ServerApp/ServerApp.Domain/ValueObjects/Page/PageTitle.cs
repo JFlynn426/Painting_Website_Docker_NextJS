@@ -10,9 +10,11 @@ public record PageTitle : StringValueObject
     {
     }
 
-    public PageTitle(string value) : base(value, MaxLength)
+    public PageTitle(string value) : base(value, MaxLength, allowEmpty: true)
     {
     }
 
     public static implicit operator PageTitle(string title) => new(title);
+
+    public static PageTitle? FromNullable(string? value) => value != null ? new PageTitle(value) : null;
 }

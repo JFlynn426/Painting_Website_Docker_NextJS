@@ -6,5 +6,5 @@ namespace ServerApp.Application.DTOs;
 public record PageContentCreatedResult(
     Guid Id,
     string Address,
-    string Title
+    string? Title
 );

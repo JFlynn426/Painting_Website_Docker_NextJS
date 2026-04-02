@@ -29,7 +29,7 @@ public class GetPageContentHandler : IRequestHandler<GetPageContent, PageContent
         return new PageContentDto
         {
             Address = pageContent.Address.Value,
-            Title = pageContent.Title.Value,
+            Title = pageContent.Title?.Value,
             Content = pageContent.Content.Value
         };
     }

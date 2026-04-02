@@ -9,7 +9,7 @@ export default function ArtCarousel() {
     // Image data
     const images = [
         {
-            src: "/Carousel-Paintings/Cloud Creatures23crop.jpg",
+            src: "/Carousel-Paintings/Cloud_Creatures23crop.jpg",
             alt: "Cloud Creatures"
         },
         {
@@ -66,6 +66,7 @@ export default function ArtCarousel() {
                                 className="object-contain h-full"
                                 style={{ width: 'auto' }}
                                 priority={index === 0}
+                                quality={60}
                             />
                         </div>
                     </div>

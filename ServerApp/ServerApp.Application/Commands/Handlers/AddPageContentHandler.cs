@@ -47,13 +47,13 @@ public class AddPageContentHandler : IRequestHandler<AddPageContent, PageContent
             // Create page content using factory
             var pageContent = _factory.Create(
                 new PageAddress(address),
-                new PageTitle(title),
+                PageTitle.FromNullable(title),
                 new PageContentText(content));
 
             await _writeRepository.AddAsync(pageContent, cancellationToken);
             await _unitOfWork.CommitAsync(cancellationToken);
 
-            return new PageContentCreatedResult(pageContent.Id, pageContent.Address.Value, pageContent.Title.Value);
+            return new PageContentCreatedResult(pageContent.Id, pageContent.Address.Value, pageContent.Title?.Value);
         }
         catch
         {

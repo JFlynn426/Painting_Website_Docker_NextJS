@@ -1,0 +1,32 @@
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.categoryTitle {
+    font-family: 'Gruppo', sans-serif;
+    font-size: 2.5rem;
+    color: var(--title-color);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.description {
+    font-family: 'Manjari', sans-serif;
+    font-size: 1.1rem;
+    color: var(--foreground);
+    text-align: center;
+    margin-bottom: 2rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.noPaintings {
+    font-family: 'Manjari', sans-serif;
+    font-size: 1.2rem;
+    color: var(--foreground);
+    text-align: center;
+    padding: 3rem;
+}

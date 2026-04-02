@@ -37,7 +37,7 @@ public class GetPaintingCategoryWithPaintingsHandler : IRequestHandler<GetPainti
             Id = category.Id,
             Name = category.Name.Value,
             Slug = category.Slug.Value,
-            Description = category.Description?.Value,
+            Description = category.Description,
             Paintings = paintings.Select(p => new PaintingDto
             {
                 Id = p.Id,
@@ -52,7 +52,8 @@ public class GetPaintingCategoryWithPaintingsHandler : IRequestHandler<GetPainti
                 Depth = p.Depth?.Value,
                 Year = p.Year?.Value,
                 Price = p.Price?.Value,
-                IsAvailable = p.IsAvailable.Value
+                IsAvailable = p.IsAvailable.Value,
+                IsNew = p.IsNew.Value
             }).ToList()
         };
     }

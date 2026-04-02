@@ -39,6 +39,12 @@ public static class PaintingCategoriesSeedData
             Name = "Flowers",
             Slug = "flowers",
             Description = "Botanical and floral compositions"
+        },
+        new PaintingCategorySeed
+        {
+            Name = "New Paintings",
+            Slug = "new-paintings",
+            Description = "Discover our latest additions to the collection"
         }
     };
 }
