@@ -35,7 +35,7 @@ export default function PaintingExamineModal({ onClose, painting }: PaintingExam
         };
     }, [painting.imageUrl]);
 
-    // Calculate initial scale to fit image in viewport
+    // Calculate initial scale to fit image in viewport and reset position
     useEffect(() => {
         if (imageDimensions.width === 0 || imageDimensions.height === 0) return;
         if (!containerRef.current) return;
@@ -54,6 +54,8 @@ export default function PaintingExamineModal({ onClose, painting }: PaintingExam
         const fitScale = Math.min(scaleX, scaleY);
 
         setScale(fitScale);
+        // Reset position to center when scale is recalculated
+        setPosition({ x: 0, y: 0 });
     }, [imageDimensions]);
 
     // Handle body overflow

@@ -103,6 +103,7 @@
     overflow: hidden;
     cursor: grab;
     background-color: black;
+    position: relative;
 }
 
 .imageContainer:active {
@@ -110,8 +111,12 @@
 }
 
 .imageWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: transform 0.1s ease;
     will-change: transform;
+    position: relative;
 }
 
 .examineImage {
@@ -194,11 +199,12 @@
 .imageSection {
     flex: 1;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     position: relative;
     min-height: 0;
+    overflow: hidden;
 }
 
 .detailsSection {

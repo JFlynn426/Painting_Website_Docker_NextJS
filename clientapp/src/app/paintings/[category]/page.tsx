@@ -43,35 +43,20 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         );
     }
 
-    // Debug: log first painting to see what values we're getting
-    if (categoryData.paintings.length > 0) {
-        const firstPainting = categoryData.paintings[0];
-        console.log('First painting from API:', {
-            title: firstPainting.title,
-            width: firstPainting.width,
-            height: firstPainting.height,
-            depth: firstPainting.depth
-        });
-    }
-
     // Convert API paintings to PaintingImageItem format
-    const images: PaintingImageItem[] = categoryData.paintings.map(painting => {
-        const orientation = getPaintingOrientation(painting.width, painting.height);
-        console.log(`Painting: ${painting.title}, width: ${painting.width}, height: ${painting.height}, orientation: ${orientation}`);
-
-        return {
-            src: painting.imageUrl,
-            alt: painting.title,
-            filename: painting.slug,
-            title: painting.title,
-            price: painting.price,
-            width: painting.width,
-            height: painting.height,
-            depth: painting.depth,
-            isAvailable: painting.isAvailable,
-            orientation
-        };
-    });
+    // The PaintingGrid component will use smart row building to group paintings by orientation
+    const images: PaintingImageItem[] = categoryData.paintings.map(painting => ({
+        src: painting.imageUrl,
+        alt: painting.title,
+        filename: painting.slug,
+        title: painting.title,
+        price: painting.price,
+        width: painting.width,
+        height: painting.height,
+        depth: painting.depth,
+        isAvailable: painting.isAvailable,
+        orientation: getPaintingOrientation(painting.width, painting.height)
+    }));
 
     return (
         <div className={styles.container}>
