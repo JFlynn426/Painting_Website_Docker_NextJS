@@ -35,10 +35,10 @@ export default async function NavBar() {
                         New Paintings
                     </Link>
                     <Link
-                        href="/gallery"
+                        href="/galleries"
                         className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-blue-400 text-center w-full md:w-auto"
                     >
-                        Gallery
+                        Galleries
                     </Link>
                     <Link
                         href="/contact"

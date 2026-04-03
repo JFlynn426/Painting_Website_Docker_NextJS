@@ -35,6 +35,19 @@ public static class PageContentsSeedData
             <p style='margin-bottom: 16px;'>My paintings are inspired by a deep love of nature and a strong commitment to environmental conservation. I am actively involved in conservation efforts in South Florida. I consider it a privilege to live in such a beautiful and unique natural setting. These values strongly influence my artistic subject matter. I also have a particular affinity for turtles since growing up in apartment, I only had pet turtles.</p>
             <p>My art is oil painting that emphasizes color and light to capture the beauty of the natural world. Most of my paintings tell a story of the events leading to that moment in the photo, and what will happen next.</p>
             </div>"
+        },
+        new PageContentSeed
+        {
+            Address = "galleries",
+            Title = "Galleries",
+            Content = @"<div style='text-align: left; max-width: 800px; margin: 0 auto;'>
+            <p style='margin-bottom: 16px;'><strong>Emerging Artist at Stuart Artfest 2024</strong></p>
+            <p style='margin-bottom: 16px;'><strong>Lighthouse Art Center</strong><br/>Annual Art Show<br/>373 Tequesta Drive<br/>Tequesta, FL 3349</p>
+            <p style='margin-bottom: 16px;'><strong>Palm City Art Association</strong><br/>Annual Art Show at Cumming Library<br/>2551 SW Matheson Avenue<br/>Palm City FL. 34990</p>
+            <p style='margin-bottom: 16px;'><strong>Cleveland Clinic Health and Wellness Center</strong><br/>3066 SW Martin Downs Blvd.<br/>Palm City, FL 34990</p>
+            <p style='margin-bottom: 16px;'><strong>Martin Arts</strong><br/>Annual Art Show<br/>80 SE Ocean Blvd<br/>Stuart, FL 34994</p>
+            <p style='margin-bottom: 16px;'><strong>Hammock Creek Golf Club</strong><br/>2400 SW Golden Bear Way<br/>Palm City, FL 34990</p>
+            </div>"
         }
     };
 }

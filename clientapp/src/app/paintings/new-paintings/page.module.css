@@ -5,7 +5,7 @@
 }
 
 .categoryTitle {
-    font-family: 'Gruppo', sans-serif;
+    font-family: var(--font-local), sans-serif;
     font-size: 2.5rem;
     color: var(--title-color);
     margin-bottom: 1rem;
@@ -13,7 +13,7 @@
 }
 
 .description {
-    font-family: 'Manjari', sans-serif;
+    font-family: var(--font-local), sans-serif;
     font-size: 1.1rem;
     color: var(--foreground);
     text-align: center;
@@ -24,7 +24,7 @@
 }
 
 .noPaintings {
-    font-family: 'Manjari', sans-serif;
+    font-family: var(--font-local), sans-serif;
     font-size: 1.2rem;
     color: var(--foreground);
     text-align: center;
