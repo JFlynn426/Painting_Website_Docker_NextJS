@@ -7,7 +7,7 @@ import Footer from "../components/Footer";
 const font = localFont({
   src: [
     {
-      path: "../../public/fonts/Manjari-Bold.ttf",
+      path: "../../public/fonts/PoiretOne-Regular.ttf",
     },
   ],
   variable: "--font-local",

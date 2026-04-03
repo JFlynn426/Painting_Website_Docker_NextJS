@@ -31,8 +31,8 @@ export default function PaintingImage({
     depth,
     isAvailable = true
 }: PaintingImageProps) {
-    // Generate slug from filename
-    const slug = filename.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").trim();
+    // The filename prop is already the painting slug from the API
+    const slug = filename;
     const detailsUrl = `/paintings/${categorySlug}/${slug}`;
 
     // Format dimensions
