@@ -4,6 +4,7 @@ import styles from './PaintingImage.module.css';
 
 interface PaintingImageProps {
     src: string;
+    thumbnailUrl?: string;
     alt: string;
     priority?: boolean;
     categorySlug: string;
@@ -19,6 +20,7 @@ interface PaintingImageProps {
 
 export default function PaintingImage({
     src,
+    thumbnailUrl,
     alt,
     priority = false,
     categorySlug,
@@ -34,6 +36,9 @@ export default function PaintingImage({
     // The filename prop is already the painting slug from the API
     const slug = filename;
     const detailsUrl = `/paintings/${categorySlug}/${slug}`;
+
+    // Use thumbnailUrl if available, otherwise fall back to src (full image)
+    const displaySrc = thumbnailUrl || src;
 
     // Format dimensions
     const dimensions = width && height
@@ -53,7 +58,7 @@ export default function PaintingImage({
         <Link href={detailsUrl} className={styles.imageWrapper}>
             <div className={styles.imageContainer}>
                 <Image
-                    src={src}
+                    src={displaySrc}
                     alt={alt}
                     width={400}
                     height={400}

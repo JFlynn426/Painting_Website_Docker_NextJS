@@ -104,18 +104,6 @@ public static class AnimalsSeedData
         },
         new PaintingSeed
         {
-            Title = "Hide and Seek",
-            Slug = "hide-and-seek",
-            Description = "Framed oil on canvas. This owl was sitting right above me in a tree in Dunedin, FL and I didn't know he was there for the longest time.",
-            ImageUrl = "/Animals-Full/My_Green_Visitor.jpg",
-            CategorySlug = "animals-and-people",
-            Width = 20,
-            Height = 25,
-            Price = 1000,
-            IsAvailable = true
-        },
-        new PaintingSeed
-        {
             Title = "Leatherback",
             Slug = "leatherback",
             Description = "Framed on canvas. The leatherback is the largest of all living turtles and the heaviest. It has existed since the first turtles on earth, and its carapace is covered by oily flesh and flexible, leather-like skin, for which it is named. The leatherback is an endangered species.",

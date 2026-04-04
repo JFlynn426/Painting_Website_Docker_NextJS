@@ -47,6 +47,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     // The PaintingGrid component will use smart row building to group paintings by orientation
     const images: PaintingImageItem[] = categoryData.paintings.map(painting => ({
         src: painting.imageUrl,
+        thumbnailUrl: painting.thumbnailUrl,
         alt: painting.title,
         filename: painting.slug,
         title: painting.title,

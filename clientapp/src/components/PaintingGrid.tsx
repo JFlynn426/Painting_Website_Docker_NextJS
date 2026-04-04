@@ -4,6 +4,7 @@ import { buildSmartRows } from '@/lib/paintingGridHelpers';
 
 export interface PaintingImageItem {
     src: string;
+    thumbnailUrl?: string;
     alt: string;
     filename: string;
     width?: number;
@@ -71,6 +72,7 @@ export default function PaintingGrid({ images, categorySlug }: PaintingGridProps
                         <div key={imageIndex} className={getPaintingItemClass(image.orientation)}>
                             <PaintingImage
                                 src={image.src}
+                                thumbnailUrl={image.thumbnailUrl}
                                 alt={image.alt}
                                 filename={image.filename}
                                 categorySlug={categorySlug}
