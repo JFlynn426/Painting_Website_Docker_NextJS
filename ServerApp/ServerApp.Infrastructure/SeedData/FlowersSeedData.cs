@@ -15,7 +15,8 @@ public static class FlowersSeedData
             Width = 46,
             Height = 35,
             Price = 2700,
-            IsAvailable = true
+            IsAvailable = true,
+            IsNew = true
         },
         new PaintingSeed
         {
@@ -102,7 +103,8 @@ public static class FlowersSeedData
             Width = 18,
             Height = 14,
             Price = 600,
-            IsAvailable = true
+            IsAvailable = true,
+            IsNew = true
         },
         new PaintingSeed
         {

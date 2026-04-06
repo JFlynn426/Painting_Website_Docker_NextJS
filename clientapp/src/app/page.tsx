@@ -19,7 +19,7 @@ export default async function Home() {
 
       {/* Content below carousel */}
       {homeContent && (
-        <div className="text-center max-w-2xl mb-8" dangerouslySetInnerHTML={{ __html: sanitizeHtml(homeContent.content) }} />
+        <div className="text-center max-w-[50rem] mb-8" dangerouslySetInnerHTML={{ __html: sanitizeHtml(homeContent.content) }} />
       )}
     </div>
   );

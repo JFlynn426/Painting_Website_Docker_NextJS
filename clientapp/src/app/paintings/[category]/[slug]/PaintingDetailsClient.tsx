@@ -82,9 +82,15 @@ export default function PaintingDetailsClient({ painting, category }: PaintingDe
                     </Link>
 
                     {painting.isAvailable && painting.price && (
-                        <button className={styles.inquireButton}>
+                        <Link href="/contact" className={styles.inquireButton}>
                             Inquire About This Piece
-                        </button>
+                        </Link>
+                    )}
+
+                    {!painting.isAvailable && (
+                        <Link href="/contact" className={styles.inquireButton}>
+                            Inquire About Prints
+                        </Link>
                     )}
 
                     <button

@@ -73,19 +73,19 @@
 }
 
 .infoLabel {
-    font-size: 0.9rem;
+    font-size: 1.2rem;
     color: var(--title-color);
     font-weight: 500;
     text-decoration: underline;
 }
 
 .infoValue {
-    font-size: 1rem;
+    font-size: 1.2rem;
     color: var(--foreground);
 }
 
 .price {
-    font-size: 1rem;
+    font-size: 1.2rem;
     font-weight: bold;
     color: var(--foreground);
 }
@@ -112,17 +112,18 @@
     justify-content: center;
     padding: 12px 24px;
     background-color: transparent;
-    color: var(--title-color);
+    color: #55a0ee;
     text-decoration: none;
-    border: 1px solid var(--title-color);
+    border: 1px solid #55a0ee;
     border-radius: 5px;
     font-size: 1rem;
     transition: all 0.2s ease;
 }
 
 .backButton:hover {
-    background-color: var(--title-color);
+    background-color: #55a0ee;
     color: white;
+    border: 1px solid transparent;
 }
 
 .inquireButton {
@@ -130,17 +131,18 @@
     align-items: center;
     justify-content: center;
     padding: 12px 24px;
-    background-color: var(--title-color);
+    background-color: #55a0ee;
     color: white;
-    border: none;
+    border: 1px solid white;
     border-radius: 5px;
     font-size: 1rem;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .inquireButton:hover {
-    background-color: #55a0ee;
+    background-color: var(--button-color);
+    border: 1px solid transparent;
 }
 
 .examineButton {
@@ -155,11 +157,12 @@
     border-radius: 5px;
     font-size: 1rem;
     border: 1px solid white;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .examineButton:hover {
     background-color: #55a0ee;
+    border: 1px solid transparent;
 }
 
 .magnifyingGlass {

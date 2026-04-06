@@ -15,7 +15,8 @@ public static class SeascapesSeedData
             Width = 18,
             Height = 22,
             Price = 900,
-            IsAvailable = true
+            IsAvailable = true,
+            IsNew = true
         },
         new PaintingSeed
         {
@@ -116,7 +117,8 @@ public static class SeascapesSeedData
             CategorySlug = "seascapes",
             Width = 20,
             Height = 16,
-            IsAvailable = false
+            IsAvailable = false,
+            IsNew = true
         },
         new PaintingSeed
         {
@@ -154,7 +156,8 @@ public static class SeascapesSeedData
             Width = 39,
             Height = 27,
             Price = 2500,
-            IsAvailable = true
+            IsAvailable = true,
+            IsNew = true
         },
         new PaintingSeed
         {
@@ -179,7 +182,8 @@ public static class SeascapesSeedData
             CategorySlug = "seascapes",
             Width = 40,
             Height = 30,
-            IsAvailable = false
+            IsAvailable = false,
+            IsNew = true
         },
         new PaintingSeed
         {

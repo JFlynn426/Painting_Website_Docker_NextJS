@@ -14,7 +14,8 @@ public static class LandscapesAndCityscapesSeedData
             CategorySlug = "landscapes-and-cityscapes",
             Width = 26,
             Height = 20,
-            IsAvailable = false
+            IsAvailable = false,
+            IsNew = true
         },
         new PaintingSeed
         {
@@ -52,7 +53,8 @@ public static class LandscapesAndCityscapesSeedData
             Width = 20,
             Height = 16,
             Price = 800,
-            IsAvailable = true
+            IsAvailable = true,
+            IsNew = true
         },
         new PaintingSeed
         {
@@ -152,7 +154,8 @@ public static class LandscapesAndCityscapesSeedData
             Width = 16,
             Height = 20,
             Price = 700,
-            IsAvailable = true
+            IsAvailable = true,
+            IsNew = true
         },
         new PaintingSeed
         {

@@ -30,8 +30,8 @@ public static class PaintingCategoriesSeedData
         },
         new PaintingCategorySeed
         {
-            Name = "Animals & People",
-            Slug = "animals-and-people",
+            Name = "Animals",
+            Slug = "animals",
             Description = "Portraits and animal paintings"
         },
         new PaintingCategorySeed
