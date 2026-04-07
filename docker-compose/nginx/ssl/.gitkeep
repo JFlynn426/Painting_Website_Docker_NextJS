@@ -1,0 +1,3 @@
+# This file ensures the ssl directory is tracked by git
+# SSL certificates (server.crt and server.key) will be generated on the deployment server
+# Do NOT commit the actual server.key file to version control

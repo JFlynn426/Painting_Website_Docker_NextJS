@@ -4,9 +4,18 @@ This guide explains how to switch between development and production modes while
 
 ## Overview
 
-The solution uses two docker-compose files:
+The solution uses three docker-compose files:
 - **`docker-compose.yml`** - Development mode (hot reload, debug mode)
-- **`docker-compose.prod.yml`** - Production mode (optimized builds, NGINX reverse proxy)
+- **`docker-compose.prod.yml`** - Production mode (optimized builds, NGINX reverse proxy with SSL)
+- **`docker-compose.cloudflare.yml`** - Cloudflare Full mode (NGINX with self-signed SSL, Cloudflare handles edge SSL)
+
+## Deployment Options
+
+| Mode | Use Case | SSL | Best For |
+|------|----------|-----|----------|
+| Development | Local development | None | Coding, testing |
+| Production (NGINX) | Self-hosted with valid SSL | Let's Encrypt or commercial | Public servers with domain |
+| **Cloudflare Full** | **Home server with Cloudflare** | **Self-signed (NGINX) + Cloudflare** | **Home servers, dynamic IP** |
 
 ## Prerequisites (Production)
 
@@ -175,6 +184,122 @@ CORS_ALLOWED_ORIGINS=https://yourdomain.com
 
 ```bash
 docker-compose -f docker-compose.prod.yml down
+```
+
+## Cloudflare Full Mode (Home Server Deployment)
+
+### Purpose
+- Optimized for home servers with dynamic IP
+- Cloudflare handles SSL at the edge (free, trusted certificates)
+- NGINX terminates SSL with self-signed certificate
+- Extra encryption layer between Cloudflare and your server
+- No need for Let's Encrypt or domain validation
+
+### Architecture
+
+```
+User Browser → HTTPS → Cloudflare (Edge SSL) → HTTPS → Your Server (NGINX) → HTTP → Containers
+```
+
+### Prerequisites
+
+- Docker and Docker Compose installed on Linux server
+- Domain name configured with Cloudflare as DNS provider
+- Cloudflare account with site added
+- Port 443 open on your server (port 80 optional)
+
+### Deploy with Cloudflare
+
+#### Step 1: Prepare Server
+
+```bash
+# On your Linux server
+git clone <repository-url>
+cd Painting_Website_Docker_NextJS/docker-compose
+```
+
+#### Step 2: Configure Environment
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+Update these values in `.env`:
+
+```env
+# SQL Server password (change to secure password)
+SQLSERVER_SA_PASSWORD=YourSecurePassword123!
+
+# CORS - your production domain
+CORS_ALLOWED_ORIGINS=https://yourdomain.com
+
+# API URLs for Cloudflare Full mode
+NEXT_PUBLIC_API_URL=https://yourdomain.com/api
+SERVER_API_URL=http://api:8080/api
+```
+
+#### Step 3: Generate Self-Signed SSL Certificate
+
+```bash
+cd nginx/ssl
+
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout server.key \
+  -out server.crt \
+  -subj "/C=US/ST=YourState/L=YourCity/O=YourOrganization/CN=yourdomain.com"
+
+chmod 600 server.key
+chmod 644 server.crt
+```
+
+Replace `yourdomain.com` with your actual domain name.
+
+#### Step 4: Configure Cloudflare
+
+1. **Add your site to Cloudflare** (if not already done)
+2. **Change DNS nameservers** at your registrar to Cloudflare's
+3. **Set SSL/TLS mode to "Full"**:
+   - Go to SSL/TLS → Overview
+   - Select "Full" (not "Flexible" or "Full (Strict)")
+4. **Ensure DNS records are proxied** (orange cloud icon):
+   - Go to DNS
+   - Make sure A record for your domain has orange cloud
+
+#### Step 5: Deploy
+
+```bash
+cd ../..
+docker-compose -f docker-compose.cloudflare.yml up -d --build
+```
+
+#### Step 6: Verify
+
+```bash
+# Check container status
+docker-compose -f docker-compose.cloudflare.yml ps
+
+# View logs
+docker-compose -f docker-compose.cloudflare.yml logs -f
+
+# Test health endpoint
+curl http://localhost:8080/health
+
+# Test your site
+curl -I https://yourdomain.com
+```
+
+### Access Points
+
+- Frontend: https://yourdomain.com (via Cloudflare)
+- API: https://yourdomain.com/api (via Cloudflare)
+- Health: http://localhost:8080/health (local only)
+- NGINX logs: `docker-compose -f docker-compose.cloudflare.yml logs nginx`
+
+### Stop Cloudflare Environment
+
+```bash
+docker-compose -f docker-compose.cloudflare.yml down
 ```
 
 ## Switching Between Modes

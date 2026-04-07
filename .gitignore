@@ -7,6 +7,9 @@
 *.env
 docker-compose/.env
 
+# SSL private key (never commit this!)
+docker-compose/nginx/ssl/server.key
+
 # User-specific files
 *.rsuser
 *.suo
