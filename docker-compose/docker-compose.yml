@@ -54,17 +54,15 @@ services:
       - ../clientapp/tailwind.config.js:/app/tailwind.config.js
       - ../clientapp/postcss.config.js:/app/postcss.config.js
       - ../clientapp/eslint.config.mjs:/app/eslint.config.mjs
-      # Mount .env.docker for Docker environment variables (overrides .env.local)
-      - ../clientapp/.env.docker:/app/.env.local
       # Named volumes for generated files (prevents path issues)
       - frontend_node_modules:/app/node_modules
       - frontend_next:/app/.next
+    env_file:
+      - ../clientapp/.env.docker
     environment:
       NODE_ENV: development
       HOST: 0.0.0.0
       PORT: 3000
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-      SERVER_API_URL: ${SERVER_API_URL}
     stdin_open: true
     tty: true
     command: npm run dev

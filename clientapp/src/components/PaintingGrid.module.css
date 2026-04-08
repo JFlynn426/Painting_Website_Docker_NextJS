@@ -54,15 +54,15 @@
 
 @media (min-width: 769px) and (max-width: 1024px) {
     .paintingRow {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(6, 1fr);
     }
 
     .paintingItemLandscape {
-        grid-column: span 2;
+        grid-column: span 3;
     }
 
     .paintingItemPortrait,
     .paintingItemSquare {
-        grid-column: span 1;
+        grid-column: span 2;
     }
 }

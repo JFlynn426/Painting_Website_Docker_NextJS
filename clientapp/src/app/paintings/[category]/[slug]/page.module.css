@@ -12,7 +12,7 @@
     gap: 40px;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1000px) {
     .contentWrapper {
         flex-direction: row;
         align-items: flex-start;
@@ -39,6 +39,17 @@
     padding: 20px;
 }
 
+@media (max-width: 1000px) {
+    .detailsSection {
+        width: 100%;
+        flex: 0 0 auto;
+        padding: 20px;
+    }
+    .infoGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 .title {
     font-size: 2rem;
     color: var(--title-color);
@@ -58,12 +69,6 @@
     grid-template-columns: 1fr;
     gap: 12px;
     margin-bottom: 24px;
-}
-
-@media (min-width: 600px) {
-    .infoGrid {
-        grid-template-columns: repeat(2, 1fr);
-    }
 }
 
 .infoItem {

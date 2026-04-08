@@ -7,6 +7,10 @@
 *.env
 docker-compose/.env
 
+# SSL/TLS certificates (sensitive files)
+*.crt
+*.key
+
 # User-specific files
 *.rsuser
 *.suo

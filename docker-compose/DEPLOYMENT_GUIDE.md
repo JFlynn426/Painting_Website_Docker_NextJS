@@ -1,3 +1,6 @@
+ENCRYPT CONN STRINGS, RUN CONTAINERS AS ROOT
+MAKE SURE DB CONT PORTS ARE NOT AVAILABLE BEFORE DEPLOY!!!
+
 # Deployment Guide: Development vs Production
 
 This guide explains how to switch between development and production modes while maintaining your local Docker development workflow.
@@ -117,6 +120,9 @@ sudo apt-get install certbot python3-certbot-nginx
 sudo certbot certonly --standalone -d yourdomain.com -d www.yourdomain.com
 sudo cp /etc/letsencrypt/live/yourdomain.com/fullchain.pem nginx/ssl/server.crt
 sudo cp /etc/letsencrypt/live/yourdomain.com/privkey.pem nginx/ssl/server.key
+sudo apt install fail2ban
+sudo apt install unattended-upgrades
+sudo dpkg-reconfigure unattended-upgrades
 
 # Option B: Self-signed (for testing)
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \

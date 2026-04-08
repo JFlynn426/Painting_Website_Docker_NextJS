@@ -1,6 +1,7 @@
 import { getNewPaintings } from "@/lib/api";
 import PaintingGrid, { PaintingImageItem } from "@/components/PaintingGrid";
 import styles from "./page.module.css";
+export const dynamic = "force-dynamic";
 
 /**
  * Determines if a painting is landscape or portrait based on its dimensions.

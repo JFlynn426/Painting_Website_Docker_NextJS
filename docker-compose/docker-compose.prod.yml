@@ -3,9 +3,9 @@ services:
     image: mcr.microsoft.com/mssql/server:2025-latest
     container_name: artgallery-sql-prod
     environment:
-      - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=${SQLSERVER_SA_PASSWORD}
-      - MSSQL_PID=Web
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${SQLSERVER_SA_PASSWORD}
+      MSSQL_PID: Express
     volumes:
       - sqlserver_data:/var/opt/mssql
     healthcheck:
@@ -38,7 +38,7 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8080/api/health/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
       start_period: 40s
 
   frontend:
@@ -46,15 +46,17 @@ services:
       context: ../clientapp
       dockerfile: Dockerfile
       target: production
+    user: "1001:1001"
     environment:
       NODE_ENV: production
       HOST: 0.0.0.0
       PORT: 3000
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-      SERVER_API_URL: ${SERVER_API_URL}
     networks:
       - artgallery-network
     restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
 
   nginx:
     image: nginx:alpine
@@ -62,19 +64,21 @@ services:
     ports:
       - "${NGINX_HTTP_PORT:-80}:80"
       - "${NGINX_HTTPS_PORT:-443}:443"
-      - "${NGINX_HEALTH_PORT:-8080}:8080"
+      - "${NGGINX_HEALTH_PORT:-8080}:8080"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
       - nginx_logs:/var/log/nginx
     depends_on:
-      - api
-      - frontend
+      api:
+        condition: service_healthy
+      frontend:
+        condition: service_started
     networks:
       - artgallery-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health", "-o", "/dev/null"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3

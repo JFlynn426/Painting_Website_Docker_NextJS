@@ -6,11 +6,29 @@
 // ============================================================================
 
 // Client-side API URL (used by browser) - must be NEXT_PUBLIC_ to be exposed to client
-const CLIENT_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+// Environment variable is required - no fallback to ensure proper configuration
+const CLIENT_API_URL = process.env.NEXT_PUBLIC_API_URL!;
+if (!CLIENT_API_URL) {
+    throw new Error('NEXT_PUBLIC_API_URL environment variable is not set. Please check your .env file.');
+}
 
 // Server-side API URL (used by Next.js server components running inside Docker)
 // This is NOT prefixed with NEXT_PUBLIC_ so it's only available on the server
-const SERVER_API_URL = process.env.SERVER_API_URL || 'http://api:8080/api';
+// We do NOT validate this at module load time because this module may be imported by client components
+// Validation happens only when server-side functions are called
+const SERVER_API_URL = process.env.SERVER_API_URL;
+
+/**
+ * Get the server-side API base URL with validation
+ * This function should only be called from server components or server actions
+ * @throws Error if SERVER_API_URL is not set (should only happen on server)
+ */
+function getServerApiUrl(): string {
+    if (!SERVER_API_URL) {
+        throw new Error('SERVER_API_URL environment variable is not set. Please check your .env file.');
+    }
+    return SERVER_API_URL;
+}
 
 /**
  * Get the appropriate API base URL based on execution context
@@ -22,7 +40,7 @@ function getApiBaseUrl(): string {
 
     if (isServer) {
         // Server-side: use the server API URL (Docker internal URL when in Docker)
-        return SERVER_API_URL;
+        return getServerApiUrl();
     } else {
         // Client-side: use the client API URL (public URL accessible from browser)
         return CLIENT_API_URL;
@@ -44,11 +62,13 @@ import {
 /**
  * Fetch all painting categories
  * Endpoint: GET api/paintingcategories
+ * Uses runtime fetching with caching to avoid build-time API calls
  */
 export async function getAllPaintingCategories(): Promise<PaintingCategory[]> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/paintingcategories`, {
+            cache: 'force-cache', // Runtime fetching with caching
             next: { revalidate: 86400 } // Cache for 24 hours
         });
 
@@ -65,11 +85,13 @@ export async function getAllPaintingCategories(): Promise<PaintingCategory[]> {
 /**
  * Fetch a specific painting category with its paintings
  * Endpoint: GET api/paintingcategories/{slug}
+ * Uses runtime fetching with caching to avoid build-time API calls
  */
 export async function getCategoryData(categorySlug: string): Promise<PaintingCategoryWithPaintings | null> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/paintingcategories/${categorySlug}`, {
+            cache: 'force-cache', // Runtime fetching with caching
             next: { revalidate: 3600 } // Cache for 1 hour
         });
 
@@ -86,11 +108,13 @@ export async function getCategoryData(categorySlug: string): Promise<PaintingCat
 /**
  * Fetch all paintings
  * Endpoint: GET api/paintings
+ * Uses runtime fetching with caching to avoid build-time API calls
  */
 export async function getAllPaintings(): Promise<Painting[]> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/paintings`, {
+            cache: 'force-cache', // Runtime fetching with caching
             next: { revalidate: 3600 } // Cache for 1 hour
         });
 
@@ -107,11 +131,13 @@ export async function getAllPaintings(): Promise<Painting[]> {
 /**
  * Fetch a specific painting by slug
  * Endpoint: GET api/paintings/{slug}
+ * Uses runtime fetching with caching to avoid build-time API calls
  */
 export async function getPaintingBySlug(slug: string): Promise<Painting | null> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/paintings/${slug}`, {
+            cache: 'force-cache', // Runtime fetching with caching
             next: { revalidate: 3600 } // Cache for 1 hour
         });
 
@@ -128,11 +154,13 @@ export async function getPaintingBySlug(slug: string): Promise<Painting | null> 
 /**
  * Fetch paintings by category slug
  * Endpoint: GET api/paintings/category/{categorySlug}
+ * Uses runtime fetching with caching to avoid build-time API calls
  */
 export async function getPaintingsByCategory(categorySlug: string): Promise<PaintingCategoryWithPaintings | null> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/paintings/category/${categorySlug}`, {
+            cache: 'force-cache', // Runtime fetching with caching
             next: { revalidate: 3600 } // Cache for 1 hour
         });
 
@@ -152,11 +180,13 @@ export { getPaintingBySlug as getPainting };
 /**
  * Fetch all new paintings (where IsNew=true)
  * Endpoint: GET api/paintings/new
+ * Uses runtime fetching with caching to avoid build-time API calls
  */
 export async function getNewPaintings(): Promise<Painting[]> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/paintings/new`, {
+            cache: 'force-cache', // Runtime fetching with caching
             next: { revalidate: 3600 } // Cache for 1 hour
         });
 
@@ -173,11 +203,13 @@ export async function getNewPaintings(): Promise<Painting[]> {
 /**
  * Fetch carousel images
  * Endpoint: GET api/carousel
+ * Uses runtime fetching with caching to avoid build-time API calls
  */
 export async function getCarouselImages(): Promise<CarouselImage[]> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/carousel`, {
+            cache: 'force-cache', // Runtime fetching with caching
             next: { revalidate: 7200 } // Cache for 2 hours
         });
 
@@ -194,11 +226,13 @@ export async function getCarouselImages(): Promise<CarouselImage[]> {
 /**
  * Fetch page content by slug
  * Endpoint: GET api/pagecontent/{slug}
+ * Uses runtime fetching with caching to avoid build-time API calls
  */
 export async function getPageContent(slug: string): Promise<PageContent | null> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/pagecontent/${slug}`, {
+            cache: 'force-cache', // Runtime fetching with caching
             next: { revalidate: 86400 } // Cache for 24 hours
         });
 
