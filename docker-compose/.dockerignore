@@ -1,0 +1,39 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+README*
+DEPLOYMENT_GUIDE.md
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment files (except secrets)
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+dist
+build
+node_modules
+
+# Test files
+test
+tests
+__tests__

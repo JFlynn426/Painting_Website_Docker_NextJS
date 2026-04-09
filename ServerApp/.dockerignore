@@ -1,0 +1,46 @@
+# Git files
+.git
+.gitignore
+
+# Visual Studio files
+*.user
+*.sln.docstates
+*.userossettings
+.vs
+.vscode
+.idea
+*.suo
+*.user
+
+# Build artifacts
+bin
+obj
+binaries
+build
+
+# NuGet packages
+packages
+*.nupkg
+*.snupkg
+**/packages/
+
+# Test results
+TestResults
+coverage
+coverage.json
+coverage.cobertura.xml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+
+# Node modules (if any)
+node_modules

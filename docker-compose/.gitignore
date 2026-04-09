@@ -1,0 +1,15 @@
+# Environment files with actual secrets
+.env
+.env.local
+.env.*.local
+
+# Secrets directory (except .gitkeep)
+secrets/*
+!secrets/.gitkeep
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
