@@ -31,7 +31,7 @@ services:
   api:
     build:
       context: ../ServerApp
-      dockerfile: ServerApp.Api/Dockerfile
+      dockerfile: ./ServerApp.Api/Dockerfile
       target: final
     environment:
       ASPNETCORE_ENVIRONMENT: Production

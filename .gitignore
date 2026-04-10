@@ -369,3 +369,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+docker-compose/ROUTER_CONFIGURATION_GUIDE.md
+docker-compose/SETUP_UBUNTU_SERVER.md
