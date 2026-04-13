@@ -43,17 +43,25 @@ export default function PaintingExamineModal({ onClose, painting }: PaintingExam
         const containerWidth = containerRef.current.clientWidth;
         const containerHeight = containerRef.current.clientHeight;
 
-        // Account for the details section width (350px) when calculating available space
-        const detailsSectionWidth = 350;
+        // Check if we're on mobile (matches CSS breakpoint at 1024px)
+        const isMobile = window.innerWidth < 1024;
+
+        // On desktop, account for the details section width (350px)
+        // On mobile, the details section is below the image, so use full width
+        const detailsSectionWidth = isMobile ? 0 : 350;
         const availableWidth = containerWidth - detailsSectionWidth;
-        const availableHeight = containerHeight;
+
+        // Account for controls bar at bottom (~100px height)
+        const controlsHeight = 100;
+        const availableHeight = containerHeight - controlsHeight;
 
         // Calculate scale to fit image within available space (contain mode)
         const scaleX = availableWidth / imageDimensions.width;
         const scaleY = availableHeight / imageDimensions.height;
         const fitScale = Math.min(scaleX, scaleY);
 
-        setScale(fitScale);
+        // Increase default scale by 20% for better initial viewing
+        setScale(fitScale * 1.2);
         // Reset position to center when scale is recalculated
         setPosition({ x: 0, y: 0 });
     }, [imageDimensions]);

@@ -45,6 +45,7 @@
         flex: 0 0 auto;
         padding: 20px;
     }
+
     .infoGrid {
         grid-template-columns: repeat(2, 1fr);
     }

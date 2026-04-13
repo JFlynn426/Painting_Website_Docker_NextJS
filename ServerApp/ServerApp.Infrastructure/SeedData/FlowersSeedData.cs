@@ -47,7 +47,7 @@ public static class FlowersSeedData
         {
             Title = "The Bee & Coneflowers",
             Slug = "the-bee-and-coneflowers",
-            Description = "Framed oil on canvas. Our honey bees are valuable to all of us for their pollination of our fruits, vegetables, plants and trees, not to mention the honey that we consume. Coneflowers are native to North America and are resilient, have long bloom time, and are the herb Echinacea known for its medicinal properties (Echinacea).",
+            Description = "Framed oil on canvas. Our honey bees are valuable to all of us for their pollination of our fruits, vegetables, plants and trees, not to mention the honey that we consume. Coneflowers are native to North America and are resilient, have long bloom time, and are the herb Echinacea known for its medicinal properties.",
             ImageUrl = "/Flowers-Full/Bee_Coneflowers.jpg",
             ThumbnailUrl = "/Flowers-Thumbnail/Bee_Coneflowers_.jpg",
             CategorySlug = "flowers",

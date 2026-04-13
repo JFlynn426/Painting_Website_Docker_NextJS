@@ -16,7 +16,7 @@ const font = localFont({
 
 export const metadata: Metadata = {
   title: "Gloria Gronowicz Fine Art",
-  description: "Gloria Gronowicz is a talented artist known for her captivating paintings that blend realism with a touch of surrealism. Her work often features vibrant colors and intricate details, drawing viewers into a world of imagination and emotion. With a unique style that combines traditional techniques with contemporary themes, Gloria's art has garnered acclaim for its ability to evoke deep feelings and spark thoughtful reflection. Whether depicting serene landscapes or thought-provoking portraits, Gloria Gronowicz's paintings are a testament to her artistic vision and skill.",
+  description: "Gloria Gronowicz is an oil painter who combines fine art with conservation. As a former Ph.D. scientist she seeks to tell the story of different species and their varied habitats, particularly in South Florida. Through color and light she creates a vignette of life in nature.",
 };
 
 export default function RootLayout({

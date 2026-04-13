@@ -344,4 +344,11 @@
         order: 1;
         min-height: 400px;
     }
+
+    .controls {
+        top: 5px;
+        bottom: auto;
+        left: 30px;
+        right: auto;
+    }
 }

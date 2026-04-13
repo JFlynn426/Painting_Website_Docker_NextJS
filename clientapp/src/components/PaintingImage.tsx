@@ -65,7 +65,7 @@ export default function PaintingImage({
                     className={`${styles.paintingImage} ${orientationClass}`}
                     priority={priority}
                     sizes="(max-width: 768px) 100vw, 50vw"
-                    quality={60}
+                    quality={40}
                 />
                 <div className={styles.hoverOverlay}>
                     <div className={styles.hoverContent}>
