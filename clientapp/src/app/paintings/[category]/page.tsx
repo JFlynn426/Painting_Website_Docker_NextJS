@@ -59,14 +59,30 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         orientation: getPaintingOrientation(painting.width, painting.height)
     }));
 
-    return (
-        <div className={styles.container}>
-            <h1 className={styles.categoryTitle}>{categoryData.name}</h1>
-            {categoryData.description && (
-                <p className={styles.description}>{categoryData.description}</p>
-            )}
+    // Preload critical above-the-fold images for faster initial render
+    // Select first 3 images' thumbnails (or full images if no thumbnail)
+    const preloadImages = images.slice(0, 3);
 
-            <PaintingGrid images={images} categorySlug={category} />
-        </div>
+    return (
+        <>
+            {/* Preload critical images */}
+            {preloadImages.map((img, index) => (
+                <link
+                    key={index}
+                    rel="preload"
+                    as="image"
+                    href={img.thumbnailUrl || img.src}
+                />
+            ))}
+
+            <div className={styles.container}>
+                <h1 className={styles.categoryTitle}>{categoryData.name}</h1>
+                {categoryData.description && (
+                    <p className={styles.description}>{categoryData.description}</p>
+                )}
+
+                <PaintingGrid images={images} categorySlug={category} />
+            </div>
+        </>
     );
 }

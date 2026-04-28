@@ -76,7 +76,7 @@ export default function PaintingGrid({ images, categorySlug }: PaintingGridProps
                                 alt={image.alt}
                                 filename={image.filename}
                                 categorySlug={categorySlug}
-                                priority={rowIndex < 1 && imageIndex < 2}
+                                priority={rowIndex < 2 && imageIndex < 3}
                                 orientation={image.orientation}
                                 title={image.title}
                                 price={image.price}

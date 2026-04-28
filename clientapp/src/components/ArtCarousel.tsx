@@ -79,7 +79,7 @@ export default function ArtCarousel() {
                                 className="object-contain h-full"
                                 style={{ width: 'auto' }}
                                 priority={index === 0}
-                                quality={75}
+                                quality={50}
                             />
                         </div>
                     </div>

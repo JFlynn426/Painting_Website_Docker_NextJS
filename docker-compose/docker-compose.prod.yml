@@ -86,11 +86,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
-          memory: 2G
+          cpus: '2'
+          memory: 4G
         reservations:
-          cpus: '0.25'
-          memory: 512M
+          cpus: '0.5'
+          memory: 1G
 
   nginx:
     build:
@@ -107,7 +107,8 @@ services:
     read_only: true  # Security: Prevent filesystem modifications
     tmpfs:           # Temporary filesystems for required writable directories
       - /var/log/nginx
-      - /var/cache/nginx
+      - /var/cache/nginx        # Main nginx cache
+      - /var/cache/nginx/static # Static asset proxy cache
       - /run
       - /etc/nginx/conf.d
       - /tmp

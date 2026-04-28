@@ -92,7 +92,7 @@ export async function getCategoryData(categorySlug: string): Promise<PaintingCat
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/paintingcategories/${categorySlug}`, {
             cache: 'force-cache', // Runtime fetching with caching
-            next: { revalidate: 3600 } // Cache for 1 hour
+            next: { revalidate: 86400 } // Cache for 24 hours
         });
 
         if (!response.ok) {
@@ -187,7 +187,7 @@ export async function getNewPaintings(): Promise<Painting[]> {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/paintings/new`, {
             cache: 'force-cache', // Runtime fetching with caching
-            next: { revalidate: 3600 } // Cache for 1 hour
+            next: { revalidate: 86400 } // Cache for 24 hours
         });
 
         if (!response.ok) {

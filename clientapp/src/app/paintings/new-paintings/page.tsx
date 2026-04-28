@@ -1,6 +1,8 @@
 import { getNewPaintings } from "@/lib/api";
 import PaintingGrid, { PaintingImageItem } from "@/components/PaintingGrid";
 import styles from "./page.module.css";
+
+// Prevent build-time prerendering since API is only available at runtime (Docker)
 export const dynamic = "force-dynamic";
 
 /**
@@ -32,6 +34,7 @@ export default async function NewPaintingsPage() {
     // The PaintingGrid component will use smart row building to group paintings by orientation
     const images: PaintingImageItem[] = paintings.map(painting => ({
         src: painting.imageUrl,
+        thumbnailUrl: painting.thumbnailUrl,
         alt: painting.title,
         filename: painting.slug,
         title: painting.title,
@@ -43,16 +46,32 @@ export default async function NewPaintingsPage() {
         orientation: getPaintingOrientation(painting.width, painting.height)
     }));
 
-    return (
-        <div className={styles.container}>
-            <h1 className={styles.categoryTitle}>New Paintings</h1>
-            <p className={styles.description}>Discover our latest additions to the collection.</p>
+    // Preload critical above-the-fold images for faster initial render
+    // Select first 3 images' thumbnails (or full images if no thumbnail)
+    const preloadImages = images.slice(0, 3);
 
-            {images.length > 0 ? (
-                <PaintingGrid images={images} categorySlug="new-paintings" />
-            ) : (
-                <p className={styles.noPaintings}>No new paintings available at this time.</p>
-            )}
-        </div>
+    return (
+        <>
+            {/* Preload critical images */}
+            {preloadImages.map((img, index) => (
+                <link
+                    key={index}
+                    rel="preload"
+                    as="image"
+                    href={img.thumbnailUrl || img.src}
+                />
+            ))}
+
+            <div className={styles.container}>
+                <h1 className={styles.categoryTitle}>New Paintings</h1>
+                <p className={styles.description}>Discover our latest additions to the collection.</p>
+
+                {images.length > 0 ? (
+                    <PaintingGrid images={images} categorySlug="new-paintings" />
+                ) : (
+                    <p className={styles.noPaintings}>No new paintings available at this time.</p>
+                )}
+            </div>
+        </>
     );
 }

@@ -181,6 +181,8 @@ export default function PaintingExamineModal({ onClose, painting }: PaintingExam
                                     height={imageDimensions.height || 600}
                                     className={styles.paintingImage}
                                     priority
+                                    sizes="100vw"
+                                    quality={95}
                                 />
                             </div>
                         </div>
