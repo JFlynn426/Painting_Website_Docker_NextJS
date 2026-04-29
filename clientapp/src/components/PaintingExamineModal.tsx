@@ -19,52 +19,34 @@ function formatDimensions(painting: Painting): string {
 }
 
 export default function PaintingExamineModal({ onClose, painting }: PaintingExamineModalProps) {
-    const [scale, setScale] = useState(1);
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-    const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
+    // Zoom level as a multiplier (1.0 = 100% contain fit), resolution-independent
+    const [zoomLevel, setZoomLevel] = useState(1.0);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Get image natural dimensions
+    // Check if zoomed away from default contain (100%)
+    const isZoomed = zoomLevel !== 1.0;
+
+    // When user zooms, just adjust the resolution-independent zoom level
+    const handleZoom = (zoomFactor: number) => {
+        setZoomLevel(prev => {
+            const newLevel = prev * zoomFactor;
+            return Math.max(0.01, Math.min(newLevel, 5));
+        });
+    };
+
+    // Handle window resize when zoomed - reset to contain mode
     useEffect(() => {
-        const img = document.createElement('img');
-        img.src = painting.imageUrl;
-        img.onload = () => {
-            setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+        if (!isZoomed) return;
+        const handleResize = () => {
+            setZoomLevel(1.0);
+            setPosition({ x: 0, y: 0 });
         };
-    }, [painting.imageUrl]);
-
-    // Calculate initial scale to fit image in viewport and reset position
-    useEffect(() => {
-        if (imageDimensions.width === 0 || imageDimensions.height === 0) return;
-        if (!containerRef.current) return;
-
-        const containerWidth = containerRef.current.clientWidth;
-        const containerHeight = containerRef.current.clientHeight;
-
-        // Check if we're on mobile (matches CSS breakpoint at 1024px)
-        const isMobile = window.innerWidth < 1024;
-
-        // On desktop, account for the details section width (350px)
-        // On mobile, the details section is below the image, so use full width
-        const detailsSectionWidth = isMobile ? 0 : 350;
-        const availableWidth = containerWidth - detailsSectionWidth;
-
-        // Account for controls bar at bottom (~100px height)
-        const controlsHeight = 100;
-        const availableHeight = containerHeight - controlsHeight;
-
-        // Calculate scale to fit image within available space (contain mode)
-        const scaleX = availableWidth / imageDimensions.width;
-        const scaleY = availableHeight / imageDimensions.height;
-        const fitScale = Math.min(scaleX, scaleY);
-
-        // Increase default scale by 20% for better initial viewing
-        setScale(fitScale * 1.2);
-        // Reset position to center when scale is recalculated
-        setPosition({ x: 0, y: 0 });
-    }, [imageDimensions]);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [isZoomed]);
 
     // Handle body overflow
     useEffect(() => {
@@ -84,12 +66,12 @@ export default function PaintingExamineModal({ onClose, painting }: PaintingExam
                 case "+":
                 case "=":
                     e.preventDefault();
-                    setScale(prev => Math.min(prev * 1.2, 5));
+                    handleZoom(1.2);
                     break;
                 case "-":
                 case "_":
                     e.preventDefault();
-                    setScale(prev => Math.max(prev / 1.2, 0.01));
+                    handleZoom(1 / 1.2);
                     break;
             }
         };
@@ -107,15 +89,19 @@ export default function PaintingExamineModal({ onClose, painting }: PaintingExam
             e.preventDefault();
             const zoomSensitivity = 0.001;
             const delta = -e.deltaY * zoomSensitivity;
-            const newScale = Math.max(0.01, Math.min(scale + delta, 5));
-            setScale(newScale);
+            const zoomFactor = 1 + delta;
+            if (zoomFactor > 1) {
+                handleZoom(zoomFactor);
+            } else {
+                handleZoom(zoomFactor);
+            }
         };
 
         container.addEventListener('wheel', wheelListener, { passive: false });
         return () => {
             container.removeEventListener('wheel', wheelListener);
         };
-    }, [scale]);
+    }, [isZoomed, zoomLevel]);
 
     // Handle drag start
     const handleMouseDown = (e: React.MouseEvent) => {
@@ -168,18 +154,18 @@ export default function PaintingExamineModal({ onClose, painting }: PaintingExam
                             onMouseLeave={handleMouseUp}
                         >
                             <div
-                                className={styles.imageWrapper}
-                                style={{
-                                    transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`,
+                                className={`${styles.imageWrapper} ${isZoomed ? '' : styles.imageWrapperContain}`}
+                                style={isZoomed ? {
+                                    transform: `scale(${zoomLevel}) translate(${position.x / zoomLevel}px, ${position.y / zoomLevel}px)`,
                                     transformOrigin: 'center center',
-                                }}
+                                } : undefined}
                             >
                                 <Image
                                     src={painting.imageUrl}
                                     alt={painting.title}
-                                    width={imageDimensions.width || 800}
-                                    height={imageDimensions.height || 600}
-                                    className={styles.paintingImage}
+                                    fill
+                                    style={{ objectFit: 'contain' }}
+                                    className={isZoomed ? styles.paintingImage : styles.paintingImageContain}
                                     priority
                                     sizes="100vw"
                                     quality={95}
@@ -190,21 +176,21 @@ export default function PaintingExamineModal({ onClose, painting }: PaintingExam
                         <div className={styles.controls}>
                             <button
                                 className={styles.zoomButton}
-                                onClick={() => setScale(prev => Math.max(prev / 1.2, 0.01))}
+                                onClick={() => handleZoom(1 / 1.2)}
                             >
                                 -
                             </button>
-                            <span className={styles.zoomLevel}>{Math.round(scale * 100)}%</span>
+                            <span className={styles.zoomLevel}>{Math.round(zoomLevel * 100)}%</span>
                             <button
                                 className={styles.zoomButton}
-                                onClick={() => setScale(prev => Math.min(prev * 1.2, 5))}
+                                onClick={() => handleZoom(1.2)}
                             >
                                 +
                             </button>
                             <button
                                 className={styles.resetButton}
                                 onClick={() => {
-                                    setScale(1);
+                                    setZoomLevel(1.0);
                                     setPosition({ x: 0, y: 0 });
                                 }}
                             >
