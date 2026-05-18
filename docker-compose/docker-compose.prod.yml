@@ -38,6 +38,12 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: Server=sqlserver,1433;Database=ArtGallery;User Id=sa;Password=${SQLSERVER_SA_PASSWORD};TrustServerCertificate=True;
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      GoogleAuth__ClientId: ${GOOGLE_AUTH_CLIENT_ID}
+      GoogleAuth__ClientSecret: ${GOOGLE_AUTH_CLIENT_SECRET}
+      GoogleAuth__RedirectUri: ${GOOGLE_AUTH_REDIRECT_URI}
+      Admin__JwtSecretKey: ${ADMIN_JWT_SECRET_KEY}
+      Admin__JwtExpiryMinutes: ${ADMIN_JWT_EXPIRY_MINUTES:-60}
+      Admin__AuthorizedEmails: ${ADMIN_AUTHORIZED_EMAILS}
     depends_on:
       sqlserver:
         condition: service_healthy

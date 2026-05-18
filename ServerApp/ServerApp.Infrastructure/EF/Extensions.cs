@@ -27,11 +27,13 @@ public static class EfExtensions
         services.AddScoped<IPaintingReadRepository, SQLServerPaintingReadRepository>();
         services.AddScoped<IPaintingCategoryReadRepository, SQLServerPaintingCategoryReadRepository>();
         services.AddScoped<IPageContentReadRepository, SQLServerPageContentReadRepository>();
+        services.AddScoped<IAdminUserReadRepository, SQLServerAdminUserReadRepository>();
 
         // Register write repositories (command operations)
         services.AddScoped<IPaintingWriteRepository, SQLServerPaintingWriteRepository>();
         services.AddScoped<IPaintingCategoryWriteRepository, SQLServerPaintingCategoryWriteRepository>();
         services.AddScoped<IPageContentWriteRepository, SQLServerPageContentWriteRepository>();
+        services.AddScoped<IAdminUserWriteRepository, SQLServerAdminUserWriteRepository>();
 
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? configuration[$"{nameof(SQLServerOptions)}:ConnectionString"]

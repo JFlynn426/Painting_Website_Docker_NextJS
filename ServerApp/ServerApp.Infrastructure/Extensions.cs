@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using ServerApp.Application.Services;
 using ServerApp.Domain.Factories;
 using ServerApp.Domain.Services;
 using ServerApp.Infrastructure.EF;
@@ -37,6 +38,7 @@ public static class InfrastructureExtensions
         services.AddScoped<IPaintingFactory, PaintingFactory>();
         services.AddScoped<IPaintingCategoryFactory, PaintingCategoryFactory>();
         services.AddScoped<IPageContentFactory, PageContentFactory>();
+        services.AddScoped<IAdminUserFactory, AdminUserFactory>();
 
         // Register HTML sanitizer service
         services.AddScoped<IHtmlSanitizer, HtmlSanitizer>();
@@ -46,6 +48,10 @@ public static class InfrastructureExtensions
 
         // Register the app initializer for database migrations
         services.AddHostedService<AppInitializer>();
+
+        // Register authentication services
+        services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+        services.AddScoped<IJwtTokenService, JwtTokenService>();
 
         return services;
     }

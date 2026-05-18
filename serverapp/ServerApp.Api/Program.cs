@@ -36,7 +36,8 @@ namespace ServerApp.Api
 
                     policy.WithOrigins(allowedOrigins.ToArray())
                           .AllowAnyHeader()
-                          .AllowAnyMethod();
+                          .AllowAnyMethod()
+                          .AllowCredentials();
                 });
             });
 
@@ -45,6 +46,13 @@ namespace ServerApp.Api
 
             // Add Infrastructure layer services
             builder.Services.AddInfrastructureServices(builder.Configuration);
+
+            // Register authorized admin emails from configuration
+            var authorizedEmailsConfig = builder.Configuration["Admin:AuthorizedEmails"];
+            var authorizedEmails = !string.IsNullOrEmpty(authorizedEmailsConfig)
+                ? authorizedEmailsConfig.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                : Array.Empty<string>();
+            builder.Services.AddSingleton<IEnumerable<string>>(authorizedEmails);
 
             var app = builder.Build();
 

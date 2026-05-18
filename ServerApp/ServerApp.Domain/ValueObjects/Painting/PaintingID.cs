@@ -1,19 +1,16 @@
 namespace ServerApp.Domain.ValueObjects.Painting;
 
-public record PaintingID
+using ServerApp.Shared.Domain;
+
+public record PaintingID : GuidValueObject
 {
-    public Guid Value { get; }
-
-    public PaintingID(Guid value)
-    {
-        Value = value;
-    }
-
-    public PaintingID() : this(Guid.NewGuid())
+    public PaintingID(Guid value) : base(value)
     {
     }
 
-    public static implicit operator Guid(PaintingID id) => id.Value;
+    public PaintingID() : base()
+    {
+    }
 
     public static implicit operator PaintingID(Guid id) => new(id);
 

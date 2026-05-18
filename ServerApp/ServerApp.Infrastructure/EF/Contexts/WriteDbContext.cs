@@ -8,6 +8,7 @@ internal sealed class WriteDbContext : DbContext
     public DbSet<Painting> Paintings { get; set; } = default!;
     public DbSet<PaintingCategory> PaintingCategories { get; set; } = default!;
     public DbSet<PageContent> PageContents { get; set; } = default!;
+    public DbSet<AdminUser> AdminUsers { get; set; } = default!;
 
     public WriteDbContext(DbContextOptions<WriteDbContext> options) : base(options)
     {

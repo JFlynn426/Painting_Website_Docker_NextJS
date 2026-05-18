@@ -1,6 +1,8 @@
+import Link from "next/link";
+
 export default function Footer() {
     return (
-        <footer className="bg-[var(--navbar-footer-bg)] text-white">
+        <footer className="bg-[var(--navbar-footer-bg)] text-white relative">
             <div className="h-px bg-white w-full"></div>
             <div className="container mx-auto px-4 py-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -14,6 +16,12 @@ export default function Footer() {
                     </div>
                 </div>
             </div>
+            <Link
+                href="/admin/login"
+                className="hidden md:block absolute bottom-2 right-4 text-xs text-gray-500 hover:text-gray-300 transition-colors"
+            >
+                Site Admin
+            </Link>
         </footer>
     );
 }

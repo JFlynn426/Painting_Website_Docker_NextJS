@@ -7,19 +7,31 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Commands\**" />
+    <Compile Remove="EF\Migrations\**" />
+    <Compile Remove="EF\Models\**" />
     <Compile Remove="EF\Services\**" />
+    <Compile Remove="Queries\**" />
+    <EmbeddedResource Remove="Commands\**" />
+    <EmbeddedResource Remove="EF\Migrations\**" />
+    <EmbeddedResource Remove="EF\Models\**" />
     <EmbeddedResource Remove="EF\Services\**" />
+    <EmbeddedResource Remove="Queries\**" />
+    <None Remove="Commands\**" />
+    <None Remove="EF\Migrations\**" />
+    <None Remove="EF\Models\**" />
     <None Remove="EF\Services\**" />
+    <None Remove="Queries\**" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AngleSharp" Version="1.4.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.5" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.5">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.8">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.8" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,14 +40,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Commands\Handlers\" />
     <Folder Include="EF\Config\" />
     <Folder Include="EF\Contexts\" />
-    <Folder Include="EF\Migrations\" />
-    <Folder Include="EF\Models\" />
     <Folder Include="EF\Repositories\" />
     <Folder Include="EF\Options\" />
-    <Folder Include="Queries\" />
     <Folder Include="Services\" />
   </ItemGroup>
 
