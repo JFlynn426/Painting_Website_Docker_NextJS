@@ -49,9 +49,17 @@ namespace ServerApp.Api
 
             // Register authorized admin emails from configuration
             var authorizedEmailsConfig = builder.Configuration["Admin:AuthorizedEmails"];
+            Console.WriteLine($"[DEBUG] Admin:AuthorizedEmails config value: '{authorizedEmailsConfig}'");
+            Console.WriteLine($"[DEBUG] Admin:AuthorizedEmails is null: {authorizedEmailsConfig == null}");
+            Console.WriteLine($"[DEBUG] Admin:AuthorizedEmails is empty: {string.IsNullOrEmpty(authorizedEmailsConfig)}");
             var authorizedEmails = !string.IsNullOrEmpty(authorizedEmailsConfig)
                 ? authorizedEmailsConfig.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 : Array.Empty<string>();
+            Console.WriteLine($"[DEBUG] Parsed authorized emails count: {authorizedEmails.Count()}");
+            foreach (var email in authorizedEmails)
+            {
+                Console.WriteLine($"[DEBUG]   - '{email}'");
+            }
             builder.Services.AddSingleton<IEnumerable<string>>(authorizedEmails);
 
             var app = builder.Build();
