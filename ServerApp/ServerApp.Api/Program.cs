@@ -49,19 +49,9 @@ namespace ServerApp.Api
 
             // Register authorized admin emails from configuration
             var authorizedEmailsConfig = builder.Configuration["Admin:AuthorizedEmails"];
-            var logger = Microsoft.Extensions.Logging.LoggerFactory.Create(b => b.AddConsole().SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Warning))
-                .CreateLogger("Startup");
-            logger.LogWarning("[DEBUG] Admin:AuthorizedEmails config value: '{Value}'", authorizedEmailsConfig);
-            logger.LogWarning("[DEBUG] Admin:AuthorizedEmails is null: {IsNull}", authorizedEmailsConfig == null);
-            logger.LogWarning("[DEBUG] Admin:AuthorizedEmails is empty: {IsEmpty}", string.IsNullOrEmpty(authorizedEmailsConfig));
             var authorizedEmails = !string.IsNullOrEmpty(authorizedEmailsConfig)
                 ? authorizedEmailsConfig.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 : Array.Empty<string>();
-            logger.LogWarning("[DEBUG] Parsed authorized emails count: {Count}", authorizedEmails.Count());
-            foreach (var email in authorizedEmails)
-            {
-                logger.LogWarning("[DEBUG]   - '{Email}'", email);
-            }
             builder.Services.AddSingleton<IEnumerable<string>>(authorizedEmails);
 
             var app = builder.Build();
