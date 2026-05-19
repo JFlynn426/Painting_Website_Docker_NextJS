@@ -49,16 +49,18 @@ namespace ServerApp.Api
 
             // Register authorized admin emails from configuration
             var authorizedEmailsConfig = builder.Configuration["Admin:AuthorizedEmails"];
-            Console.WriteLine($"[DEBUG] Admin:AuthorizedEmails config value: '{authorizedEmailsConfig}'");
-            Console.WriteLine($"[DEBUG] Admin:AuthorizedEmails is null: {authorizedEmailsConfig == null}");
-            Console.WriteLine($"[DEBUG] Admin:AuthorizedEmails is empty: {string.IsNullOrEmpty(authorizedEmailsConfig)}");
+            var logger = Microsoft.Extensions.Logging.LoggerFactory.Create(b => b.AddConsole().SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Warning))
+                .CreateLogger("Startup");
+            logger.LogWarning("[DEBUG] Admin:AuthorizedEmails config value: '{Value}'", authorizedEmailsConfig);
+            logger.LogWarning("[DEBUG] Admin:AuthorizedEmails is null: {IsNull}", authorizedEmailsConfig == null);
+            logger.LogWarning("[DEBUG] Admin:AuthorizedEmails is empty: {IsEmpty}", string.IsNullOrEmpty(authorizedEmailsConfig));
             var authorizedEmails = !string.IsNullOrEmpty(authorizedEmailsConfig)
                 ? authorizedEmailsConfig.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 : Array.Empty<string>();
-            Console.WriteLine($"[DEBUG] Parsed authorized emails count: {authorizedEmails.Count()}");
+            logger.LogWarning("[DEBUG] Parsed authorized emails count: {Count}", authorizedEmails.Count());
             foreach (var email in authorizedEmails)
             {
-                Console.WriteLine($"[DEBUG]   - '{email}'");
+                logger.LogWarning("[DEBUG]   - '{Email}'", email);
             }
             builder.Services.AddSingleton<IEnumerable<string>>(authorizedEmails);
 
