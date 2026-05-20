@@ -110,12 +110,17 @@ echo ""
 # --- Install cron job ---
 echo "Installing cron job: $CRON_SCHEDULE (Sunday 2:00 AM)"
 
-# Remove existing backup cron job if present
-sed -i '/artgallery.*backup/d' /var/spool/cron/root 2>/dev/null || true
-
-# Add new cron job
-echo "$CRON_SCHEDULE $SCRIPTS_DIR/backup.sh" >> /var/spool/cron/root
-chmod 600 /var/spool/cron/root
+# Use crontab command for cross-distro compatibility (Ubuntu uses /var/spool/cron/crontabs/, Debian uses /var/spool/cron/)
+# Get existing root crontab if any, remove old backup entries, add new one
+EXISTING_CRONTAB=$(crontab -l 2>/dev/null || true)
+if [ -n "$EXISTING_CRONTAB" ]; then
+    echo "$EXISTING_CRONTAB" | grep -v 'artgallery.*backup' | {
+        cat
+        echo "$CRON_SCHEDULE $SCRIPTS_DIR/backup.sh"
+    } | crontab -
+else
+    echo "$CRON_SCHEDULE $SCRIPTS_DIR/backup.sh" | crontab -
+fi
 
 # Reload cron service
 systemctl reload cron 2>/dev/null || service cron reload 2>/dev/null || true
