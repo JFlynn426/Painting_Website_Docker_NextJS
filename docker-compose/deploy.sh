@@ -16,6 +16,14 @@ echo ""
 # Navigate to docker-compose directory
 cd "$(dirname "$0")"
 
+# Load environment variables from .env file
+if [ -f ".env" ]; then
+    set -a  # Export all variables
+    source .env
+    set +a
+    echo "Loaded environment variables from .env"
+fi
+
 echo "[1/4] Setting up NGINX file permissions for non-root user (UID 101)..."
 
 # Set ownership of SSL directory and files to UID 101 (nginx user)
@@ -43,25 +51,87 @@ else
 fi
 
 echo ""
-echo "[2/4] Stopping existing containers..."
+echo "[2/6] Stopping existing containers..."
 docker-compose -f docker-compose.prod.yml down || true
 
 echo ""
-echo "[3/4] Building and starting containers..."
+echo "[3/6] Starting SQL Server..."
+docker-compose -f docker-compose.prod.yml up -d sqlserver
+
+# Wait for SQL Server to be healthy
+echo "  Waiting for SQL Server to be healthy..."
+MAX_WAIT=180
+ELAPSED=0
+while [ $ELAPSED -lt $MAX_WAIT ]; do
+    HEALTH=$(docker inspect -f '{{.State.Health.Status}}' artgallery-sql-prod 2>/dev/null || echo "starting")
+    if [ "$HEALTH" = "healthy" ]; then
+        echo "  SQL Server is healthy!"
+        break
+    fi
+    sleep 5
+    ELAPSED=$((ELAPSED + 5))
+    echo -n "."
+done
+echo ""
+
+if [ "$HEALTH" != "healthy" ]; then
+    echo "ERROR: SQL Server did not become healthy in time"
+    exit 1
+fi
+
+# Restore latest backup if available
+# Uses BACKUP_DIR from .env (sourced via docker-compose) with Linux production fallback
+BACKUP_DIR="${BACKUP_DIR:-/opt/artgallery/backups}"
+if [ -d "$BACKUP_DIR" ]; then
+    LATEST_BACKUP=$(ls -1t "$BACKUP_DIR"/*.bak 2>/dev/null | head -1)
+    if [ -n "$LATEST_BACKUP" ]; then
+        BACKUP_NAME=$(basename "$LATEST_BACKUP")
+        echo "[4/6] Restoring database from backup: $BACKUP_NAME"
+        
+        # Read password from secrets file
+        SECRET_FILE="./secrets/sqlserver_sa_password"
+        if [ -f "$SECRET_FILE" ]; then
+            SA_PASSWORD=$(cat "$SECRET_FILE")
+        else
+            SA_PASSWORD="${SQLSERVER_SA_PASSWORD}"
+        fi
+        
+        docker exec artgallery-sql-prod /opt/mssql-tools18/bin/sqlcmd \
+            -S localhost \
+            -U sa \
+            -P "$SA_PASSWORD" \
+            -C \
+            -Q "RESTORE DATABASE [ArtGallery] FROM DISK = N'/var/opt/mssql/backup/$BACKUP_NAME' WITH REPLACE, RECOVERY" \
+            2>&1
+        
+        if [ $? -eq 0 ]; then
+            echo "  Database restored successfully!"
+        else
+            echo "  WARNING: Database restore failed. Seeder will populate data."
+        fi
+    else
+        echo "[4/6] No backup files found in $BACKUP_DIR. Database will be seeded."
+    fi
+else
+    echo "[4/6] Backup directory $BACKUP_DIR not found. Database will be seeded."
+fi
+
+echo ""
+echo "[5/6] Building and starting remaining containers..."
 docker-compose -f docker-compose.prod.yml up -d --build
 
 echo ""
-echo "[4/5] Checking container status..."
+echo "[6/6] Checking container status..."
 docker-compose -f docker-compose.prod.yml ps
 
 echo ""
-echo "[5/5] Running security checks..."
+echo "Running security checks..."
 echo "------------------------------------------"
 
 # Security Check 1: Verify all containers run as non-root
 echo "✓ Checking container users (should all be non-root)..."
-API_USER=$(docker exec artgallery-api whoami 2>/dev/null || echo "FAILED")
-FRONTEND_USER=$(docker exec artgallery-frontend whoami 2>/dev/null || echo "FAILED")
+API_USER=$(docker exec artgallery-api-prod whoami 2>/dev/null || echo "FAILED")
+FRONTEND_USER=$(docker exec artgallery-frontend-prod whoami 2>/dev/null || echo "FAILED")
 SQL_USER=$(docker exec artgallery-sql-prod whoami 2>/dev/null || echo "FAILED")
 NGINX_USER=$(docker exec artgallery-nginx whoami 2>/dev/null || echo "FAILED")
 
@@ -130,8 +200,8 @@ echo "To check health:"
 echo "  curl http://localhost:8080/health"
 echo ""
 echo "To run security checks manually:"
-echo "  docker exec artgallery-api whoami"
-echo "  docker exec artgallery-frontend whoami"
+echo "  docker exec artgallery-api-prod whoami"
+echo "  docker exec artgallery-frontend-prod whoami"
 echo "  docker exec artgallery-sql-prod whoami"
 echo "  docker exec artgallery-nginx whoami"
 echo ""

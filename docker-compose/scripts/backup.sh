@@ -29,7 +29,7 @@ log() {
 
 cleanup() {
     # Remove temporary backup file from container if it exists
-    docker exec "$CONTAINER_NAME" rm -f "/var/opt/mssql/backup/$BACKUP_FILE" 2>/dev/null || true
+    docker exec "$CONTAINER_NAME" rm -f "/tmp/$BACKUP_FILE" 2>/dev/null || true
 }
 
 # --- Pre-flight Checks ---
@@ -78,14 +78,14 @@ log "========================================="
 # Trap to clean up container temp file on failure
 trap cleanup ERR
 
-# Step 1: Create backup inside the Docker container
+# Step 1: Create backup inside the Docker container (use /tmp/ since backup volume is read-only)
 log "Creating database backup inside container..."
 docker exec "$CONTAINER_NAME" /opt/mssql-tools18/bin/sqlcmd \
     -S localhost \
     -U SA \
     -P "$SA_PASSWORD" \
     -C \
-    -Q "BACKUP DATABASE [$DATABASE_NAME] TO DISK = N'/var/opt/mssql/backup/$BACKUP_FILE' WITH INIT, STATS = 10" \
+    -Q "BACKUP DATABASE [$DATABASE_NAME] TO DISK = N'/tmp/$BACKUP_FILE' WITH INIT, STATS = 10" \
     2>&1 | tee -a "$LOG_FILE"
 
 if [ ${PIPESTATUS[0]} -ne 0 ]; then
@@ -95,7 +95,7 @@ fi
 
 # Step 2: Copy the .bak file out of the container to the host
 log "Copying backup file to host..."
-docker cp "$CONTAINER_NAME:/var/opt/mssql/backup/$BACKUP_FILE" "$BACKUP_PATH"
+docker cp "$CONTAINER_NAME:/tmp/$BACKUP_FILE" "$BACKUP_PATH"
 
 if [ ${PIPESTATUS[0]} -ne 0 ]; then
     log "ERROR: Failed to copy backup file from container"

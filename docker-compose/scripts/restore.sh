@@ -152,9 +152,9 @@ log "Stopping API container..."
 docker stop artgallery-api-prod 2>/dev/null || true
 log "API container stopped"
 
-# Step 2: Copy backup file into the SQL Server container
+# Step 2: Copy backup file into the SQL Server container (use /tmp/ since backup volume is read-only)
 log "Copying backup file to container..."
-docker cp "$BACKUP_PATH" "$CONTAINER_NAME:/var/opt/mssql/backup/$FILENAME"
+docker cp "$BACKUP_PATH" "$CONTAINER_NAME:/tmp/$FILENAME"
 
 # Step 3: Set database to SINGLE_USER mode to kill existing connections
 log "Setting database to SINGLE_USER mode..."
@@ -172,7 +172,7 @@ docker exec "$CONTAINER_NAME" /opt/mssql-tools18/bin/sqlcmd \
     -U SA \
     -P "$SA_PASSWORD" \
     -C \
-    -Q "RESTORE DATABASE [$DATABASE_NAME] FROM DISK = N'/var/opt/mssql/backup/$FILENAME' WITH REPLACE, RECOVERY" \
+    -Q "RESTORE DATABASE [$DATABASE_NAME] FROM DISK = N'/tmp/$FILENAME' WITH REPLACE, RECOVERY" \
     2>&1 | tee -a "$LOG_FILE"
 
 RESTORE_EXIT=${PIPESTATUS[0]}
@@ -187,7 +187,7 @@ docker exec "$CONTAINER_NAME" /opt/mssql-tools18/bin/sqlcmd \
     -Q "ALTER DATABASE [$DATABASE_NAME] SET MULTI_USER"
 
 # Step 6: Clean up temp file in container
-docker exec "$CONTAINER_NAME" rm -f "/var/opt/mssql/backup/$FILENAME" 2>/dev/null || true
+docker exec "$CONTAINER_NAME" rm -f "/tmp/$FILENAME" 2>/dev/null || true
 
 # Step 7: Restart API container
 log "Starting API container..."

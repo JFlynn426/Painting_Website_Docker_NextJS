@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using ServerApp.Infrastructure.EF.Contexts;
 
 namespace ServerApp.Infrastructure.Services;
@@ -8,10 +9,12 @@ namespace ServerApp.Infrastructure.Services;
 internal sealed class AppInitializer : IHostedService
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly IHostEnvironment _environment;
 
-    public AppInitializer(IServiceProvider serviceProvider)
+    public AppInitializer(IServiceProvider serviceProvider, IHostEnvironment environment)
     {
         _serviceProvider = serviceProvider;
+        _environment = environment;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -26,9 +29,19 @@ internal sealed class AppInitializer : IHostedService
         var readDbContext = scope.ServiceProvider.GetRequiredService<ReadDbContext>();
         await readDbContext.Database.MigrateAsync(cancellationToken);
 
-        // Seed the database with initial data
-        var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
-        await seeder.SeedAsync(cancellationToken);
+        // Only seed in non-production environments
+        // In production, data is restored from backup during deployment
+        if (!_environment.IsProduction())
+        {
+            var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+            await seeder.SeedAsync(cancellationToken);
+        }
+        else
+        {
+            // Log that seeding is skipped in production
+            var logger = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AppInitializer>>();
+            logger.LogInformation("Production environment detected. Skipping database seeding (data restored from backup).");
+        }
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

@@ -8,6 +8,7 @@ services:
       MSSQL_PID: Express
     volumes:
       - sqlserver_data:/var/opt/mssql
+      - ${BACKUP_DIR:-./backups}:/var/opt/mssql/backup:ro
     secrets:
       - sqlserver_sa_password
     healthcheck:
@@ -29,6 +30,7 @@ services:
           memory: 2G
 
   api:
+    container_name: artgallery-api-prod
     build:
       context: ../ServerApp
       dockerfile: ./ServerApp.Api/Dockerfile
@@ -67,6 +69,7 @@ services:
           memory: 1G
 
   frontend:
+    container_name: artgallery-frontend-prod
     build:
       context: ../clientapp
       dockerfile: Dockerfile
