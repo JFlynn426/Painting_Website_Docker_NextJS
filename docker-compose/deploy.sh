@@ -8,6 +8,16 @@
 
 set -e
 
+# Detect Docker Compose command (v2 'docker compose' or v1 'docker-compose')
+if docker compose version >/dev/null 2>&1; then
+    COMPOSE="docker compose"
+elif docker-compose version >/dev/null 2>&1; then
+    COMPOSE="docker-compose"
+else
+    echo "ERROR: Neither 'docker compose' nor 'docker-compose' found"
+    exit 1
+fi
+
 echo "=========================================="
 echo "Art Gallery Deployment Script"
 echo "=========================================="
@@ -52,11 +62,11 @@ fi
 
 echo ""
 echo "[2/6] Stopping existing containers..."
-docker-compose -f docker-compose.prod.yml down || true
+$COMPOSE -f docker-compose.prod.yml down || true
 
 echo ""
 echo "[3/6] Starting SQL Server..."
-docker-compose -f docker-compose.prod.yml up -d sqlserver
+$COMPOSE -f docker-compose.prod.yml up -d sqlserver
 
 # Wait for SQL Server to be healthy
 echo "  Waiting for SQL Server to be healthy..."
@@ -118,11 +128,11 @@ fi
 
 echo ""
 echo "[5/6] Building and starting remaining containers..."
-docker-compose -f docker-compose.prod.yml up -d --build
+$COMPOSE -f docker-compose.prod.yml up -d --build
 
 echo ""
 echo "[6/6] Checking container status..."
-docker-compose -f docker-compose.prod.yml ps
+$COMPOSE -f docker-compose.prod.yml ps
 
 echo ""
 echo "Running security checks..."
@@ -194,7 +204,7 @@ fi
 echo "=========================================="
 echo ""
 echo "To view logs:"
-echo "  docker-compose -f docker-compose.prod.yml logs -f"
+echo "  $COMPOSE -f docker-compose.prod.yml logs -f"
 echo ""
 echo "To check health:"
 echo "  curl http://localhost:8080/health"
