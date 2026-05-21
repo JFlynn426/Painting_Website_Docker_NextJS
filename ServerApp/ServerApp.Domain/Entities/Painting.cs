@@ -21,6 +21,7 @@ public class Painting : AggregateRoot<Guid>
     public PaintingPrice? Price { get; private set; }
     public PaintingIsAvailable IsAvailable { get; private set; } = default!;
     public PaintingIsNew IsNew { get; private set; } = default!;
+    public PaintingIsCarouselPainting IsCarouselPainting { get; private set; } = default!;
 
     // Navigation property for the category this painting belongs to
     public PaintingCategory? Category { get; private set; }
@@ -36,7 +37,7 @@ public class Painting : AggregateRoot<Guid>
     internal Painting(PaintingID id, PaintingName title, PaintingSlug slug, PaintingDescription? description, PaintingImageUrl imageUrl,
         PaintingThumbnailUrl? thumbnailUrl, PaintingCategorySlug categorySlug, PaintingPrice? price,
         PaintingWidth? width = null, PaintingHeight? height = null, PaintingDepth? depth = null,
-        PaintingYear? year = null, PaintingIsAvailable isAvailable = default!, PaintingIsNew isNew = default!)
+        PaintingYear? year = null, PaintingIsAvailable isAvailable = default!, PaintingIsNew isNew = default!, PaintingIsCarouselPainting isCarouselPainting = default!)
     {
         Id = id.Value;
         Title = title;
@@ -52,78 +53,58 @@ public class Painting : AggregateRoot<Guid>
         Year = year;
         IsAvailable = isAvailable;
         IsNew = isNew;
+        IsCarouselPainting = isCarouselPainting;
 
         AddEvent(new PaintingCreatedEvent(Id, title.Value, categorySlug.Value));
     }
 
-    // Method to update availability
-    public void SetAvailability(PaintingIsAvailable isAvailable)
+    // Consolidated update method - applies only non-null parameters
+    public void Update(
+        PaintingDescription? description = null,
+        PaintingImageUrl? imageUrl = null,
+        PaintingThumbnailUrl? thumbnailUrl = null,
+        PaintingPrice? price = null,
+        PaintingWidth? width = null,
+        PaintingHeight? height = null,
+        PaintingDepth? depth = null,
+        PaintingYear? year = null,
+        PaintingIsAvailable? isAvailable = null,
+        PaintingIsNew? isNew = null,
+        PaintingIsCarouselPainting? isCarouselPainting = null)
     {
-        IsAvailable = isAvailable;
+        if (description != null) Description = description;
+        if (imageUrl != null) ImageUrl = imageUrl;
+        if (thumbnailUrl != null) ThumbnailUrl = thumbnailUrl;
+        if (price != null) Price = price;
+        if (width != null) Width = width;
+        if (height != null) Height = height;
+        if (depth != null) Depth = depth;
+        if (year != null) Year = year;
+        if (isAvailable != null) IsAvailable = isAvailable;
+        if (isNew != null) IsNew = isNew;
+        if (isCarouselPainting != null) IsCarouselPainting = isCarouselPainting;
+
         AddEvent(new PaintingUpdatedEvent(Id, Title.Value, CategorySlug.Value));
     }
 
-    // Method to update price
-    public void UpdatePrice(PaintingPrice newPrice)
-    {
-        Price = newPrice;
-        AddEvent(new PaintingUpdatedEvent(Id, Title.Value, CategorySlug.Value));
-    }
-
-    // Method to update description
-    public void UpdateDescription(PaintingDescription newDescription)
-    {
-        Description = newDescription;
-        AddEvent(new PaintingUpdatedEvent(Id, Title.Value, CategorySlug.Value));
-    }
-
-    // Method to update image URL
-    public void UpdateImageUrl(PaintingImageUrl newImageUrl)
-    {
-        ImageUrl = newImageUrl;
-        AddEvent(new PaintingUpdatedEvent(Id, Title.Value, CategorySlug.Value));
-    }
-
-    // Method to update thumbnail URL
-    public void UpdateThumbnailUrl(PaintingThumbnailUrl newThumbnailUrl)
-    {
-        ThumbnailUrl = newThumbnailUrl;
-        AddEvent(new PaintingUpdatedEvent(Id, Title.Value, CategorySlug.Value));
-    }
-
-    // Method to update year
-    public void UpdateYear(PaintingYear newYear)
-    {
-        Year = newYear;
-        AddEvent(new PaintingUpdatedEvent(Id, Title.Value, CategorySlug.Value));
-    }
-
-    // Method to update dimensions
-    public void UpdateDimensions(PaintingWidth? width, PaintingHeight? height, PaintingDepth? depth)
-    {
-        Width = width;
-        Height = height;
-        Depth = depth;
-        AddEvent(new PaintingUpdatedEvent(Id, Title.Value, CategorySlug.Value));
-    }
-
-    // Method to associate with a category
+    // Method to associate with a category (separate operation)
     public void AssignCategory(PaintingCategory category)
     {
         Category = category;
         CategorySlug = category.Slug;
+        AddEvent(new PaintingUpdatedEvent(Id, Title.Value, CategorySlug.Value));
+    }
+
+    // Method to update category slug (called when category name/slug changes)
+    public void UpdateCategorySlug(PaintingCategorySlug newCategorySlug)
+    {
+        CategorySlug = newCategorySlug;
+        AddEvent(new PaintingUpdatedEvent(Id, Title.Value, CategorySlug.Value));
     }
 
     // Method to mark painting for deletion
     public void MarkAsDeleted()
     {
         AddEvent(new PaintingDeletedEvent(Id, Title.Value));
-    }
-
-    // Method to update IsNew status
-    public void SetIsNew(PaintingIsNew isNew)
-    {
-        IsNew = isNew;
-        AddEvent(new PaintingUpdatedEvent(Id, Title.Value, CategorySlug.Value));
     }
 }

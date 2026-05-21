@@ -33,6 +33,29 @@ public class AdminUser : AggregateRoot<Guid>
         AddEvent(new AdminCreatedEvent(Id, Email.Value));
     }
 
+    // Consolidated update method - applies only non-null parameters
+    public void Update(
+        AdminName? displayName = null,
+        AdminPictureUrl? pictureUrl = null,
+        AdminIsActive? isActive = null)
+    {
+        if (displayName != null) DisplayName = displayName;
+        if (pictureUrl != null) PictureUrl = pictureUrl;
+        if (isActive != null)
+        {
+            IsActive = isActive;
+            if (isActive.Value)
+            {
+                AddEvent(new AdminReactivatedEvent(Id, Email.Value));
+            }
+            else
+            {
+                AddEvent(new AdminDeactivatedEvent(Id, Email.Value));
+            }
+        }
+    }
+
+    // Update login info on each successful login (always updates LastLoginAt)
     public void UpdateLoginInfo(AdminName? displayName = null,
         AdminPictureUrl? pictureUrl = null)
     {
@@ -40,15 +63,5 @@ public class AdminUser : AggregateRoot<Guid>
         if (pictureUrl != null) PictureUrl = pictureUrl;
         LastLoginAt = new AdminLastLoginAt(DateTime.UtcNow);
         AddEvent(new AdminLoggedInEvent(Id, Email.Value));
-    }
-
-    public void Deactivate()
-    {
-        IsActive = new AdminIsActive(false);
-    }
-
-    public void Reactivate()
-    {
-        IsActive = new AdminIsActive(true);
     }
 }

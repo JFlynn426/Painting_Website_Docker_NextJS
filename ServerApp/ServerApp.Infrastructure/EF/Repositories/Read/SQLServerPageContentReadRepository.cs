@@ -19,6 +19,12 @@ internal class SQLServerPageContentReadRepository : IPageContentReadRepository
         _readContext = readContext;
     }
 
+    public async Task<PageContent?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _readContext.PageContents
+            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+    }
+
     public async Task<PageContent?> GetByAddressAsync(PageAddress address, CancellationToken cancellationToken = default)
     {
         return await _readContext.PageContents

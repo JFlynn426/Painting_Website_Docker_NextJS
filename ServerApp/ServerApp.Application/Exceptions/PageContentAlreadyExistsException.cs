@@ -1,6 +1,6 @@
-using ServerApp.Shared.Exceptions;
+namespace ServerApp.Application.Exceptions;
 
-namespace ServerApp.Domain.Exceptions;
+using ServerApp.Shared.Exceptions;
 
 public class PageContentAlreadyExistsException : ServerAppException
 {

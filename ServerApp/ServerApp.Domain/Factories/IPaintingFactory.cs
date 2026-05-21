@@ -18,5 +18,6 @@ public interface IPaintingFactory
         PaintingDepth? depth = null,
         PaintingYear? year = null,
         PaintingIsAvailable isAvailable = default!,
-        PaintingIsNew isNew = default!);
+        PaintingIsNew isNew = default!,
+        PaintingIsCarouselPainting isCarouselPainting = default!);
 }

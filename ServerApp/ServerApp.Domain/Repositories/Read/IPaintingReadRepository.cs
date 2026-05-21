@@ -10,6 +10,7 @@ using ServerApp.Domain.ValueObjects.PaintingCategory;
 /// </summary>
 public interface IPaintingReadRepository
 {
+    Task<Painting?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Painting?> GetAsync(PaintingSlug slug, CancellationToken cancellationToken = default);
     Task<IEnumerable<Painting>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<Painting>> GetByCategoryAsync(PaintingCategorySlug categorySlug, CancellationToken cancellationToken = default);

@@ -42,7 +42,7 @@ public class ExceptionMiddleware
                 await response.WriteAsJsonAsync(new { error = "Painting not found", message = ex.Message });
                 break;
 
-            case ServerApp.Domain.Exceptions.PaintingCategoryNotFoundException ex:
+            case PaintingCategoryNotFoundException ex:
                 response.StatusCode = StatusCodes.Status404NotFound;
                 await response.WriteAsJsonAsync(new { error = "Painting category not found", message = ex.Message });
                 break;

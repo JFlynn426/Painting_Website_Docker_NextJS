@@ -15,4 +15,6 @@ public record PageContentText : StringValueObject
     }
 
     public static implicit operator PageContentText(string content) => new(content);
+
+    public static PageContentText? FromNullable(string? value) => value != null ? new PageContentText(value) : null;
 }

@@ -2,6 +2,7 @@ namespace ServerApp.Domain.Entities;
 
 using ServerApp.Shared.Domain;
 using ServerApp.Domain.ValueObjects.Page;
+using ServerApp.Domain.Events;
 
 public class PageContent : AggregateRoot<Guid>
 {
@@ -18,12 +19,18 @@ public class PageContent : AggregateRoot<Guid>
         Address = address;
         Title = title;
         Content = content;
+
+        AddEvent(new PageContentCreatedEvent(Id, address.Value));
     }
 
-    // Method to update page content
-    public void UpdateContent(PageTitle? newTitle, PageContentText newContent)
+    // Consolidated update method - applies only non-null parameters
+    public void Update(
+        PageTitle? title = null,
+        PageContentText? content = null)
     {
-        Title = newTitle;
-        Content = newContent;
+        if (title != null) Title = title;
+        if (content != null) Content = content;
+
+        AddEvent(new PageContentUpdatedEvent(Id, Address.Value));
     }
 }

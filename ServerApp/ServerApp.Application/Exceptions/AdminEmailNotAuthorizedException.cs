@@ -1,4 +1,4 @@
-namespace ServerApp.Domain.Exceptions;
+namespace ServerApp.Application.Exceptions;
 
 using ServerApp.Shared.Exceptions;
 

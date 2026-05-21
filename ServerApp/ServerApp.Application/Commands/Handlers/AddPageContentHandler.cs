@@ -8,7 +8,7 @@ using ServerApp.Domain.Factories;
 using ServerApp.Domain.Repositories.Write;
 using ServerApp.Domain.Repositories.Read;
 using ServerApp.Domain.ValueObjects.Page;
-using ServerApp.Domain.Exceptions;
+using ServerApp.Application.Exceptions;
 
 public class AddPageContentHandler : IRequestHandler<AddPageContent, PageContentCreatedResult>
 {

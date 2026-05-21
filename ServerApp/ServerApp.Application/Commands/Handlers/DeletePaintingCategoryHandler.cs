@@ -35,6 +35,12 @@ public class DeletePaintingCategoryHandler : IRequestHandler<DeletePaintingCateg
                 throw new PaintingCategoryNotFoundException(command.Id.ToString());
             }
 
+            // Check if category still has associated paintings
+            if (category.Paintings.Any())
+            {
+                throw new PaintingCategoryHasPaintingsException(category.Name.Value);
+            }
+
             await _writeRepository.DeleteAsync(command.Id, cancellationToken);
             await _unitOfWork.CommitAsync(cancellationToken);
         }

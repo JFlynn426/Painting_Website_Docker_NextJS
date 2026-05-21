@@ -10,7 +10,7 @@ using ServerApp.Domain.Factories;
 using ServerApp.Domain.Repositories.Write;
 using ServerApp.Domain.Repositories.Read;
 using ServerApp.Domain.ValueObjects.Admin;
-using ServerApp.Domain.Exceptions;
+using ServerApp.Application.Exceptions;
 
 public class LoginWithGoogleHandler : IRequestHandler<LoginWithGoogle, GoogleAuthResponse>
 {

@@ -32,6 +32,7 @@ public class PaintingCategoryFactory : IPaintingCategoryFactory
         // Auto-generate slug from name
         var slug = PaintingCategorySlug.FromName(new PaintingCategoryName(name));
 
-        return new PaintingCategory(id, new PaintingCategoryName(name), slug, description);
+        var descriptionVo = PaintingCategoryDescription.FromNullable(description);
+        return new PaintingCategory(id, new PaintingCategoryName(name), slug, descriptionVo);
     }
 }

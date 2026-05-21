@@ -19,6 +19,13 @@ internal class SQLServerPaintingCategoryReadRepository : IPaintingCategoryReadRe
         _readContext = readContext;
     }
 
+    public async Task<PaintingCategory?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _readContext.PaintingCategories
+            .Include(c => c.Paintings)
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+    }
+
     public async Task<PaintingCategory?> GetAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _readContext.PaintingCategories

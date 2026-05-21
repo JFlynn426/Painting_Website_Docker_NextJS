@@ -3,12 +3,13 @@ namespace ServerApp.Domain.Entities;
 using System.Collections.Generic;
 using ServerApp.Shared.Domain;
 using ServerApp.Domain.ValueObjects.PaintingCategory;
+using ServerApp.Domain.Events;
 
 public class PaintingCategory : AggregateRoot<Guid>
 {
-    public PaintingCategoryName Name { get; private set; }
-    public PaintingCategorySlug Slug { get; private set; }
-    public string? Description { get; private set; }
+    public PaintingCategoryName Name { get; private set; } = default!;
+    public PaintingCategorySlug Slug { get; private set; } = default!;
+    public PaintingCategoryDescription? Description { get; private set; }
 
     // Navigation property for Paintings in this category
     public ICollection<Painting> Paintings { get; private set; } = new List<Painting>();
@@ -17,26 +18,40 @@ public class PaintingCategory : AggregateRoot<Guid>
     private PaintingCategory() { }
 
     // Constructor for creating a new category (domain creation path)
-    internal PaintingCategory(PaintingCategoryID id, PaintingCategoryName name, PaintingCategorySlug slug, string? description = null)
+    internal PaintingCategory(PaintingCategoryID id, PaintingCategoryName name, PaintingCategorySlug slug, PaintingCategoryDescription? description = null)
     {
         Id = id.Value;
         Name = name;
         Slug = slug;
         Description = description;
+
+        AddEvent(new PaintingCategoryCreatedEvent(Id, name.Value, slug.Value));
     }
 
-    // Method to add a painting to this category
-    public void AddPainting(Painting painting)
+    // Consolidated update method - applies only non-null parameters
+    public void Update(
+        PaintingCategoryName? name = null,
+        PaintingCategoryDescription? description = null)
     {
-        if (!Paintings.Contains(painting))
+        if (name != null)
         {
-            Paintings.Add(painting);
+            Name = name;
+            Slug = PaintingCategorySlug.FromName(name);
         }
+        if (description != null) Description = description;
+
+        AddEvent(new PaintingCategoryUpdatedEvent(Id, Name.Value, Slug.Value));
     }
 
     // Method to remove a painting from this category
     public void RemovePainting(Painting painting)
     {
         Paintings.Remove(painting);
+    }
+
+    // Method to mark category for deletion
+    public void MarkAsDeleted()
+    {
+        AddEvent(new PaintingCategoryDeletedEvent(Id, Name.Value));
     }
 }
