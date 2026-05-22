@@ -2,7 +2,7 @@ namespace ServerApp.Shared.Domain
 {
     public abstract class AggregateRoot<T>
     {
-        public T Id { get; protected set; }
+        public T Id { get; protected set; } = default!;
         public int Version { get; protected set; }
 
         private readonly List<IDomainEvent> _events = new();

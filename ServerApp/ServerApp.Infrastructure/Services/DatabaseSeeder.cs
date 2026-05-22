@@ -147,7 +147,8 @@ internal sealed class DatabaseSeeder
             depth: seed.Depth.HasValue ? new PaintingDepth(seed.Depth.Value) : null,
             year: seed.Year.HasValue ? new PaintingYear(seed.Year.Value) : null,
             isAvailable: new PaintingIsAvailable(seed.IsAvailable),
-            isNew: new PaintingIsNew(seed.IsNew)
+            isNew: new PaintingIsNew(seed.IsNew),
+            isCarouselPainting: new PaintingIsCarouselPainting(seed.IsCarouselPainting)
         );
     }
 }

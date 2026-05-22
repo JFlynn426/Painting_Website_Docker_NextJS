@@ -2,7 +2,10 @@ namespace ServerApp.Domain.ValueObjects.Painting;
 
 public record PaintingIsCarouselPainting
 {
-    public bool Value { get; }
+    public bool Value { get; init; }
+
+    // Parameterless constructor for EF Core
+    protected PaintingIsCarouselPainting() { }
 
     public PaintingIsCarouselPainting(bool value)
     {

@@ -1,13 +1,15 @@
 namespace ServerApp.Application.Commands.Handlers;
 
 using MediatR;
-using ServerApp.Shared.Persistence;
+using ServerApp.Application.DTOs;
 using ServerApp.Application.Commands;
+using ServerApp.Application.Services;
+using ServerApp.Shared.Persistence;
 using ServerApp.Domain.Repositories.Write;
 using ServerApp.Domain.Repositories.Read;
 using ServerApp.Application.Exceptions;
 
-public class ReassignPaintingsHandler : IRequestHandler<ReassignPaintings>
+public class ReassignPaintingsHandler : CommandHandlerBase, IRequestHandler<ReassignPaintings, CommandCompletionResponse>
 {
     private readonly IPaintingWriteRepository _paintingWriteRepository;
     private readonly IPaintingReadRepository _paintingReadRepository;
@@ -18,7 +20,10 @@ public class ReassignPaintingsHandler : IRequestHandler<ReassignPaintings>
         IPaintingWriteRepository paintingWriteRepository,
         IPaintingReadRepository paintingReadRepository,
         IPaintingCategoryReadRepository categoryReadRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IConcurrencyLockService concurrencyLock,
+        IIdempotencyKeyService idempotencyKey)
+        : base(concurrencyLock, idempotencyKey)
     {
         _paintingWriteRepository = paintingWriteRepository;
         _paintingReadRepository = paintingReadRepository;
@@ -26,42 +31,48 @@ public class ReassignPaintingsHandler : IRequestHandler<ReassignPaintings>
         _unitOfWork = unitOfWork;
     }
 
-    public async Task Handle(ReassignPaintings command, CancellationToken cancellationToken = default)
+    public async Task<CommandCompletionResponse> Handle(ReassignPaintings command, CancellationToken cancellationToken = default)
     {
-        await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
-        try
+        return await ExecuteAsync(command.AdminId, command.IdempotencyKey, async ct =>
         {
-            // Load all unique categories upfront
-            var categoryIds = command.PaintingIdToCategoryId.Values.Distinct().ToList();
-            var categories = new Dictionary<Guid, Domain.Entities.PaintingCategory>();
-            foreach (var categoryId in categoryIds)
-            {
-                var category = await _categoryReadRepository.GetByIdAsync(categoryId, cancellationToken);
-                if (category == null)
-                {
-                    throw new PaintingCategoryNotFoundException(categoryId.ToString());
-                }
-                categories[categoryId] = category;
-            }
+            await _unitOfWork.BeginTransactionAsync(ct);
 
-            // Reassign each painting to its target category
-            foreach (var kvp in command.PaintingIdToCategoryId)
+            try
             {
-                var painting = await _paintingReadRepository.GetByIdAsync(kvp.Key, cancellationToken);
-                if (painting != null)
+                // Load all unique categories upfront
+                var categoryIds = command.PaintingIdToCategoryId.Values.Distinct().ToList();
+                var categories = new Dictionary<Guid, Domain.Entities.PaintingCategory>();
+                foreach (var categoryId in categoryIds)
                 {
-                    painting.AssignCategory(categories[kvp.Value]);
-                    await _paintingWriteRepository.UpdateAsync(painting, cancellationToken);
+                    var category = await _categoryReadRepository.GetByIdAsync(categoryId, ct);
+                    if (category == null)
+                    {
+                        throw new PaintingCategoryNotFoundException(categoryId.ToString());
+                    }
+                    categories[categoryId] = category;
                 }
-            }
 
-            await _unitOfWork.CommitAsync(cancellationToken);
-        }
-        catch
-        {
-            await _unitOfWork.RollbackAsync(cancellationToken);
-            throw;
-        }
+                // Reassign each painting to its target category
+                int affectedCount = 0;
+                foreach (var kvp in command.PaintingIdToCategoryId)
+                {
+                    var painting = await _paintingReadRepository.GetByIdAsync(kvp.Key, ct);
+                    if (painting != null)
+                    {
+                        painting.AssignCategory(categories[kvp.Value]);
+                        await _paintingWriteRepository.UpdateAsync(painting, ct);
+                        affectedCount++;
+                    }
+                }
+
+                await _unitOfWork.CommitAsync(ct);
+                return affectedCount;
+            }
+            catch
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                throw;
+            }
+        }, cancellationToken);
     }
 }

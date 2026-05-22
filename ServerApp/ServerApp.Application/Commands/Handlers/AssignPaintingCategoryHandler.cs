@@ -1,13 +1,15 @@
 namespace ServerApp.Application.Commands.Handlers;
 
 using MediatR;
-using ServerApp.Shared.Persistence;
+using ServerApp.Application.DTOs;
 using ServerApp.Application.Commands;
+using ServerApp.Application.Services;
+using ServerApp.Shared.Persistence;
 using ServerApp.Domain.Repositories.Write;
 using ServerApp.Domain.Repositories.Read;
 using ServerApp.Application.Exceptions;
 
-public class AssignPaintingCategoryHandler : IRequestHandler<AssignPaintingCategory>
+public class AssignPaintingCategoryHandler : CommandHandlerBase, IRequestHandler<AssignPaintingCategory, CommandCompletionResponse>
 {
     private readonly IPaintingWriteRepository _paintingWriteRepository;
     private readonly IPaintingReadRepository _paintingReadRepository;
@@ -18,7 +20,10 @@ public class AssignPaintingCategoryHandler : IRequestHandler<AssignPaintingCateg
         IPaintingWriteRepository paintingWriteRepository,
         IPaintingReadRepository paintingReadRepository,
         IPaintingCategoryReadRepository categoryReadRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IConcurrencyLockService concurrencyLock,
+        IIdempotencyKeyService idempotencyKey)
+        : base(concurrencyLock, idempotencyKey)
     {
         _paintingWriteRepository = paintingWriteRepository;
         _paintingReadRepository = paintingReadRepository;
@@ -26,33 +31,37 @@ public class AssignPaintingCategoryHandler : IRequestHandler<AssignPaintingCateg
         _unitOfWork = unitOfWork;
     }
 
-    public async Task Handle(AssignPaintingCategory command, CancellationToken cancellationToken = default)
+    public async Task<CommandCompletionResponse> Handle(AssignPaintingCategory command, CancellationToken cancellationToken = default)
     {
-        await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
-        try
+        return await ExecuteAsync(command.AdminId, command.IdempotencyKey, async ct =>
         {
-            var painting = await _paintingReadRepository.GetByIdAsync(command.PaintingId, cancellationToken);
-            if (painting == null)
+            await _unitOfWork.BeginTransactionAsync(ct);
+
+            try
             {
-                throw new PaintingNotFoundException(command.PaintingId.ToString());
-            }
+                var painting = await _paintingReadRepository.GetByIdAsync(command.PaintingId, ct);
+                if (painting == null)
+                {
+                    throw new PaintingNotFoundException(command.PaintingId.ToString());
+                }
 
-            var category = await _categoryReadRepository.GetByIdAsync(command.CategoryId, cancellationToken);
-            if (category == null)
+                var category = await _categoryReadRepository.GetByIdAsync(command.CategoryId, ct);
+                if (category == null)
+                {
+                    throw new PaintingCategoryNotFoundException(command.CategoryId.ToString());
+                }
+
+                painting.AssignCategory(category);
+
+                await _paintingWriteRepository.UpdateAsync(painting, ct);
+                await _unitOfWork.CommitAsync(ct);
+                return 1;
+            }
+            catch
             {
-                throw new PaintingCategoryNotFoundException(command.CategoryId.ToString());
+                await _unitOfWork.RollbackAsync(ct);
+                throw;
             }
-
-            painting.AssignCategory(category);
-
-            await _paintingWriteRepository.UpdateAsync(painting, cancellationToken);
-            await _unitOfWork.CommitAsync(cancellationToken);
-        }
-        catch
-        {
-            await _unitOfWork.RollbackAsync(cancellationToken);
-            throw;
-        }
+        }, cancellationToken);
     }
 }

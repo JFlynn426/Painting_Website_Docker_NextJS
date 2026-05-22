@@ -1,6 +1,7 @@
 namespace ServerApp.Application.Commands;
 
 using MediatR;
+using ServerApp.Application.DTOs;
 
 public record UpdatePainting(
     Guid Id,
@@ -17,5 +18,7 @@ public record UpdatePainting(
     decimal? Price,
     bool? IsAvailable,
     bool? IsNew,
-    bool? IsCarouselPainting
-) : IRequest;
+    bool? IsCarouselPainting,
+    Guid AdminId,
+    string? IdempotencyKey
+) : IRequest<CommandCompletionResponse>;

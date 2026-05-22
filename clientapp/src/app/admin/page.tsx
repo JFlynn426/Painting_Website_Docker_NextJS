@@ -2,53 +2,34 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-
-interface AdminUser {
-    id: string;
-    email: string;
-    displayName: string;
-    pictureUrl?: string;
-    lastLoginAt: string;
-    createdAt: string;
-    isActive: boolean;
-}
+import { verifyAuth, logout, AdminUserDto } from '@/lib/auth';
 
 export default function AdminDashboardPage() {
     const router = useRouter();
-    const [user, setUser] = useState<AdminUser | null>(null);
+    const [user, setUser] = useState<AdminUserDto | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const token = localStorage.getItem('admin_token');
-        const userData = localStorage.getItem('admin_user');
-
-        if (!token || !userData) {
+        verifyAuth().then(result => {
+            if (!result) {
+                router.push('/admin/login');
+            } else {
+                setUser(result);
+                // Store non-sensitive display data for UI caching
+                localStorage.setItem('admin_user', JSON.stringify({
+                    displayName: result.displayName,
+                    pictureUrl: result.pictureUrl
+                }));
+            }
+            setLoading(false);
+        }).catch(() => {
             router.push('/admin/login');
-            return;
-        }
-
-        try {
-            setUser(JSON.parse(userData));
-        } catch {
-            router.push('/admin/login');
-        }
-
-        setLoading(false);
+            setLoading(false);
+        });
     }, [router]);
 
     const handleLogout = async () => {
-        try {
-            await fetch('/api/auth/logout', {
-                method: 'POST',
-                credentials: 'include',
-            });
-        } catch {
-            // Ignore logout errors
-        } finally {
-            localStorage.removeItem('admin_token');
-            localStorage.removeItem('admin_user');
-            router.push('/admin/login');
-        }
+        await logout();
     };
 
     if (loading) {

@@ -28,20 +28,6 @@ internal sealed class AppInitializer : IHostedService
         // Migrate ReadDbContext
         var readDbContext = scope.ServiceProvider.GetRequiredService<ReadDbContext>();
         await readDbContext.Database.MigrateAsync(cancellationToken);
-
-        // Only seed in non-production environments
-        // In production, data is restored from backup during deployment
-        if (!_environment.IsProduction())
-        {
-            var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
-            await seeder.SeedAsync(cancellationToken);
-        }
-        else
-        {
-            // Log that seeding is skipped in production
-            var logger = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AppInitializer>>();
-            logger.LogInformation("Production environment detected. Skipping database seeding (data restored from backup).");
-        }
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

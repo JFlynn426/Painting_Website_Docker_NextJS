@@ -16,7 +16,8 @@ public static class FlowersSeedData
             Height = 35,
             Price = 2700,
             IsAvailable = true,
-            IsNew = true
+            IsNew = true,
+            IsCarouselPainting = true
         },
         new PaintingSeed
         {

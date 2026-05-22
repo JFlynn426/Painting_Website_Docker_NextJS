@@ -23,7 +23,7 @@ public class GetAllPaintingCategoriesHandler : IRequestHandler<GetAllPaintingCat
             Id = c.Id,
             Name = c.Name.Value,
             Slug = c.Slug.Value,
-            Description = c.Description
+            Description = c.Description?.Value
         }).ToList();
     }
 }

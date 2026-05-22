@@ -24,5 +24,6 @@ public class PaintingSeed
     public decimal? Price { get; set; }
     public bool IsAvailable { get; set; } = true;
     public bool IsNew { get; set; } = false;
+    public bool IsCarouselPainting { get; set; } = false;
     public string? ThumbnailUrl { get; set; }
 }

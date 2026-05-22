@@ -45,9 +45,8 @@ RUN npm install
 COPY . .
 
 # Build the Next.js app
-# Using --experimental-build-mode=server to skip static generation
-# This prevents build-time API calls that would fail in Docker
-RUN npm run build
+# Clean .next to avoid stale Turbopack artifacts, then build without Turbopack
+RUN rm -rf .next && NEXT_TURBOPACK=false npm run build
 
 # --- Production Stage ---
 FROM node:25-alpine AS production
@@ -69,15 +68,14 @@ RUN addgroup -g 1001 -S nodejs && \
 
 # Copy standalone output from builder stage
 # The 'output: standalone' in next.config.ts creates a minimal output
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/package-lock.json ./
 COPY --from=builder /app/next.config.ts ./
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-# Install production dependencies only
-RUN npm ci --only=production --omit=dev && npm cache clean --force
+# Copy full node_modules from builder because Turbopack standalone output
+# requires all dependencies (not just production) to resolve hashed module names
+COPY --from=builder /app/node_modules ./node_modules
 
 # Change ownership to non-root user
 RUN chown -R nextjs:nodejs /app

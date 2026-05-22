@@ -15,7 +15,8 @@ public static class LandscapesAndCityscapesSeedData
             Width = 26,
             Height = 20,
             IsAvailable = false,
-            IsNew = true
+            IsNew = true,
+            IsCarouselPainting = true
         },
         new PaintingSeed
         {

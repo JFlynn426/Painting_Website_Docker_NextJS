@@ -157,7 +157,8 @@ public static class SeascapesSeedData
             Height = 27,
             Price = 2500,
             IsAvailable = true,
-            IsNew = true
+            IsNew = true,
+            IsCarouselPainting = true
         },
         new PaintingSeed
         {
@@ -183,7 +184,8 @@ public static class SeascapesSeedData
             Width = 40,
             Height = 30,
             IsAvailable = false,
-            IsNew = true
+            IsNew = true,
+            IsCarouselPainting = true
         },
         new PaintingSeed
         {

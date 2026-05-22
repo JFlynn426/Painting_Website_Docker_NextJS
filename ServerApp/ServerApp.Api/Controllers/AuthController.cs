@@ -16,11 +16,13 @@ public class AuthController : BaseController
 {
     private readonly IMediator _mediator;
     private readonly IGoogleAuthService _googleAuthService;
+    private readonly IJwtTokenService _jwtTokenService;
 
-    public AuthController(IMediator mediator, IGoogleAuthService googleAuthService)
+    public AuthController(IMediator mediator, IGoogleAuthService googleAuthService, IJwtTokenService jwtTokenService)
     {
         _mediator = mediator;
         _googleAuthService = googleAuthService;
+        _jwtTokenService = jwtTokenService;
     }
 
     /// <summary>
@@ -58,13 +60,30 @@ public class AuthController : BaseController
     }
 
     /// <summary>
-    /// Gets the current authenticated admin user.
+    /// Gets the current authenticated admin user by validating the httpOnly cookie.
     /// </summary>
-    /// <param name="adminId">The admin user ID from the JWT token claim.</param>
-    /// <returns>Admin user information if authenticated, otherwise NotFound.</returns>
+    /// <returns>Admin user information if authenticated, otherwise Unauthorized.</returns>
     [HttpGet("me")]
-    public async Task<ActionResult<AdminUserDto>> GetCurrentUser([FromHeader(Name = "X-Admin-Id")] Guid adminId)
+    public async Task<ActionResult<AdminUserDto>> GetCurrentUser()
     {
+        var token = Request.Cookies["admin_token"];
+        if (string.IsNullOrEmpty(token))
+        {
+            return Unauthorized(new { error = "Unauthorized", message = "Missing authentication token." });
+        }
+
+        var principal = _jwtTokenService.ValidateToken(token);
+        if (principal == null)
+        {
+            return Unauthorized(new { error = "Unauthorized", message = "Invalid or expired token." });
+        }
+
+        var adminIdClaim = principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(adminIdClaim) || !Guid.TryParse(adminIdClaim, out var adminId))
+        {
+            return Unauthorized(new { error = "Unauthorized", message = "Invalid token claims." });
+        }
+
         var result = await _mediator.Send(new GetCurrentUser(adminId));
         return OkOrNotFound(result);
     }
@@ -77,5 +96,25 @@ public class AuthController : BaseController
     {
         Response.Cookies.Delete("admin_token");
         return Ok(new { message = "Logged out successfully" });
+    }
+
+    /// <summary>
+    /// Updates an admin user by its ID.
+    /// </summary>
+    /// <param name="id">The admin user ID.</param>
+    /// <param name="request">The update admin user request from the Application layer.</param>
+    /// <param name="idempotencyKey">Optional idempotency key for safe retries.</param>
+    /// <returns>200 OK with command completion response.</returns>
+    [ServerApp.Api.Filters.AdminAuthorized]
+    [HttpPatch("{id:guid}")]
+    public async Task<ActionResult<CommandCompletionResponse>> UpdateAdminUser(
+        [FromRoute] Guid id,
+        [FromBody] UpdateAdminUserRequest request,
+        [FromHeader(Name = "X-Idempotency-Key")] string? idempotencyKey)
+    {
+        var adminId = (Guid)HttpContext.Items["AdminId"]!;
+        var command = new UpdateAdminUser(id, request.DisplayName, request.PictureUrl, request.IsActive, adminId, idempotencyKey);
+        var result = await _mediator.Send(command);
+        return Ok(result);
     }
 }

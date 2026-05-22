@@ -113,7 +113,8 @@ public static class AnimalsSeedData
             Height = 25,
             Price = 1600,
             IsAvailable = true,
-            IsNew = true
+            IsNew = true,
+            IsCarouselPainting = true
         },
         new PaintingSeed
         {
@@ -127,7 +128,8 @@ public static class AnimalsSeedData
             Height = 25,
             Price = 1600,
             IsAvailable = true,
-            IsNew = true
+            IsNew = true,
+            IsCarouselPainting = true
         },
         new PaintingSeed
         {

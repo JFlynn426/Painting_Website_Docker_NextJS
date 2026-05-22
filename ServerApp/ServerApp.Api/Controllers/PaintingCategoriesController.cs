@@ -66,4 +66,24 @@ public class PaintingCategoriesController : BaseController
         await _mediator.Send(command);
         return NoContent();
     }
+
+    /// <summary>
+    /// Updates a painting category by its ID.
+    /// </summary>
+    /// <param name="id">The category ID.</param>
+    /// <param name="request">The update painting category request from the Application layer.</param>
+    /// <param name="idempotencyKey">Optional idempotency key for safe retries.</param>
+    /// <returns>200 OK with command completion response.</returns>
+    [ServerApp.Api.Filters.AdminAuthorized]
+    [HttpPatch("{id:guid}")]
+    public async Task<ActionResult<CommandCompletionResponse>> Update(
+        [FromRoute] Guid id,
+        [FromBody] UpdatePaintingCategoryRequest request,
+        [FromHeader(Name = "X-Idempotency-Key")] string? idempotencyKey)
+    {
+        var adminId = (Guid)HttpContext.Items["AdminId"]!;
+        var command = new UpdatePaintingCategory(id, request.Name, request.Description, adminId, idempotencyKey);
+        var result = await _mediator.Send(command);
+        return Ok(result);
+    }
 }

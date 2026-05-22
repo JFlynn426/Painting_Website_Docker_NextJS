@@ -1,14 +1,16 @@
 namespace ServerApp.Application.Commands.Handlers;
 
 using MediatR;
-using ServerApp.Shared.Persistence;
+using ServerApp.Application.DTOs;
 using ServerApp.Application.Commands;
+using ServerApp.Application.Services;
+using ServerApp.Shared.Persistence;
 using ServerApp.Domain.Repositories.Write;
 using ServerApp.Domain.Repositories.Read;
 using ServerApp.Domain.ValueObjects.Page;
 using ServerApp.Application.Exceptions;
 
-public class UpdatePageContentHandler : IRequestHandler<UpdatePageContent>
+public class UpdatePageContentHandler : CommandHandlerBase, IRequestHandler<UpdatePageContent, CommandCompletionResponse>
 {
     private readonly IPageContentWriteRepository _writeRepository;
     private readonly IPageContentReadRepository _readRepository;
@@ -17,36 +19,43 @@ public class UpdatePageContentHandler : IRequestHandler<UpdatePageContent>
     public UpdatePageContentHandler(
         IPageContentWriteRepository writeRepository,
         IPageContentReadRepository readRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IConcurrencyLockService concurrencyLock,
+        IIdempotencyKeyService idempotencyKey)
+        : base(concurrencyLock, idempotencyKey)
     {
         _writeRepository = writeRepository;
         _readRepository = readRepository;
         _unitOfWork = unitOfWork;
     }
 
-    public async Task Handle(UpdatePageContent command, CancellationToken cancellationToken = default)
+    public async Task<CommandCompletionResponse> Handle(UpdatePageContent command, CancellationToken cancellationToken = default)
     {
-        await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
-        try
+        return await ExecuteAsync(command.AdminId, command.IdempotencyKey, async ct =>
         {
-            var pageContent = await _readRepository.GetByIdAsync(command.Id, cancellationToken);
-            if (pageContent == null)
+            await _unitOfWork.BeginTransactionAsync(ct);
+
+            try
             {
-                throw new PageContentNotFoundException(command.Id.ToString());
+                var pageContent = await _readRepository.GetByIdAsync(command.Id, ct);
+                if (pageContent == null)
+                {
+                    throw new PageContentNotFoundException(command.Id.ToString());
+                }
+
+                pageContent.Update(
+                    PageTitle.FromNullable(command.Title),
+                    PageContentText.FromNullable(command.Content));
+
+                await _writeRepository.UpdateAsync(pageContent, ct);
+                await _unitOfWork.CommitAsync(ct);
+                return 1;
             }
-
-            pageContent.Update(
-                PageTitle.FromNullable(command.Title),
-                PageContentText.FromNullable(command.Content));
-
-            await _writeRepository.UpdateAsync(pageContent, cancellationToken);
-            await _unitOfWork.CommitAsync(cancellationToken);
-        }
-        catch
-        {
-            await _unitOfWork.RollbackAsync(cancellationToken);
-            throw;
-        }
+            catch
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                throw;
+            }
+        }, cancellationToken);
     }
 }

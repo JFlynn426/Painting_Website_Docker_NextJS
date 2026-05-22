@@ -77,6 +77,16 @@ public class ExceptionMiddleware
                 await response.WriteAsJsonAsync(new { error = "Invalid input", message = ex.Message });
                 break;
 
+            case ConcurrentUpdateException ex:
+                response.StatusCode = StatusCodes.Status409Conflict;
+                await response.WriteAsJsonAsync(new { error = "Concurrent update", message = ex.Message });
+                break;
+
+            case CommandTimeoutException ex:
+                response.StatusCode = StatusCodes.Status504GatewayTimeout;
+                await response.WriteAsJsonAsync(new { error = "Command timeout", message = ex.Message });
+                break;
+
             case ServerAppException ex:
                 response.StatusCode = StatusCodes.Status400BadRequest;
                 await response.WriteAsJsonAsync(new { error = "Server error", message = ex.Message });

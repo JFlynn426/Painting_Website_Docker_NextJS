@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import styles from './page.module.css';
 
 interface GoogleAuthResponse {
-    token: string;
     adminUser: {
         id: string;
         email: string;
@@ -70,9 +69,12 @@ export default function AdminLoginPage() {
 
             const data: GoogleAuthResponse = await response.json();
 
-            // Store the token in localStorage for subsequent requests
-            localStorage.setItem('admin_token', data.token);
-            localStorage.setItem('admin_user', JSON.stringify(data.adminUser));
+            // Store only non-sensitive display data in localStorage
+            // The actual auth token is stored as httpOnly cookie by the backend
+            localStorage.setItem('admin_user', JSON.stringify({
+                displayName: data.adminUser.displayName,
+                pictureUrl: data.adminUser.pictureUrl
+            }));
 
             // Redirect to admin dashboard (or home page for now)
             window.location.href = '/admin';

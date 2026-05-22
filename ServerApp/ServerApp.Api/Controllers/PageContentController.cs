@@ -45,6 +45,26 @@ public class PageContentController : BaseController
     }
 
     /// <summary>
+    /// Updates page content by its ID.
+    /// </summary>
+    /// <param name="id">The page content ID.</param>
+    /// <param name="request">The update page content request from the Application layer.</param>
+    /// <param name="idempotencyKey">Optional idempotency key for safe retries.</param>
+    /// <returns>200 OK with command completion response.</returns>
+    [ServerApp.Api.Filters.AdminAuthorized]
+    [HttpPatch("{id:guid}")]
+    public async Task<ActionResult<CommandCompletionResponse>> Update(
+        [FromRoute] Guid id,
+        [FromBody] UpdatePageContentRequest request,
+        [FromHeader(Name = "X-Idempotency-Key")] string? idempotencyKey)
+    {
+        var adminId = (Guid)HttpContext.Items["AdminId"]!;
+        var command = new UpdatePageContent(id, request.Title, request.Content, adminId, idempotencyKey);
+        var result = await _mediator.Send(command);
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Deletes page content by its address.
     /// </summary>
     /// <param name="command">The delete page content command from the Application layer.</param>

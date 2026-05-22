@@ -1,13 +1,15 @@
 namespace ServerApp.Application.Commands.Handlers;
 
 using MediatR;
-using ServerApp.Shared.Persistence;
+using ServerApp.Application.DTOs;
 using ServerApp.Application.Commands;
+using ServerApp.Application.Services;
+using ServerApp.Shared.Persistence;
 using ServerApp.Domain.Repositories.Write;
 using ServerApp.Domain.Repositories.Read;
 using ServerApp.Domain.ValueObjects.Admin;
 
-public class UpdateAdminUserHandler : IRequestHandler<UpdateAdminUser>
+public class UpdateAdminUserHandler : CommandHandlerBase, IRequestHandler<UpdateAdminUser, CommandCompletionResponse>
 {
     private readonly IAdminUserWriteRepository _writeRepository;
     private readonly IAdminUserReadRepository _readRepository;
@@ -16,37 +18,44 @@ public class UpdateAdminUserHandler : IRequestHandler<UpdateAdminUser>
     public UpdateAdminUserHandler(
         IAdminUserWriteRepository writeRepository,
         IAdminUserReadRepository readRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IConcurrencyLockService concurrencyLock,
+        IIdempotencyKeyService idempotencyKey)
+        : base(concurrencyLock, idempotencyKey)
     {
         _writeRepository = writeRepository;
         _readRepository = readRepository;
         _unitOfWork = unitOfWork;
     }
 
-    public async Task Handle(UpdateAdminUser command, CancellationToken cancellationToken = default)
+    public async Task<CommandCompletionResponse> Handle(UpdateAdminUser command, CancellationToken cancellationToken = default)
     {
-        await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
-        try
+        return await ExecuteAsync(command.AdminId, command.IdempotencyKey, async ct =>
         {
-            var adminUser = await _readRepository.GetByIdAsync(command.Id, cancellationToken);
-            if (adminUser == null)
+            await _unitOfWork.BeginTransactionAsync(ct);
+
+            try
             {
-                throw new InvalidOperationException($"Admin user with ID {command.Id} not found.");
+                var adminUser = await _readRepository.GetByIdAsync(command.Id, ct);
+                if (adminUser == null)
+                {
+                    throw new InvalidOperationException($"Admin user with ID {command.Id} not found.");
+                }
+
+                adminUser.Update(
+                    command.DisplayName != null ? new AdminName(command.DisplayName) : null,
+                    AdminPictureUrl.FromNullable(command.PictureUrl),
+                    command.IsActive != null ? new AdminIsActive(command.IsActive.Value) : null);
+
+                await _writeRepository.UpdateAsync(adminUser, ct);
+                await _unitOfWork.CommitAsync(ct);
+                return 1;
             }
-
-            adminUser.Update(
-                command.DisplayName != null ? new AdminName(command.DisplayName) : null,
-                AdminPictureUrl.FromNullable(command.PictureUrl),
-                command.IsActive != null ? new AdminIsActive(command.IsActive.Value) : null);
-
-            await _writeRepository.UpdateAsync(adminUser, cancellationToken);
-            await _unitOfWork.CommitAsync(cancellationToken);
-        }
-        catch
-        {
-            await _unitOfWork.RollbackAsync(cancellationToken);
-            throw;
-        }
+            catch
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                throw;
+            }
+        }, cancellationToken);
     }
 }

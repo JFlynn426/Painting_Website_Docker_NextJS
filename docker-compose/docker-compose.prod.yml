@@ -31,6 +31,7 @@ services:
 
   api:
     container_name: artgallery-api-prod
+    ports: []  # Override dev ports (8080:8080) to avoid conflict with nginx health port
     build:
       context: ../ServerApp
       dockerfile: ./ServerApp.Api/Dockerfile
@@ -83,6 +84,11 @@ services:
       - artgallery-network
     restart: unless-stopped
     read_only: true  # Security: Prevent filesystem modifications
+    tmpfs:           # Temporary filesystems for required writable directories
+      - /tmp
+      - /app/.next/cache
+    volumes: []  # Override dev volumes (frontend_next, frontend_node_modules) which mount stale Turbopack artifacts
+    command: node server.js  # Override dev command from docker-compose.yml
     depends_on:
       api:
         condition: service_healthy
@@ -109,7 +115,7 @@ services:
     ports:
       - "${NGINX_HTTP_PORT:-80}:80"
       - "${NGINX_HTTPS_PORT:-443}:443"
-      - "${NGINX_HEALTH_PORT:-8080}:8080"
+      - "${NGINX_HEALTH_PORT:-9090}:8080"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro

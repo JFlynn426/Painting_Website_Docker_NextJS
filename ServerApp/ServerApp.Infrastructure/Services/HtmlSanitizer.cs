@@ -46,14 +46,15 @@ public class HtmlSanitizer : IHtmlSanitizer
         // Parse the HTML
         var document = Parser.ParseDocument(html);
 
-        // Remove dangerous elements
-        RemoveDangerousElements(document.Body);
+        // Remove dangerous elements (document.Body is never null after ParseDocument)
+        var body = document.Body!;
+        RemoveDangerousElements(body);
 
         // Remove dangerous attributes
-        RemoveDangerousAttributes(document.Body);
+        RemoveDangerousAttributes(body);
 
         // Return the sanitized body inner HTML
-        return document.Body.InnerHtml;
+        return body.InnerHtml;
     }
 
     /// <summary>

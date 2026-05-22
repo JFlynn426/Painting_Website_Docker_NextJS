@@ -43,15 +43,16 @@ public static class InfrastructureExtensions
         // Register HTML sanitizer service
         services.AddScoped<IHtmlSanitizer, HtmlSanitizer>();
 
-        // Register the database seeder
-        services.AddScoped<DatabaseSeeder>();
-
         // Register the app initializer for database migrations
         services.AddHostedService<AppInitializer>();
 
         // Register authentication services
         services.AddScoped<IGoogleAuthService, GoogleAuthService>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
+
+        // Register concurrency and idempotency services
+        services.AddSingleton<IConcurrencyLockService, ConcurrencyLockService>();
+        services.AddSingleton<IIdempotencyKeyService, IdempotencyKeyService>();
 
         return services;
     }

@@ -6,9 +6,9 @@ using ServerApp.Domain.Events;
 
 public class PageContent : AggregateRoot<Guid>
 {
-    public PageAddress Address { get; private set; }
+    public PageAddress Address { get; private set; } = default!;
     public PageTitle? Title { get; private set; }
-    public PageContentText Content { get; private set; }
+    public PageContentText Content { get; private set; } = default!;
 
     // Parameterless constructor for EF Core
     private PageContent() { }
