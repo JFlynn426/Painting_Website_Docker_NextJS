@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import NavBar from "../components/NavBar";
-import Footer from "../components/Footer";
 
 const font = localFont({
   src: [
@@ -27,11 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${font.variable} bg-[var(--background)] text-[var(--foreground)]`}>
-        <NavBar />
-        <main className="py-4">
-          {children}
-        </main>
-        <Footer />
+        {children}
       </body>
     </html>
   );

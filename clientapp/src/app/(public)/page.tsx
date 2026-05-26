@@ -1,6 +1,6 @@
-import ArtCarousel from "../components/ArtCarousel";
-import { getPageContent } from "../lib/api";
-import { sanitizeHtml } from "../lib/sanitization";
+import ArtCarousel from "../../components/ArtCarousel";
+import { getPageContent } from "../../lib/api";
+import { sanitizeHtml } from "../../lib/sanitization";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
