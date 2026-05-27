@@ -16,6 +16,7 @@ export interface Painting {
     price?: number;
     isAvailable: boolean;
     isNew: boolean;
+    isCarouselPainting: boolean;
 }
 
 /**

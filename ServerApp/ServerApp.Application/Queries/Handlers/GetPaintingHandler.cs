@@ -40,7 +40,9 @@ public class GetPaintingHandler : IRequestHandler<GetPainting, PaintingDto>
             Depth = painting.Depth?.Value,
             Year = painting.Year?.Value,
             Price = painting.Price?.Value,
-            IsAvailable = painting.IsAvailable.Value
+            IsAvailable = painting.IsAvailable.Value,
+            IsNew = painting.IsNew.Value,
+            IsCarouselPainting = painting.IsCarouselPainting.Value
         };
     }
 }

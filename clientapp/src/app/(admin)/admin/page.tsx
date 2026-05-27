@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { verifyAuth, AdminUserDto } from '@/lib/auth';
 
 export default function AdminDashboardPage() {
@@ -38,9 +39,44 @@ export default function AdminDashboardPage() {
 
     return (
         <div>
-            <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6">
-                <h2 className="text-2xl font-bold mb-4">Welcome, {user?.displayName}</h2>
-                <p className="text-gray-400">Admin dashboard coming soon...</p>
+            <h1 className="text-2xl font-bold mb-6">Welcome, {user?.displayName}</h1>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Link href="/admin/paintings" className="block">
+                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer">
+                        <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Paintings</h2>
+                        <p className="text-gray-400">
+                            Manage paintings: add new paintings, delete existing ones, edit details, and select new arrivals.
+                        </p>
+                    </div>
+                </Link>
+
+                <Link href="/admin/categories" className="block">
+                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer">
+                        <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Categories</h2>
+                        <p className="text-gray-400">
+                            Manage painting categories: create new categories, edit existing ones, or remove categories.
+                        </p>
+                    </div>
+                </Link>
+
+                <Link href="/admin/content" className="block">
+                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer">
+                        <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Content</h2>
+                        <p className="text-gray-400">
+                            Manage website content: edit page text, descriptions, and other site content.
+                        </p>
+                    </div>
+                </Link>
+
+                <Link href="/admin/settings" className="block">
+                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer">
+                        <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Settings</h2>
+                        <p className="text-gray-400">
+                            Configure site settings: admin preferences and site-wide configuration options.
+                        </p>
+                    </div>
+                </Link>
             </div>
         </div>
     );

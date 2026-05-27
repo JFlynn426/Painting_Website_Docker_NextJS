@@ -309,6 +309,7 @@ export interface AddPaintingRequest {
     depth?: number;
     year?: number;
     isAvailable: boolean;
+    isNew: boolean;
 }
 
 /** Request body for updating a painting */

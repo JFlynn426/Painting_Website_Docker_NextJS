@@ -16,4 +16,5 @@ public class PaintingDto
     public decimal? Price { get; init; }
     public bool IsAvailable { get; init; }
     public bool IsNew { get; init; }
+    public bool IsCarouselPainting { get; init; }
 }
