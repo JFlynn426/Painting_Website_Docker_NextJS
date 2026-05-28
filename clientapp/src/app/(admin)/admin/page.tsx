@@ -43,7 +43,7 @@ export default function AdminDashboardPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Link href="/admin/paintings" className="block">
-                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer">
+                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer min-h-[120px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Paintings</h2>
                         <p className="text-gray-400">
                             Manage paintings: add new paintings, delete existing ones, edit details, and select new arrivals.
@@ -52,7 +52,7 @@ export default function AdminDashboardPage() {
                 </Link>
 
                 <Link href="/admin/categories" className="block">
-                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer">
+                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer min-h-[120px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Categories</h2>
                         <p className="text-gray-400">
                             Manage painting categories: create new categories, edit existing ones, or remove categories.
@@ -61,7 +61,7 @@ export default function AdminDashboardPage() {
                 </Link>
 
                 <Link href="/admin/content" className="block">
-                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer">
+                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer min-h-[120px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Content</h2>
                         <p className="text-gray-400">
                             Manage website content: edit page text, descriptions, and other site content.
@@ -69,11 +69,11 @@ export default function AdminDashboardPage() {
                     </div>
                 </Link>
 
-                <Link href="/admin/settings" className="block">
-                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer">
-                        <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Settings</h2>
+                <Link href="/admin/history" className="block">
+                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer min-h-[120px] flex flex-col justify-center">
+                        <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">History</h2>
                         <p className="text-gray-400">
-                            Configure site settings: admin preferences and site-wide configuration options.
+                            View editing history: track all changes made to paintings, categories, and content.
                         </p>
                     </div>
                 </Link>

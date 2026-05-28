@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { verifyAuth } from '@/lib/auth';
 import styles from './page.module.css';
 
 interface GoogleAuthResponse {
@@ -16,8 +18,21 @@ interface GoogleAuthResponse {
 }
 
 export default function AdminLoginPage() {
+    const router = useRouter();
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [checkingAuth, setCheckingAuth] = useState(true);
+
+    // Check if user is already authenticated - redirect to admin dashboard if so
+    // This uses the server-side /api/auth/me endpoint which validates the httpOnly cookie
+    useEffect(() => {
+        verifyAuth().then(user => {
+            if (user) {
+                router.replace('/admin');
+            }
+            setCheckingAuth(false);
+        });
+    }, [router]);
 
     useEffect(() => {
         // Check if we have a Google auth code in the URL
@@ -86,6 +101,9 @@ export default function AdminLoginPage() {
 
     return (
         <div className={styles.container}>
+            {checkingAuth && (
+                <div className="text-white">Checking authentication...</div>
+            )}
             <div className={styles.loginCard}>
                 <h1 className={styles.title}>Admin Login</h1>
                 <p className={styles.subtitle}>Sign in with Google to access the admin panel</p>

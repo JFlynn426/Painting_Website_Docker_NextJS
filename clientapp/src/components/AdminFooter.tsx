@@ -1,20 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 
 export default function AdminFooter() {
-    const pathname = usePathname();
-
-    if (pathname === '/admin/login') {
-        return null;
-    }
 
     return (
-        <footer className="bg-[var(--navbar-footer-bg)] p-4 text-center text-gray-500 text-sm">
-            <div className="container mx-auto">
+        <footer className="bg-[var(--navbar-footer-bg)] text-center text-gray-500 text-sm">
+            <div className="h-px bg-white w-full"></div>
+            <div className="container mx-auto p-4">
                 <p>Admin Panel &copy; {new Date().getFullYear()} Gloria Gronowicz Fine Art</p>
-                <Link href="/" className="text-gray-400 hover:text-gray-200 transition-colors">
+                <Link href="/" className="text-white hover:text-gray-200 transition-colors">
                     Back to Public Site
                 </Link>
             </div>

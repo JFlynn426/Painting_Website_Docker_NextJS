@@ -303,9 +303,6 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                     <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-1">
                         Title <span className="text-red-500">*</span>
                     </label>
-                    {title !== originalTitle && (
-                        <p className="text-gray-500 text-xs mb-1">Original: {originalTitle}</p>
-                    )}
                     <input
                         type="text"
                         id="title"
@@ -315,6 +312,9 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                         className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
                     />
                     <p className="text-gray-500 text-xs mt-1">{title.length}/100 characters</p>
+                    {title !== originalTitle && (
+                        <p className="text-white text-xs mt-1">Original: {originalTitle}</p>
+                    )}
                     {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
                 </div>
 
@@ -323,9 +323,6 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                     <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">
                         Description
                     </label>
-                    {description !== originalDescription && (
-                        <p className="text-gray-500 text-xs mb-1">Original: {originalDescription || '(empty)'}</p>
-                    )}
                     <textarea
                         id="description"
                         value={description}
@@ -335,6 +332,9 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                         className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
                     />
                     <p className="text-gray-500 text-xs mt-1">{description.length}/500 characters</p>
+                    {description !== originalDescription && (
+                        <p className="text-white text-xs mt-1">Original: {originalDescription || '(empty)'}</p>
+                    )}
                     {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
                 </div>
 
@@ -344,9 +344,6 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                         <label htmlFor="width" className="block text-sm font-medium text-gray-300 mb-1">
                             Width
                         </label>
-                        {width !== originalWidth && (
-                            <p className="text-gray-500 text-xs mb-1">Original: {originalWidth || '(empty)'}</p>
-                        )}
                         <input
                             type="number"
                             id="width"
@@ -354,17 +351,17 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                             onChange={e => setWidth(e.target.value)}
                             step="0.01"
                             min="0.01"
-                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
+                        {width !== originalWidth && (
+                            <p className="text-white text-xs mt-1">Original: {originalWidth || '(empty)'}</p>
+                        )}
                         {errors.width && <p className="text-red-500 text-sm mt-1">{errors.width}</p>}
                     </div>
                     <div>
                         <label htmlFor="height" className="block text-sm font-medium text-gray-300 mb-1">
                             Height
                         </label>
-                        {height !== originalHeight && (
-                            <p className="text-gray-500 text-xs mb-1">Original: {originalHeight || '(empty)'}</p>
-                        )}
                         <input
                             type="number"
                             id="height"
@@ -372,17 +369,17 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                             onChange={e => setHeight(e.target.value)}
                             step="0.01"
                             min="0.01"
-                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
+                        {height !== originalHeight && (
+                            <p className="text-white text-xs mt-1">Original: {originalHeight || '(empty)'}</p>
+                        )}
                         {errors.height && <p className="text-red-500 text-sm mt-1">{errors.height}</p>}
                     </div>
                     <div>
                         <label htmlFor="depth" className="block text-sm font-medium text-gray-300 mb-1">
                             Depth
                         </label>
-                        {depth !== originalDepth && (
-                            <p className="text-gray-500 text-xs mb-1">Original: {originalDepth || '(empty)'}</p>
-                        )}
                         <input
                             type="number"
                             id="depth"
@@ -390,8 +387,11 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                             onChange={e => setDepth(e.target.value)}
                             step="0.01"
                             min="0.01"
-                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
+                        {depth !== originalDepth && (
+                            <p className="text-white text-xs mt-1">Original: {originalDepth || '(empty)'}</p>
+                        )}
                         {errors.depth && <p className="text-red-500 text-sm mt-1">{errors.depth}</p>}
                     </div>
                 </div>
@@ -402,9 +402,6 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                         <label htmlFor="year" className="block text-sm font-medium text-gray-300 mb-1">
                             Year
                         </label>
-                        {year !== originalYear && (
-                            <p className="text-gray-500 text-xs mb-1">Original: {originalYear || '(empty)'}</p>
-                        )}
                         <input
                             type="number"
                             id="year"
@@ -412,17 +409,17 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                             onChange={e => setYear(e.target.value)}
                             min={1900}
                             max={2100}
-                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
+                        {year !== originalYear && (
+                            <p className="text-white text-xs mt-1">Original: {originalYear || '(empty)'}</p>
+                        )}
                         {errors.year && <p className="text-red-500 text-sm mt-1">{errors.year}</p>}
                     </div>
                     <div>
                         <label htmlFor="price" className="block text-sm font-medium text-gray-300 mb-1">
                             Price ($)
                         </label>
-                        {price !== originalPrice && (
-                            <p className="text-gray-500 text-xs mb-1">Original: {originalPrice || '(empty)'}</p>
-                        )}
                         <input
                             type="number"
                             id="price"
@@ -430,8 +427,11 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                             onChange={e => setPrice(e.target.value)}
                             step="0.01"
                             min="0"
-                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
+                        {price !== originalPrice && (
+                            <p className="text-white text-xs mt-1">Original: {originalPrice || '(empty)'}</p>
+                        )}
                         {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
                     </div>
                 </div>
@@ -449,7 +449,7 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                         Painting is available
                     </label>
                     {isAvailable !== originalIsAvailable && (
-                        <span className="ml-2 text-xs text-gray-500">
+                        <span className="ml-2 text-xs text-white">
                             (Original: {originalIsAvailable ? 'Available' : 'Not Available'})
                         </span>
                     )}
@@ -468,7 +468,7 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                         Show in New Paintings
                     </label>
                     {isNew !== originalIsNew && (
-                        <span className="ml-2 text-xs text-gray-500">
+                        <span className="ml-2 text-xs text-white">
                             (Original: {originalIsNew ? 'Yes' : 'No'})
                         </span>
                     )}
