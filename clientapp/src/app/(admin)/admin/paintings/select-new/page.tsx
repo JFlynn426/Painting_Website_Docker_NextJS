@@ -129,7 +129,7 @@ export default function SelectNewPaintingsPage() {
                 {currentNewPaintings.length === 0 ? (
                     <p className="text-gray-400">No paintings are currently marked as new.</p>
                 ) : (
-                    <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    <div className="grid lg:grid-cols-6 gap-4">
                         {currentNewPaintings.map((painting) => (
                             <div
                                 key={painting.id}
@@ -159,7 +159,7 @@ export default function SelectNewPaintingsPage() {
                 {updatedNewPaintings.length === 0 ? (
                     <p className="text-gray-400">No paintings selected yet. Click on paintings below to add them.</p>
                 ) : (
-                    <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {updatedNewPaintings.map((painting) => (
                             <div
                                 key={painting.id}
@@ -210,7 +210,7 @@ export default function SelectNewPaintingsPage() {
                 <p className="text-gray-400 text-sm mb-4">
                     Click on a painting to toggle it as a {'"'}New Painting{'"'}. Selected paintings are highlighted with a blue border.
                 </p>
-                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {allPaintings.map((painting) => {
                         const isSelected = selectedIds.has(painting.id);
                         return (

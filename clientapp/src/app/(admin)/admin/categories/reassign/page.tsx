@@ -1,18 +1,241 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { getAllPaintings, getAllPaintingCategories, reassignPaintings } from '@/lib/api';
+import type { Painting, PaintingCategory } from '@/types/paintings';
+import type { ReassignPaintingsRequest } from '@/lib/api';
 
 export default function ReassignPaintingsPage() {
+    const [allPaintings, setAllPaintings] = useState<Painting[]>([]);
+    const [categories, setCategories] = useState<PaintingCategory[]>([]);
+    const [selectedCategories, setSelectedCategories] = useState<Record<string, string>>({});
+    const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const [saveSuccess, setSaveSuccess] = useState(false);
+
+    useEffect(() => {
+        async function loadData() {
+            try {
+                setLoading(true);
+                const [paintings, cats] = await Promise.all([
+                    getAllPaintings(),
+                    getAllPaintingCategories()
+                ]);
+                // Filter out "new-paintings" category since it's special
+                const filteredCategories = cats.filter(c => c.slug !== 'new-paintings');
+                setAllPaintings(paintings);
+                setCategories(filteredCategories);
+            } catch (err) {
+                setLoadError(err instanceof Error ? err.message : 'Failed to load data');
+            } finally {
+                setLoading(false);
+            }
+        }
+        loadData();
+    }, []);
+
+    const handleCategoryChange = useCallback((paintingId: string, categorySlug: string) => {
+        setSelectedCategories(prev => ({
+            ...prev,
+            [paintingId]: categorySlug
+        }));
+    }, []);
+
+    // Group paintings by their current category
+    const paintingsByCategory = allPaintings.reduce<Record<string, Painting[]>>((acc, painting) => {
+        const categorySlug = painting.categorySlug;
+        if (!acc[categorySlug]) {
+            acc[categorySlug] = [];
+        }
+        acc[categorySlug].push(painting);
+        return acc;
+    }, {});
+
+    // Get list of paintings that have been changed
+    const changedPaintings = allPaintings.filter(painting =>
+        selectedCategories[painting.id] && selectedCategories[painting.id] !== painting.categorySlug
+    );
+
+    const handleSave = async () => {
+        if (changedPaintings.length === 0) {
+            return;
+        }
+
+        setIsSaving(true);
+        setSaveError(null);
+        setSaveSuccess(false);
+
+        try {
+            const paintingIdToCategoryId: Record<string, string> = {};
+            for (const painting of changedPaintings) {
+                const targetCategory = categories.find(c => c.slug === selectedCategories[painting.id]);
+                if (targetCategory) {
+                    paintingIdToCategoryId[painting.id] = targetCategory.id;
+                }
+            }
+
+            const request: ReassignPaintingsRequest = {
+                paintingIdToCategoryId
+            };
+
+            await reassignPaintings(request);
+            setSaveSuccess(true);
+
+            // Update local state to reflect saved changes
+            setAllPaintings(prev =>
+                prev.map(p => {
+                    if (selectedCategories[p.id]) {
+                        return { ...p, categorySlug: selectedCategories[p.id] };
+                    }
+                    return p;
+                })
+            );
+
+            // Clear selected categories after save
+            setSelectedCategories({});
+        } catch (err) {
+            setSaveError(err instanceof Error ? err.message : 'Failed to save changes');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div>
+                <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Reassign Paintings</h1>
+                <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6">
+                    <p className="text-gray-400">Loading paintings and categories...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (loadError) {
+        return (
+            <div>
+                <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Reassign Paintings</h1>
+                <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-6">
+                    <p className="text-red-200">Error: {loadError}</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div>
-            <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Reassign Paintings Between Categories</h1>
+            <h1 className="text-3xl font-bold mb-2 text-[var(--title-color)]">Reassign Paintings</h1>
+            <p className="text-gray-400 mb-6">
+                Paintings are displayed in their initial categories. Select the category to move the painting to by selecting a new category in the dropdown.
+            </p>
 
-            <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6">
-                <p className="text-gray-400">
-                    Select a source category and a target category to move paintings between them. This is useful when reorganizing or merging categories.
-                </p>
+            {saveSuccess && (
+                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-4 mb-6">
+                    <p className="text-green-200">Changes saved successfully! ({changedPaintings.length} painting{changedPaintings.length !== 1 ? 's' : ''} reassigned)</p>
+                </div>
+            )}
+
+            {saveError && (
+                <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-4 mb-6">
+                    <p className="text-red-200">Error: {saveError}</p>
+                </div>
+            )}
+
+            {/* Paintings organized by category */}
+            <div className="space-y-8">
+                {Object.entries(paintingsByCategory).map(([categorySlug, paintings]) => {
+                    const category = categories.find(c => c.slug === categorySlug);
+                    const categoryName = category?.name || categorySlug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+                    return (
+                        <div key={categorySlug}>
+                            <h2 className="text-xl font-semibold mb-3 text-[var(--title-color)]">
+                                {categoryName} ({paintings.length})
+                            </h2>
+                            <div className="grid lg:grid-cols-6 gap-4">
+                                {paintings.map((painting) => {
+                                    const hasChanged = selectedCategories[painting.id] && selectedCategories[painting.id] !== painting.categorySlug;
+                                    return (
+                                        <div
+                                            key={painting.id}
+                                            className={`bg-[var(--navbar-footer-bg)] rounded-lg p-2 ${hasChanged ? 'ring-2 ring-red-500' : ''
+                                                }`}
+                                        >
+                                            <div className="aspect-square mb-1 overflow-hidden rounded">
+                                                <img
+                                                    src={painting.thumbnailUrl || painting.imageUrl}
+                                                    alt={painting.title}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <p className="text-xs text-white truncate mb-2">
+                                                {painting.title}
+                                            </p>
+                                            <select
+                                                value={selectedCategories[painting.id] || painting.categorySlug}
+                                                onChange={(e) => handleCategoryChange(painting.id, e.target.value)}
+                                                className="w-full text-xs bg-gray-700 rounded px-2 py-1 border border-gray-600 focus:border-blue-500 focus:outline-none"
+                                            >
+                                                {categories.map((cat) => (
+                                                    <option key={cat.slug} value={cat.slug}>
+                                                        {cat.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
 
+            {/* Changes List and Save Button */}
+            {changedPaintings.length > 0 && (
+                <div className="mt-8 bg-[var(--navbar-footer-bg)] rounded-lg p-6">
+                    <h2 className="text-xl font-semibold mb-3 text-[var(--title-color)]">
+                        Pending Changes ({changedPaintings.length})
+                    </h2>
+                    <div className="max-h-60 overflow-y-auto mb-4">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="border-b border-gray-600">
+                                    <th className="text-left py-2 px-3 text-[var(--title-color)]">Painting</th>
+                                    <th className="text-left py-2 px-3 text-[var(--title-color)]">Current Category</th>
+                                    <th className="text-left py-2 px-3 text-[var(--title-color)]">New Category</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {changedPaintings.map((painting) => {
+                                    const currentCategory = categories.find(c => c.slug === painting.categorySlug);
+                                    const newCategory = categories.find(c => c.slug === selectedCategories[painting.id]);
+                                    return (
+                                        <tr key={painting.id} className="border-b border-gray-700">
+                                            <td className="py-2 px-3 text-white">{painting.title}</td>
+                                            <td className="py-2 px-3 text-gray-400">{currentCategory?.name || painting.categorySlug}</td>
+                                            <td className="py-2 px-3 text-yellow-400">{newCategory?.name || selectedCategories[painting.id]}</td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                    <button
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    >
+                        {isSaving ? 'Saving...' : `Save Changes (${changedPaintings.length})`}
+                    </button>
+                </div>
+            )}
+
             <div className="mt-6">
-                <Link href="/admin/categories" className="block text-[var(--title-color)] hover:underline">
+                <Link href="/admin/categories" className="text-[var(--title-color)] hover:underline">
                     &larr; Back to Category Management
                 </Link>
             </div>
