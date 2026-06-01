@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getAllPaintings, getAllPaintingCategories, reassignPaintings } from '@/lib/api';
 import type { Painting, PaintingCategory } from '@/types/paintings';
 import type { ReassignPaintingsRequest } from '@/lib/api';
@@ -58,6 +59,18 @@ export default function ReassignPaintingsPage() {
     const changedPaintings = allPaintings.filter(painting =>
         selectedCategories[painting.id] && selectedCategories[painting.id] !== painting.categorySlug
     );
+
+    // Group paintings being reassigned TO each category
+    const incomingPaintingsByCategory = changedPaintings.reduce<Record<string, Painting[]>>((acc, painting) => {
+        const targetSlug = selectedCategories[painting.id];
+        if (targetSlug && !acc[targetSlug]) {
+            acc[targetSlug] = [];
+        }
+        if (targetSlug) {
+            acc[targetSlug].push(painting);
+        }
+        return acc;
+    }, {});
 
     const handleSave = async () => {
         if (changedPaintings.length === 0) {
@@ -164,11 +177,13 @@ export default function ReassignPaintingsPage() {
                                             className={`bg-[var(--navbar-footer-bg)] rounded-lg p-2 ${hasChanged ? 'ring-2 ring-red-500' : ''
                                                 }`}
                                         >
-                                            <div className="aspect-square mb-1 overflow-hidden rounded">
-                                                <img
+                                            <div className="aspect-square mb-1 overflow-hidden rounded relative">
+                                                <Image
                                                     src={painting.thumbnailUrl || painting.imageUrl}
                                                     alt={painting.title}
-                                                    className="w-full h-full object-cover"
+                                                    fill
+                                                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                                    className="object-cover"
                                                 />
                                             </div>
                                             <p className="text-xs text-white truncate mb-2">
@@ -189,6 +204,36 @@ export default function ReassignPaintingsPage() {
                                     );
                                 })}
                             </div>
+
+                            {/* Incoming paintings from other categories */}
+                            {incomingPaintingsByCategory[categorySlug] && incomingPaintingsByCategory[categorySlug].length > 0 && (
+                                <div className="mt-4">
+                                    <h3 className="text-sm font-semibold mb-2 text-blue-400">
+                                        Incoming from other categories ({incomingPaintingsByCategory[categorySlug].length})
+                                    </h3>
+                                    <div className="grid lg:grid-cols-6 gap-4">
+                                        {incomingPaintingsByCategory[categorySlug].map((painting) => (
+                                            <div
+                                                key={`incoming-${painting.id}`}
+                                                className="bg-[var(--navbar-footer-bg)] rounded-lg p-2 ring-2 ring-blue-500"
+                                            >
+                                                <div className="aspect-square mb-1 overflow-hidden rounded relative">
+                                                    <Image
+                                                        src={painting.thumbnailUrl || painting.imageUrl}
+                                                        alt={painting.title}
+                                                        fill
+                                                        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                                        className="object-cover"
+                                                    />
+                                                </div>
+                                                <p className="text-xs text-white truncate">
+                                                    {painting.title}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     );
                 })}

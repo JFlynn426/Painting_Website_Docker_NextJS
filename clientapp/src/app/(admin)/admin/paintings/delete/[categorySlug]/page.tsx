@@ -2,6 +2,7 @@
 
 import { use, useState, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getPaintingsByCategory, deletePainting } from '@/lib/api';
 import type { PaintingCategoryWithPaintings } from '@/types/paintings';
 
@@ -115,17 +116,19 @@ export default function DeleteCategoryPaintingsPage({ params }: DeleteCategoryPa
             {category && category.paintings.length === 0 ? (
                 <p className="text-gray-400">No paintings found in this category.</p>
             ) : category ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {category.paintings.map((painting) => (
                         <div
                             key={painting.id}
                             className="bg-[var(--navbar-footer-bg)] rounded-lg p-3 hover:bg-[var(--background)] transition-colors group"
                         >
-                            <div className="aspect-square mb-2 overflow-hidden rounded">
-                                <img
+                            <div className="aspect-square mb-2 overflow-hidden rounded relative">
+                                <Image
                                     src={painting.thumbnailUrl || painting.imageUrl}
                                     alt={painting.title}
-                                    className="w-full h-full object-cover group-hover:opacity-80 transition-opacity"
+                                    fill
+                                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                    className="object-cover group-hover:opacity-80 transition-opacity"
                                 />
                             </div>
                             <p className="text-sm text-white truncate group-hover:text-[var(--title-color)] transition-colors mb-2">

@@ -11,17 +11,24 @@ using ServerApp.Shared.Persistence;
 internal sealed class UnitOfWork : IUnitOfWork
 {
     private readonly WriteDbContext _writeDbContext;
+    private readonly bool _readOnlyMode;
     private IDbContextTransaction? _transaction;
     private bool _disposed;
 
-    public UnitOfWork(WriteDbContext writeDbContext)
+    public UnitOfWork(WriteDbContext writeDbContext, bool readOnlyMode = false)
     {
         _writeDbContext = writeDbContext;
+        _readOnlyMode = readOnlyMode;
     }
 
     /// <inheritdoc/>
     public async Task BeginTransactionAsync(CancellationToken cancellationToken = default)
     {
+        if (_readOnlyMode)
+        {
+            return; // No-op in read-only mode
+        }
+
         if (_transaction != null)
         {
             return; // Transaction already started
@@ -33,6 +40,11 @@ internal sealed class UnitOfWork : IUnitOfWork
     /// <inheritdoc/>
     public async Task CommitAsync(CancellationToken cancellationToken = default)
     {
+        if (_readOnlyMode)
+        {
+            return; // No-op in read-only mode
+        }
+
         if (_transaction == null)
         {
             // No transaction started, just save changes
@@ -47,8 +59,29 @@ internal sealed class UnitOfWork : IUnitOfWork
     }
 
     /// <inheritdoc/>
+    /// Commits changes even in read-only mode. Used for authentication operations.
+    public async Task CommitForceAsync(CancellationToken cancellationToken = default)
+    {
+        if (_transaction == null)
+        {
+            await _writeDbContext.SaveChangesAsync(cancellationToken);
+            return;
+        }
+
+        await _writeDbContext.SaveChangesAsync(cancellationToken);
+        await _transaction.CommitAsync(cancellationToken);
+        await _transaction.DisposeAsync();
+        _transaction = null;
+    }
+
+    /// <inheritdoc/>
     public async Task RollbackAsync(CancellationToken cancellationToken = default)
     {
+        if (_readOnlyMode)
+        {
+            return; // No-op in read-only mode
+        }
+
         if (_transaction == null)
         {
             return; // No transaction to rollback

@@ -9,7 +9,7 @@ export default function PaintingsAdminPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Link href="/admin/paintings/add" className="block">
-                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer min-h-[120px] flex flex-col justify-center">
+                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Add Paintings</h2>
                         <p className="text-gray-400">
                             Add new paintings to existing categories on the website. Upload images, set titles, descriptions, and assign to a category, etc.
@@ -18,7 +18,7 @@ export default function PaintingsAdminPage() {
                 </Link>
 
                 <Link href="/admin/paintings/delete" className="block">
-                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer min-h-[120px] flex flex-col justify-center">
+                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Delete Paintings</h2>
                         <p className="text-gray-400">
                             Remove existing paintings from the website. Select paintings to permanently delete from the database and storage.
@@ -27,7 +27,7 @@ export default function PaintingsAdminPage() {
                 </Link>
 
                 <Link href="/admin/paintings/edit" className="block">
-                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer min-h-[120px] flex flex-col justify-center">
+                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Edit Paintings</h2>
                         <p className="text-gray-400">
                             Modify details of existing paintings including titles, descriptions, images, dimensions, year, and category assignments, etc.
@@ -36,7 +36,7 @@ export default function PaintingsAdminPage() {
                 </Link>
 
                 <Link href="/admin/paintings/select-new" className="block">
-                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer min-h-[120px] flex flex-col justify-center">
+                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Select New Paintings</h2>
                         <p className="text-gray-400">
                             Mark paintings as new to appear in the New Paintings page. These paintings will be displayed on the New Paintings page and showcase your latest arrivals to the site.

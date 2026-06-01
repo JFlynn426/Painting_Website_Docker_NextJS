@@ -4,6 +4,7 @@ using ServerApp.Application.Services;
 using ServerApp.Domain.Factories;
 using ServerApp.Domain.Services;
 using ServerApp.Infrastructure.EF;
+using ServerApp.Infrastructure.EF.Contexts;
 using ServerApp.Infrastructure.Persistence;
 using ServerApp.Infrastructure.Services;
 using ServerApp.Shared.Persistence;
@@ -31,8 +32,13 @@ public static class InfrastructureExtensions
         // Register SQL Server DbContexts and repositories
         services.AddSQLServer(configuration);
 
-        // Register UnitOfWork for transaction management
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        // Register UnitOfWork for transaction management with read-only mode support
+        var readOnlyMode = bool.Parse(configuration["Database:ReadOnlyMode"] ?? "false");
+        services.AddScoped<IUnitOfWork>(sp =>
+        {
+            var dbContext = sp.GetRequiredService<WriteDbContext>();
+            return new UnitOfWork(dbContext, readOnlyMode);
+        });
 
         // Register domain factories for entity creation
         services.AddScoped<IPaintingFactory, PaintingFactory>();
@@ -43,7 +49,10 @@ public static class InfrastructureExtensions
         // Register HTML sanitizer service
         services.AddScoped<IHtmlSanitizer, HtmlSanitizer>();
 
-        // Register the app initializer for database migrations
+        // Register the database seeder
+        services.AddScoped<DatabaseSeeder>();
+
+        // Register the app initializer for database migrations and seeding
         services.AddHostedService<AppInitializer>();
 
         // Register authentication services

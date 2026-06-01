@@ -85,7 +85,7 @@ public class LoginWithGoogleHandler : IRequestHandler<LoginWithGoogle, GoogleAut
                 await _adminWriteRepository.AddAsync(adminUser, cancellationToken);
             }
 
-            await _unitOfWork.CommitAsync(cancellationToken);
+            await _unitOfWork.CommitForceAsync(cancellationToken);
 
             // Generate JWT token
             var token = _jwtTokenService.GenerateToken(adminUser);

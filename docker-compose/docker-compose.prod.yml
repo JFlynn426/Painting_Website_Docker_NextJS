@@ -47,6 +47,7 @@ services:
       Admin__JwtSecretKey: ${ADMIN_JWT_SECRET_KEY}
       Admin__JwtExpiryMinutes: ${ADMIN_JWT_EXPIRY_MINUTES:-60}
       Admin__AuthorizedEmails: ${ADMIN_AUTHORIZED_EMAILS}
+      Database__ReadOnlyMode: ${DATABASE_READ_ONLY_MODE:-true}
     depends_on:
       sqlserver:
         condition: service_healthy

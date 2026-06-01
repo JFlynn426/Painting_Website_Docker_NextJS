@@ -28,6 +28,7 @@ public class GetPageContentHandler : IRequestHandler<GetPageContent, PageContent
 
         return new PageContentDto
         {
+            Id = pageContent.Id,
             Address = pageContent.Address.Value,
             Title = pageContent.Title?.Value,
             Content = pageContent.Content.Value

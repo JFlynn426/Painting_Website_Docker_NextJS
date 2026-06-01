@@ -228,6 +228,30 @@ export async function getCarouselImages(): Promise<CarouselImage[]> {
  * Endpoint: GET api/pagecontent/{slug}
  * Uses runtime fetching with caching to avoid build-time API calls
  */
+export async function getAllPageContents(): Promise<PageContent[]> {
+    try {
+        const API_BASE_URL = getApiBaseUrl();
+        const response = await fetch(`${API_BASE_URL}/pagecontent`, {
+            cache: 'force-cache',
+            next: { revalidate: 86400 }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch page contents: ${response.statusText}`);
+        }
+
+        const results = await response.json() as RawPageContentDto[];
+        return results.map(r => ({
+            id: r.id,
+            slug: r.address,
+            title: r.title,
+            content: r.content
+        }));
+    } catch (error) {
+        throw error;
+    }
+}
+
 export async function getPageContent(slug: string): Promise<PageContent | null> {
     try {
         const API_BASE_URL = getApiBaseUrl();
@@ -240,10 +264,23 @@ export async function getPageContent(slug: string): Promise<PageContent | null> 
             throw new Error(`Failed to fetch page content: ${response.statusText}`);
         }
 
-        return await response.json();
+        const result = await response.json() as RawPageContentDto;
+        return {
+            id: result.id,
+            slug: result.address,
+            title: result.title,
+            content: result.content
+        };
     } catch (error) {
         throw error;
     }
+}
+
+interface RawPageContentDto {
+    id: string;
+    address: string;
+    title?: string;
+    content: string;
 }
 
 // ============================================================================

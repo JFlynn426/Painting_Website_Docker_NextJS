@@ -21,6 +21,17 @@ public class PageContentController : BaseController
     }
 
     /// <summary>
+    /// Gets all page content items.
+    /// </summary>
+    /// <returns>List of all page content items.</returns>
+    [HttpGet]
+    public async Task<ActionResult<List<PageContentDto>>> GetAll()
+    {
+        var result = await _mediator.Send(new GetAllPageContents());
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Gets page content by its address.
     /// </summary>
     /// <param name="address">The page address.</param>

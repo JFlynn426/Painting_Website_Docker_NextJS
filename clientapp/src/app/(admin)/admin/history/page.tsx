@@ -9,7 +9,7 @@ export default function HistoryAdminPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Link href="/admin/history/view" className="block">
-                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer min-h-[120px] flex flex-col justify-center">
+                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">View Editing History</h2>
                         <p className="text-gray-400">
                             Browse all editing history records for paintings, categories, and content changes. Track when changes were made and by whom.
@@ -18,7 +18,7 @@ export default function HistoryAdminPage() {
                 </Link>
 
                 <Link href="/admin/history/revert" className="block">
-                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer min-h-[120px] flex flex-col justify-center">
+                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Revert Editing History</h2>
                         <p className="text-gray-400">
                             Revert previous changes to paintings, categories, or content by selecting from editing history. Restore previous versions easily.

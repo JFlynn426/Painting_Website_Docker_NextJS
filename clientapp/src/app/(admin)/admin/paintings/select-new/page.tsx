@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getAllPaintings, updatePainting } from '@/lib/api';
 import type { Painting } from '@/types/paintings';
 
@@ -135,11 +136,13 @@ export default function SelectNewPaintingsPage() {
                                 key={painting.id}
                                 className="bg-[var(--navbar-footer-bg)] rounded-lg p-2"
                             >
-                                <div className="aspect-square mb-1 overflow-hidden rounded">
-                                    <img
+                                <div className="aspect-square mb-1 overflow-hidden rounded relative">
+                                    <Image
                                         src={painting.thumbnailUrl || painting.imageUrl}
                                         alt={painting.title}
-                                        className="w-full h-full object-cover"
+                                        fill
+                                        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 16vw"
+                                        className="object-cover"
                                     />
                                 </div>
                                 <p className="text-xs text-white truncate">
@@ -159,17 +162,19 @@ export default function SelectNewPaintingsPage() {
                 {updatedNewPaintings.length === 0 ? (
                     <p className="text-gray-400">No paintings selected yet. Click on paintings below to add them.</p>
                 ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
                         {updatedNewPaintings.map((painting) => (
                             <div
                                 key={painting.id}
                                 className="bg-[var(--navbar-footer-bg)] rounded-lg p-2"
                             >
-                                <div className="aspect-square mb-1 overflow-hidden rounded">
-                                    <img
+                                <div className="aspect-square mb-1 overflow-hidden rounded relative">
+                                    <Image
                                         src={painting.thumbnailUrl || painting.imageUrl}
                                         alt={painting.title}
-                                        className="w-full h-full object-cover"
+                                        fill
+                                        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 16vw"
+                                        className="object-cover"
                                     />
                                 </div>
                                 <p className="text-xs text-white truncate">
@@ -210,7 +215,7 @@ export default function SelectNewPaintingsPage() {
                 <p className="text-gray-400 text-sm mb-4">
                     Click on a painting to toggle it as a {'"'}New Painting{'"'}. Selected paintings are highlighted with a blue border.
                 </p>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
                     {allPaintings.map((painting) => {
                         const isSelected = selectedIds.has(painting.id);
                         return (
@@ -222,11 +227,13 @@ export default function SelectNewPaintingsPage() {
                                     : 'hover:bg-[var(--background)]'
                                     }`}
                             >
-                                <div className="aspect-square mb-1 overflow-hidden rounded">
-                                    <img
+                                <div className="aspect-square mb-1 overflow-hidden rounded relative">
+                                    <Image
                                         src={painting.thumbnailUrl || painting.imageUrl}
                                         alt={painting.title}
-                                        className="w-full h-full object-cover group-hover:opacity-80 transition-opacity"
+                                        fill
+                                        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 16vw"
+                                        className="object-cover group-hover:opacity-80 transition-opacity"
                                     />
                                 </div>
                                 <p className={`text-xs truncate group-hover:text-[var(--title-color)] transition-colors ${isSelected ? 'text-[var(--title-color)]' : 'text-white'

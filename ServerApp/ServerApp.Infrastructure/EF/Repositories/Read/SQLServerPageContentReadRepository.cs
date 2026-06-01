@@ -31,6 +31,12 @@ internal class SQLServerPageContentReadRepository : IPageContentReadRepository
             .FirstOrDefaultAsync(p => p.Address == address.Value, cancellationToken);
     }
 
+    public async Task<IEnumerable<PageContent>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await _readContext.PageContents
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<bool> ExistsByAddressAsync(PageAddress address, CancellationToken cancellationToken = default)
     {
         return await _readContext.PageContents.AnyAsync(p => p.Address == address.Value, cancellationToken);
