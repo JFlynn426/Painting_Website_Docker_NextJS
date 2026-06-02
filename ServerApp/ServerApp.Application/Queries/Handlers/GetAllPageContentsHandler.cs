@@ -23,7 +23,8 @@ public class GetAllPageContentsHandler : IRequestHandler<GetAllPageContents, Lis
             Id = pc.Id,
             Address = pc.Address.Value,
             Title = pc.Title?.Value,
-            Content = pc.Content.Value
+            Content = pc.Content.Value,
+            PhotoUrl = pc.PhotoUrl?.Value
         }).ToList();
     }
 }

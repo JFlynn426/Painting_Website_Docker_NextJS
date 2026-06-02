@@ -12,14 +12,12 @@ public class PageContentConfiguration : IEntityTypeConfiguration<PageContent>
     {
         builder.ToTable("PageContents");
 
-        // Primary key
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id)
             .HasColumnName("Id")
             .HasColumnType("uniqueidentifier")
             .ValueGeneratedOnAdd();
 
-        // Value object with a non-null backing primitive
         builder.Property(e => e.Address)
             .HasColumnName("Address")
             .HasColumnType("nvarchar(200)")
@@ -28,7 +26,6 @@ public class PageContentConfiguration : IEntityTypeConfiguration<PageContent>
                 a => a.Value,
                 value => new PageAddress(value));
 
-        // Nullable value object - conversion must handle null both ways
         builder.Property(e => e.Title)
             .HasColumnName("Title")
             .HasColumnType("nvarchar(200)")
@@ -38,7 +35,6 @@ public class PageContentConfiguration : IEntityTypeConfiguration<PageContent>
                     v => v == null ? null : v.Value,
                     v => v == null ? null : new PageTitle(v)));
 
-        // Value object with a non-null backing primitive
         builder.Property(e => e.Content)
             .HasColumnName("Content")
             .HasColumnType("nvarchar(max)")
@@ -46,6 +42,15 @@ public class PageContentConfiguration : IEntityTypeConfiguration<PageContent>
             .HasConversion(
                 c => c.Value,
                 value => new PageContentText(value));
+
+        builder.Property(e => e.PhotoUrl)
+            .HasColumnName("PhotoUrl")
+            .HasColumnType("nvarchar(max)")
+            .IsRequired(false)
+            .HasConversion(
+                new ValueConverter<PagePhotoUrl?, string?>(
+                    v => v == null ? null : v.Value,
+                    v => v == null ? null : new PagePhotoUrl(v)));
 
         builder.HasIndex(e => e.Address).IsUnique();
     }

@@ -8,5 +8,6 @@ public interface IPageContentFactory
     PageContent Create(
         PageAddress address,
         PageTitle? title,
-        PageContentText content);
+        PageContentText content,
+        PagePhotoUrl? photoUrl = null);
 }

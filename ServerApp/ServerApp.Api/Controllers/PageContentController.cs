@@ -70,7 +70,7 @@ public class PageContentController : BaseController
         [FromHeader(Name = "X-Idempotency-Key")] string? idempotencyKey)
     {
         var adminId = (Guid)HttpContext.Items["AdminId"]!;
-        var command = new UpdatePageContent(id, request.Title, request.Content, adminId, idempotencyKey);
+        var command = new UpdatePageContent(id, request.Title, request.Content, request.PhotoUrl, adminId, idempotencyKey);
         var result = await _mediator.Send(command);
         return Ok(result);
     }

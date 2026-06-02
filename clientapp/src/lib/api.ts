@@ -245,7 +245,8 @@ export async function getAllPageContents(): Promise<PageContent[]> {
             id: r.id,
             slug: r.address,
             title: r.title,
-            content: r.content
+            content: r.content,
+            photoUrl: r.photoUrl
         }));
     } catch (error) {
         throw error;
@@ -269,7 +270,8 @@ export async function getPageContent(slug: string): Promise<PageContent | null> 
             id: result.id,
             slug: result.address,
             title: result.title,
-            content: result.content
+            content: result.content,
+            photoUrl: result.photoUrl
         };
     } catch (error) {
         throw error;
@@ -281,6 +283,7 @@ interface RawPageContentDto {
     address: string;
     title?: string;
     content: string;
+    photoUrl?: string;
 }
 
 // ============================================================================
@@ -390,6 +393,7 @@ export interface AddPageContentRequest {
 export interface UpdatePageContentRequest {
     title?: string;
     content?: string;
+    photoUrl?: string;
 }
 
 /** Request body for updating an admin user */

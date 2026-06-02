@@ -1,5 +1,6 @@
+import Image from "next/image";
 import { getPageContent } from "@/lib/api";
-import { sanitizeHtml } from "@/lib/sanitization";
+import { renderParagraphs } from "@/lib/sanitization";
 
 interface PageContentProps {
     address: string;
@@ -36,8 +37,22 @@ export default async function PageContent({
                 </h1>
             )}
 
-            {/* Content from page content */}
-            <div className={contentClassName} dangerouslySetInnerHTML={{ __html: sanitizeHtml(pageContent.content) }} />
+            {/* Photo from page content */}
+            {pageContent.photoUrl && (
+                <div className="relative place-self-center mb-6 w-[400px] h-[400px]">
+                    <Image
+                        src={pageContent.photoUrl}
+                        alt={pageContent.title || 'Page photo'}
+                        fill
+                        className="rounded-lg object-contain"
+                    />
+                </div>
+            )}
+
+            {/* Content container with consistent styling */}
+            <div className={contentClassName} style={{ textAlign: 'left', maxWidth: '800px', margin: '0 auto', marginBottom: '3rem' }}>
+                <div dangerouslySetInnerHTML={{ __html: renderParagraphs(pageContent.content) }} />
+            </div>
         </div>
     );
 }

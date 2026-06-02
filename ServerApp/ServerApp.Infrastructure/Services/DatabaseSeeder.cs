@@ -113,7 +113,8 @@ internal sealed class DatabaseSeeder
             var pageContent = _pageContentFactory.Create(
                 new PageAddress(seedPageContent.Address),
                 PageTitle.FromNullable(seedPageContent.Title),
-                new PageContentText(seedPageContent.Content)
+                new PageContentText(seedPageContent.Content),
+                PagePhotoUrl.FromNullable(seedPageContent.PhotoUrl)
             );
             pageContents.Add(pageContent);
             context.Set<PageContent>().Add(pageContent);

@@ -64,6 +64,61 @@ export function sanitizeHtml(html: string): string {
 }
 
 /**
+ * Internal helper - splits content into paragraphs and wraps in <p> tags.
+ * Normalizes line endings (\r\n -> \n) before splitting to handle Windows C# verbatim strings.
+ * Supports [align:center], [align:left], [align:right] markers at the start of content.
+ */
+function buildParagraphs(content: string): string {
+    // Normalize Windows line endings to Unix line endings
+    let normalized = content.replace(/\r\n/g, '\n');
+
+    // Check for alignment marker at the start
+    let alignment = '';
+    const alignMatch = normalized.match(/^\[align:(center|left|right)\]\s*\n?/);
+    if (alignMatch) {
+        alignment = ` style="text-align: ${alignMatch[1]}"`;
+        normalized = normalized.replace(/^\[align:(center|left|right)\]\s*\n?/, '');
+    }
+
+    const paragraphs = normalized.split('\n\n')
+        .map(p => p.trim())
+        .filter(p => p.length > 0)
+        .map(p => {
+            // Convert single newlines to <br> tags within paragraphs
+            const withBreaks = p.replace(/\n/g, '<br>');
+            return `<p class='pb-4'${alignment}>${withBreaks}</p>`;
+        });
+    return paragraphs.join('');
+}
+
+/**
+ * Sanitizes HTML allowing only <strong> and <br/> within <p> tags.
+ */
+function sanitizeParagraphs(html: string): string {
+    const purify = getDOMPurify();
+    return purify.sanitize(html, {
+        ALLOWED_TAGS: ['p', 'strong', 'em', 'u', 'br'],
+        ALLOWED_ATTR: ['class', 'style']
+    });
+}
+
+/**
+ * Renders plain text content as HTML paragraphs (SERVER-SIDE ONLY).
+ * Splits content by double newlines (\\n\\n) to create paragraphs.
+ * Preserves <strong> and <br/> tags within paragraphs.
+ *
+ * @param content - Plain text content with optional <strong> and <br/> tags
+ * @returns HTML string with paragraphs wrapped in <p> tags
+ */
+export function renderParagraphs(content: string): string {
+    if (!content || typeof content !== 'string') {
+        return '';
+    }
+    const html = buildParagraphs(content);
+    return sanitizeParagraphs(html);
+}
+
+/**
  * Sanitizes a URL to prevent protocol-based XSS attacks.
  * Uses DOMPurify.sanitize with a dummy anchor element to validate the URL.
  * 

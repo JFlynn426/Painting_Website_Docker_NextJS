@@ -13,7 +13,10 @@ export default function RevertEditingHistoryPage() {
 
             <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6">
                 <p className="text-gray-400">
-                    Revert previous changes to paintings, categories, or content by selecting from editing history. This feature is coming soon.
+                    Revert previous changes to paintings, categories, or content by selecting from editing history.
+                </p>
+                <p className="text-yellow-400 mt-4 text-sm">
+                    Note: This feature is only visible to John Flynn to keep database reversions minimal, as the feature is complex and prone to issues.
                 </p>
             </div>
         </div>

@@ -8,8 +8,9 @@ public class PageContentFactory : IPageContentFactory
     public PageContent Create(
         PageAddress address,
         PageTitle? title,
-        PageContentText content)
+        PageContentText content,
+        PagePhotoUrl? photoUrl = null)
     {
-        return new PageContent(address, title, content);
+        return new PageContent(address, title, content, photoUrl);
     }
 }

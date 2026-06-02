@@ -9,16 +9,18 @@ public class PageContent : AggregateRoot<Guid>
     public PageAddress Address { get; private set; } = default!;
     public PageTitle? Title { get; private set; }
     public PageContentText Content { get; private set; } = default!;
+    public PagePhotoUrl? PhotoUrl { get; private set; }
 
     // Parameterless constructor for EF Core
     private PageContent() { }
 
     // Constructor for creating a new page content (domain creation path)
-    internal PageContent(PageAddress address, PageTitle? title, PageContentText content)
+    internal PageContent(PageAddress address, PageTitle? title, PageContentText content, PagePhotoUrl? photoUrl = null)
     {
         Address = address;
         Title = title;
         Content = content;
+        PhotoUrl = photoUrl;
 
         AddEvent(new PageContentCreatedEvent(Id, address.Value));
     }
@@ -26,10 +28,12 @@ public class PageContent : AggregateRoot<Guid>
     // Consolidated update method - applies only non-null parameters
     public void Update(
         PageTitle? title = null,
-        PageContentText? content = null)
+        PageContentText? content = null,
+        PagePhotoUrl? photoUrl = null)
     {
         if (title != null) Title = title;
         if (content != null) Content = content;
+        if (photoUrl != null) PhotoUrl = photoUrl;
 
         AddEvent(new PageContentUpdatedEvent(Id, Address.Value));
     }

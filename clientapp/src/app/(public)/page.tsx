@@ -1,6 +1,6 @@
 import ArtCarousel from "../../components/ArtCarousel";
 import { getPageContent } from "../../lib/api";
-import { sanitizeHtml } from "../../lib/sanitization";
+import { renderParagraphs } from "../../lib/sanitization";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
@@ -18,9 +18,11 @@ export default async function Home() {
         <ArtCarousel />
       </div>
 
-      {/* Content below carousel */}
+      {/* Content below carousel with consistent styling */}
       {homeContent && (
-        <div className="text-center max-w-[50rem] mb-8" dangerouslySetInnerHTML={{ __html: sanitizeHtml(homeContent.content) }} />
+        <div className="max-w-[50rem] mb-8" style={{ textAlign: 'left', maxWidth: '800px', margin: '0 auto', marginBottom: '3rem' }}>
+          <div dangerouslySetInnerHTML={{ __html: renderParagraphs(homeContent.content) }} />
+        </div>
       )}
     </div>
   );

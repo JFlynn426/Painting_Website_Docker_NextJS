@@ -6,4 +6,5 @@ export interface PageContent {
     slug: string;
     title?: string;
     content: string;
+    photoUrl?: string;
 }
