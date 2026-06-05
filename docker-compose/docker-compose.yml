@@ -15,9 +15,12 @@
 services:
   api:
     ports:
-      - "8080:8080"  # Expose API directly for local development
+      - "8080:8080" # Expose API directly for local development
 
   nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.local # Use local Dockerfile with dos2unix for Windows CRLF handling
     volumes:
       # Override nginx.conf with localhost-specific configuration
       - ./nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
