@@ -21,8 +21,8 @@ export default function AddCategoryPage() {
             newErrors.name = 'Category name must be 50 characters or less';
         }
 
-        if (description.trim().length > 1000) {
-            newErrors.description = 'Description must be 1000 characters or less';
+        if (description.trim().length > 200) {
+            newErrors.description = 'Description must be 200 characters or less';
         }
 
         setErrors(newErrors);
@@ -103,12 +103,12 @@ export default function AddCategoryPage() {
                         id="description"
                         value={description}
                         onChange={e => setDescription(e.target.value)}
-                        maxLength={1000}
+                        maxLength={200}
                         rows={4}
                         className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                        placeholder="Enter category description (optional)"
+                        placeholder="Enter category description (optional) - This description is displayed underneath the category title"
                     />
-                    <p className="text-gray-500 text-xs mt-1">{description.length}/1000 characters</p>
+                    <p className="text-gray-500 text-xs mt-1">{description.length}/200 characters</p>
                     {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
                 </div>
 

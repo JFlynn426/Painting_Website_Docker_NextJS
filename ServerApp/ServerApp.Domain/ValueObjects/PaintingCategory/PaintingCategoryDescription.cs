@@ -4,7 +4,7 @@ using ServerApp.Shared.Domain;
 
 public record PaintingCategoryDescription : StringValueObject
 {
-    public const int MaxLength = 2000;
+    public const int MaxLength = 200;
 
     public PaintingCategoryDescription() : base()
     {

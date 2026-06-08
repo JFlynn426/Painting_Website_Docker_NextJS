@@ -253,6 +253,12 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                 Edit Painting: {painting.title}
             </h1>
 
+            <div className="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-4 mb-6">
+                <p className="text-yellow-200 text-sm">
+                    <strong>Note:</strong> Attempt to keep filled out fields across the site consistent across all paintings.
+                </p>
+            </div>
+
             {submitSuccess && (
                 <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-4 mb-6">
                     <p className="text-green-200">Painting updated successfully!</p>

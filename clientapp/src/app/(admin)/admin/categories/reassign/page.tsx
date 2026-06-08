@@ -72,9 +72,57 @@ export default function ReassignPaintingsPage() {
         return acc;
     }, {});
 
+    // Calculate outgoing paintings per category (paintings leaving this category)
+    const outgoingPaintingsByCategory = changedPaintings.reduce<Record<string, number>>((acc, painting) => {
+        acc[painting.categorySlug] = (acc[painting.categorySlug] || 0) + 1;
+        return acc;
+    }, {});
+
+    // Calculate projected count per category after reassignment
+    const projectedCounts = allPaintings.reduce<Record<string, number>>((acc, p) => {
+        acc[p.categorySlug] = (acc[p.categorySlug] || 0) + 1;
+        return acc;
+    }, {});
+    for (const painting of changedPaintings) {
+        projectedCounts[painting.categorySlug] = (projectedCounts[painting.categorySlug] || 0) - 1;
+        const targetSlug = selectedCategories[painting.id];
+        if (targetSlug) {
+            projectedCounts[targetSlug] = (projectedCounts[targetSlug] || 0) + 1;
+        }
+    }
+
     const handleSave = async () => {
         if (changedPaintings.length === 0) {
             return;
+        }
+
+        // Validate: check if any category would exceed 30 paintings after reassignment
+        // Build a map of current counts per category
+        const currentCounts = allPaintings.reduce<Record<string, number>>((acc, p) => {
+            acc[p.categorySlug] = (acc[p.categorySlug] || 0) + 1;
+            return acc;
+        }, {});
+
+        // Calculate final counts after reassignment
+        const finalCounts = { ...currentCounts };
+        for (const painting of changedPaintings) {
+            // Decrement source category
+            finalCounts[painting.categorySlug] = (finalCounts[painting.categorySlug] || 0) - 1;
+            // Increment target category
+            const targetSlug = selectedCategories[painting.id];
+            if (targetSlug) {
+                finalCounts[targetSlug] = (finalCounts[targetSlug] || 0) + 1;
+            }
+        }
+
+        // Check for any category exceeding 30
+        for (const [slug, count] of Object.entries(finalCounts)) {
+            if (count > 30) {
+                const category = categories.find(c => c.slug === slug);
+                const categoryName = category?.name || slug;
+                setSaveError(`Cannot save: "${categoryName}" would have ${count} paintings, which exceeds the maximum of 30 paintings per category.`);
+                return;
+            }
         }
 
         setIsSaving(true);
@@ -145,6 +193,12 @@ export default function ReassignPaintingsPage() {
                 Paintings are displayed in their initial categories. Select the category to move the painting to by selecting a new category in the dropdown.
             </p>
 
+            <div className="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-4 mb-6">
+                <p className="text-yellow-200 text-sm">
+                    <strong>Note:</strong> Categories can have no more than 30 paintings per page. It is suggested that each category should contain 8 or more paintings.
+                </p>
+            </div>
+
             {saveSuccess && (
                 <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-4 mb-6">
                     <p className="text-green-200">Changes saved successfully! ({changedPaintings.length} painting{changedPaintings.length !== 1 ? 's' : ''} reassigned)</p>
@@ -163,11 +217,35 @@ export default function ReassignPaintingsPage() {
                     const category = categories.find(c => c.slug === categorySlug);
                     const categoryName = category?.name || categorySlug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
+                    const projectedCount = projectedCounts[categorySlug] || 0;
+                    const hasChanges = incomingPaintingsByCategory[categorySlug]?.length > 0 || outgoingPaintingsByCategory[categorySlug] > 0;
+
                     return (
                         <div key={categorySlug}>
                             <h2 className="text-xl font-semibold mb-3 text-[var(--title-color)]">
                                 {categoryName} ({paintings.length})
                             </h2>
+                            {hasChanges && (
+                                <p className="text-sm mb-2">
+                                    <span className="text-gray-400">Projected after changes: </span>
+                                    <span className={projectedCount > 30 ? 'text-red-400 font-bold' : projectedCount < 8 ? 'text-yellow-400 font-bold' : 'text-green-400 font-bold'}>
+                                        {projectedCount}
+                                    </span>
+                                    {projectedCount > 30 && (
+                                        <span className="text-red-400 ml-2">⚠ Error: Exceeds maximum of 30 paintings</span>
+                                    )}
+                                    {projectedCount < 8 && projectedCount <= 30 && (
+                                        <span className="text-yellow-400 ml-2">⚠ Warning: Fewer than 8 paintings suggested</span>
+                                    )}
+                                </p>
+                            )}
+                            {!hasChanges && paintings.length < 8 && (
+                                <div className="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-3 mb-3">
+                                    <p className="text-yellow-200 text-sm">
+                                        <strong>Warning:</strong> This category has fewer than 8 paintings. It is suggested that each category should contain 8 or more paintings.
+                                    </p>
+                                </div>
+                            )}
                             <div className="grid lg:grid-cols-6 gap-4">
                                 {paintings.map((painting) => {
                                     const hasChanged = selectedCategories[painting.id] && selectedCategories[painting.id] !== painting.categorySlug;

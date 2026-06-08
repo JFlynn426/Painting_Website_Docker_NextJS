@@ -186,6 +186,12 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                 Add Painting to: {slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
             </h1>
 
+            <div className="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-4 mb-6">
+                <p className="text-yellow-200 text-sm">
+                    <strong>Note:</strong> Required fields are marked with a red asterisk. Try to keep consistency in the filled out fields across the paintings entered across the site.
+                </p>
+            </div>
+
             {submitSuccess && (
                 <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-4 mb-6">
                     <p className="text-green-200">Painting added successfully!</p>
@@ -230,7 +236,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                         onChange={e => setTitle(e.target.value)}
                         maxLength={100}
                         className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                        placeholder="Enter painting title"
+                        placeholder="Enter painting title (Required)"
                     />
                     <p className="text-gray-500 text-xs mt-1">{title.length}/100 characters</p>
                     {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
@@ -248,7 +254,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                         maxLength={500}
                         rows={4}
                         className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                        placeholder="Enter painting description (optional)"
+                        placeholder="Enter painting description (Suggested)"
                     />
                     <p className="text-gray-500 text-xs mt-1">{description.length}/500 characters</p>
                     {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
@@ -268,7 +274,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                             step="0.01"
                             min="0.01"
                             className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                            placeholder="Width"
+                            placeholder="Width (Suggested)"
                         />
                         {errors.width && <p className="text-red-500 text-sm mt-1">{errors.width}</p>}
                     </div>
@@ -284,7 +290,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                             step="0.01"
                             min="0.01"
                             className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                            placeholder="Height"
+                            placeholder="Height (Suggested)"
                         />
                         {errors.height && <p className="text-red-500 text-sm mt-1">{errors.height}</p>}
                     </div>
@@ -300,7 +306,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                             step="0.01"
                             min="0.01"
                             className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                            placeholder="Depth"
+                            placeholder="Depth (Optional)"
                         />
                         {errors.depth && <p className="text-red-500 text-sm mt-1">{errors.depth}</p>}
                     </div>
@@ -320,7 +326,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                             min={1900}
                             max={2100}
                             className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                            placeholder="Year created"
+                            placeholder="Year created (Optional)"
                         />
                         {errors.year && <p className="text-red-500 text-sm mt-1">{errors.year}</p>}
                     </div>
@@ -336,7 +342,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                             step="0.01"
                             min="0"
                             className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                            placeholder="Price"
+                            placeholder="Price (Suggested for available paintings)"
                         />
                         {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
                     </div>

@@ -39,7 +39,10 @@ export default function AdminDashboardPage() {
 
     return (
         <div>
-            <h1 className="text-2xl font-bold mb-6">Welcome, {user?.displayName}</h1>
+            <h1 className="text-3xl font-bold mb-2 text-[var(--title-color)]">Welcome, {user?.displayName} - Dashboard</h1>
+            <p className="text-gray-400 mb-6">
+                Select an item to edit from the list below. You can navigate between items from the dashboard (this page) or from the navigation bar.
+            </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Link href="/admin/paintings" className="block">
@@ -64,7 +67,7 @@ export default function AdminDashboardPage() {
                     <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Content</h2>
                         <p className="text-gray-400">
-                            Manage website content: edit page text, descriptions, and other site content.
+                            Manage other website content: edit page text, descriptions, home page carousel, etc...
                         </p>
                     </div>
                 </Link>

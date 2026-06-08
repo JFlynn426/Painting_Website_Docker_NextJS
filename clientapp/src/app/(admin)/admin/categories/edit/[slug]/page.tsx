@@ -55,9 +55,9 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
             newErrors.name = 'Category name must be 50 characters or less';
         }
 
-        // Description max 1000 chars
-        if (description && description.length > 1000) {
-            newErrors.description = 'Description must be 1000 characters or less';
+        // Description max 200 chars
+        if (description && description.length > 200) {
+            newErrors.description = 'Description must be 200 characters or less';
         }
 
         setErrors(newErrors);
@@ -90,7 +90,6 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
         }
     };
 
-    const categoryName = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
     if (loading) {
         return (
@@ -174,11 +173,11 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
                         id="description"
                         value={description}
                         onChange={e => setDescription(e.target.value)}
-                        maxLength={1000}
+                        maxLength={200}
                         rows={4}
                         className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
                     />
-                    <p className="text-gray-500 text-xs mt-1">{description.length}/1000 characters</p>
+                    <p className="text-gray-500 text-xs mt-1">{description.length}/200 characters</p>
                     {description !== originalDescription && (
                         <p className="text-white text-xs mt-1">Original: {originalDescription || '(empty)'}</p>
                     )}
