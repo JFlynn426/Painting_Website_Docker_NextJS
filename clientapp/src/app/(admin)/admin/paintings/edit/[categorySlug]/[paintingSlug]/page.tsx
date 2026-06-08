@@ -255,7 +255,7 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
 
             <div className="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-4 mb-6">
                 <p className="text-yellow-200 text-sm">
-                    <strong>Note:</strong> Attempt to keep filled out fields across the site consistent across all paintings.
+                    <strong>Note:</strong> Required fields are marked with a red asterisk. Attempt to fill out the same fields for every painting to maintain consistency across the site.
                 </p>
             </div>
 
