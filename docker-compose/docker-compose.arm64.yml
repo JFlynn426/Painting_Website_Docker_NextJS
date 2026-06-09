@@ -1,0 +1,172 @@
+# ============================================================================
+# ARM64 Production Configuration
+# ============================================================================
+# This file provides ARM64-compatible service definitions for laptops like
+# Apple Silicon (M1/M2/M3/M4) and Windows ARM64 devices.
+#
+# Key differences from docker-compose.prod.yml:
+#   - Uses PostgreSQL 17 Alpine (native ARM64 support, no emulation needed)
+#   - Uses environment variable for postgres password instead of secrets (simpler for local dev)
+#   - API and Frontend ports exposed for local development
+#   - Adjusted resource limits for typical laptop hardware
+#
+# Usage:
+#   docker-compose -f docker-compose.arm64.yml up -d --build
+# ============================================================================
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: artgallery-postgres-arm64
+    environment:
+      POSTGRES_DB: artgallery
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ${BACKUP_DIR:-./backups}:/backups:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d artgallery" ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks:
+      - artgallery-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  api:
+    container_name: artgallery-api-arm64
+    build:
+      context: ../ServerApp
+      dockerfile: ./ServerApp.Api/Dockerfile
+      target: final
+    ports:
+      - "${API_PORT:-8080}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=artgallery;Username=postgres;Password=${POSTGRES_PASSWORD};
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      GoogleAuth__ClientId: ${GOOGLE_AUTH_CLIENT_ID}
+      GoogleAuth__ClientSecret: ${GOOGLE_AUTH_CLIENT_SECRET}
+      GoogleAuth__RedirectUri: ${GOOGLE_AUTH_REDIRECT_URI}
+      Admin__JwtSecretKey: ${ADMIN_JWT_SECRET_KEY}
+      Admin__JwtExpiryMinutes: ${ADMIN_JWT_EXPIRY_MINUTES:-60}
+      Admin__AuthorizedEmails: ${ADMIN_AUTHORIZED_EMAILS}
+      Database__ReadOnlyMode: ${DATABASE_READ_ONLY_MODE:-true}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - artgallery-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/api/health/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  frontend:
+    container_name: artgallery-frontend-arm64
+    build:
+      context: ../clientapp
+      dockerfile: Dockerfile
+      target: production
+    user: "1001:1001"
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080/api}
+      SERVER_API_URL: ${SERVER_API_URL:-http://api:8080/api}
+    networks:
+      - artgallery-network
+    restart: unless-stopped
+    command: node server.js
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.local # Use local Dockerfile with dos2unix for Windows CRLF handling
+    container_name: artgallery-nginx-arm64
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+      - "${NGINX_HEALTH_PORT:-9090}:8080"
+    volumes:
+      - ./nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl/localhost:/etc/nginx/ssl:ro
+    read_only: true # Security: Prevent filesystem modifications
+    tmpfs:
+      # Temporary filesystems for required writable directories
+      - /var/log/nginx
+      - /var/cache/nginx # Main nginx cache
+      - /var/cache/nginx/static # Static asset proxy cache
+      - /run
+      - /etc/nginx/conf.d
+      - /tmp
+    depends_on:
+      api:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    networks:
+      - artgallery-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+volumes:
+  postgres_data:
+
+networks:
+  artgallery-network:
+    driver: bridge
