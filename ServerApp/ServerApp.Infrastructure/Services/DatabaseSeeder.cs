@@ -114,7 +114,7 @@ internal sealed class DatabaseSeeder
                 new PageAddress(seedPageContent.Address),
                 PageTitle.FromNullable(seedPageContent.Title),
                 new PageContentText(seedPageContent.Content),
-                PagePhotoUrl.FromNullable(seedPageContent.PhotoUrl)
+                PagePhotoUrls.FromNullable(seedPageContent.PhotoUrls)
             );
             pageContents.Add(pageContent);
             context.Set<PageContent>().Add(pageContent);
@@ -149,7 +149,7 @@ internal sealed class DatabaseSeeder
             year: seed.Year.HasValue ? new PaintingYear(seed.Year.Value) : null,
             isAvailable: new PaintingIsAvailable(seed.IsAvailable),
             isNew: new PaintingIsNew(seed.IsNew),
-            isCarouselPainting: new PaintingIsCarouselPainting(seed.IsCarouselPainting)
+            isLandscape: new PaintingIsLandscape(seed.IsLandscape)
         );
     }
 }

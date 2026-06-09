@@ -9,5 +9,5 @@ public interface IPageContentFactory
         PageAddress address,
         PageTitle? title,
         PageContentText content,
-        PagePhotoUrl? photoUrl = null);
+        PagePhotoUrls? photoUrls = null);
 }

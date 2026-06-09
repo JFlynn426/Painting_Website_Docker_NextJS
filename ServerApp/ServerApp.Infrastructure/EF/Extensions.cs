@@ -39,8 +39,8 @@ public static class EfExtensions
             ?? configuration[$"{nameof(SQLServerOptions)}:ConnectionString"]
             ?? string.Empty;
 
-        services.AddDbContext<ReadDbContext>(ctx => ctx.UseSqlServer(connectionString));
-        services.AddDbContext<WriteDbContext>(ctx => ctx.UseSqlServer(connectionString));
+        services.AddDbContext<ReadDbContext>(ctx => ctx.UseNpgsql(connectionString));
+        services.AddDbContext<WriteDbContext>(ctx => ctx.UseNpgsql(connectionString));
 
         return services;
     }

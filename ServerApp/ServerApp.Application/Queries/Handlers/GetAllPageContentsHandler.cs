@@ -24,7 +24,7 @@ public class GetAllPageContentsHandler : IRequestHandler<GetAllPageContents, Lis
             Address = pc.Address.Value,
             Title = pc.Title?.Value,
             Content = pc.Content.Value,
-            PhotoUrl = pc.PhotoUrl?.Value
+            PhotoUrls = pc.PhotoUrls.ToArray()
         }).ToList();
     }
 }

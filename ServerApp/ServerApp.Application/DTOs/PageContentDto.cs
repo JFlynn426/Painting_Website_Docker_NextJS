@@ -6,5 +6,5 @@ public class PageContentDto
     public string Address { get; init; } = string.Empty;
     public string? Title { get; init; }
     public string Content { get; init; } = string.Empty;
-    public string? PhotoUrl { get; init; }
+    public string[] PhotoUrls { get; init; } = Array.Empty<string>();
 }

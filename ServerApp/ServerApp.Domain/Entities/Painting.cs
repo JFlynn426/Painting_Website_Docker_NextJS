@@ -21,8 +21,7 @@ public class Painting : AggregateRoot<Guid>
     public PaintingPrice? Price { get; private set; }
     public PaintingIsAvailable IsAvailable { get; private set; } = default!;
     public PaintingIsNew IsNew { get; private set; } = default!;
-    public PaintingIsCarouselPainting IsCarouselPainting { get; private set; } = default!;
-
+    public PaintingIsLandscape IsLandscape { get; private set; } = default!;
     // Navigation property for the category this painting belongs to
     public PaintingCategory? Category { get; private set; }
 
@@ -37,7 +36,7 @@ public class Painting : AggregateRoot<Guid>
     internal Painting(PaintingID id, PaintingName title, PaintingSlug slug, PaintingDescription? description, PaintingImageUrl imageUrl,
         PaintingThumbnailUrl? thumbnailUrl, PaintingCategorySlug categorySlug, PaintingPrice? price,
         PaintingWidth? width = null, PaintingHeight? height = null, PaintingDepth? depth = null,
-        PaintingYear? year = null, PaintingIsAvailable isAvailable = default!, PaintingIsNew isNew = default!, PaintingIsCarouselPainting isCarouselPainting = default!)
+        PaintingYear? year = null, PaintingIsAvailable isAvailable = default!, PaintingIsNew isNew = default!, PaintingIsLandscape isLandscape = default!)
     {
         Id = id.Value;
         Title = title;
@@ -53,8 +52,7 @@ public class Painting : AggregateRoot<Guid>
         Year = year;
         IsAvailable = isAvailable;
         IsNew = isNew;
-        IsCarouselPainting = isCarouselPainting;
-
+        IsLandscape = isLandscape;
         AddEvent(new PaintingCreatedEvent(Id, title.Value, categorySlug.Value));
     }
 
@@ -70,7 +68,7 @@ public class Painting : AggregateRoot<Guid>
         PaintingYear? year = null,
         PaintingIsAvailable? isAvailable = null,
         PaintingIsNew? isNew = null,
-        PaintingIsCarouselPainting? isCarouselPainting = null)
+        PaintingIsLandscape? isLandscape = null)
     {
         if (description != null) Description = description;
         if (imageUrl != null) ImageUrl = imageUrl;
@@ -82,8 +80,7 @@ public class Painting : AggregateRoot<Guid>
         if (year != null) Year = year;
         if (isAvailable != null) IsAvailable = isAvailable;
         if (isNew != null) IsNew = isNew;
-        if (isCarouselPainting != null) IsCarouselPainting = isCarouselPainting;
-
+        if (isLandscape != null) IsLandscape = isLandscape;
         AddEvent(new PaintingUpdatedEvent(Id, Title.Value, CategorySlug.Value));
     }
 

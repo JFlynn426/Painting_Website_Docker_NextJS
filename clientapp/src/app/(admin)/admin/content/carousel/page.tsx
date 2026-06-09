@@ -3,12 +3,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getAllPaintings, updatePainting } from '@/lib/api';
+import { getAllPaintings, getPageContent, updatePageContent } from '@/lib/api';
 import type { Painting } from '@/types/paintings';
+import type { PageContent } from '@/types/page-content';
 
 export default function CarouselContentPage() {
     const [allPaintings, setAllPaintings] = useState<Painting[]>([]);
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [currentCarouselPaintings, setCurrentCarouselPaintings] = useState<Painting[]>([]);
+    const [selectedPaintings, setSelectedPaintings] = useState<Painting[]>([]);
+    const [homeContent, setHomeContent] = useState<PageContent | null>(null);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
@@ -16,47 +19,73 @@ export default function CarouselContentPage() {
     const [saveSuccess, setSaveSuccess] = useState(false);
 
     useEffect(() => {
-        async function loadPaintings() {
+        async function loadData() {
             try {
                 setLoading(true);
-                const paintings = await getAllPaintings();
+                const [paintings, homePage] = await Promise.all([
+                    getAllPaintings(),
+                    getPageContent('home')
+                ]);
                 setAllPaintings(paintings);
-                // Initialize selected IDs from paintings that currently have isCarouselPainting=true
-                const currentCarouselIds = new Set<string>();
-                paintings.forEach(p => {
-                    if (p.isCarouselPainting) {
-                        currentCarouselIds.add(p.id);
-                    }
-                });
-                setSelectedIds(currentCarouselIds);
+                setHomeContent(homePage);
+
+                // Initialize current and selected paintings from existing photoUrls
+                // photoUrls store thumbnailUrl paths, so match against thumbnailUrl
+                // Preserve the order from photoUrls
+                if (homePage?.photoUrls) {
+                    const current = homePage.photoUrls
+                        .map(url => paintings.find(p => p.thumbnailUrl === url))
+                        .filter((p): p is Painting => p !== undefined);
+                    setCurrentCarouselPaintings(current);
+                    setSelectedPaintings(current);
+                }
             } catch (err) {
-                setLoadError(err instanceof Error ? err.message : 'Failed to load paintings');
+                setLoadError(err instanceof Error ? err.message : 'Failed to load data');
             } finally {
                 setLoading(false);
             }
         }
-        loadPaintings();
+        loadData();
     }, []);
 
-    const togglePainting = useCallback((id: string) => {
-        setSelectedIds(prev => {
-            const next = new Set(prev);
-            if (next.has(id)) {
-                next.delete(id);
-            } else {
-                next.add(id);
+    const togglePainting = useCallback((painting: Painting) => {
+        setSelectedPaintings(prev => {
+            const exists = prev.find(p => p.id === painting.id);
+            if (exists) {
+                return prev.filter(p => p.id !== painting.id);
             }
-            return next;
+            return [...prev, painting];
         });
     }, []);
 
-    const currentCarouselPaintings = allPaintings.filter(p => p.isCarouselPainting);
-    const updatedCarouselPaintings = allPaintings.filter(p => selectedIds.has(p.id));
-    const isValidCount = updatedCarouselPaintings.length >= 3 && updatedCarouselPaintings.length <= 8;
+    const moveUp = useCallback((index: number) => {
+        if (index === 0) return;
+        setSelectedPaintings(prev => {
+            const newOrder = [...prev];
+            [newOrder[index - 1], newOrder[index]] = [newOrder[index], newOrder[index - 1]];
+            return newOrder;
+        });
+    }, []);
+
+    const moveDown = useCallback((index: number) => {
+        setSelectedPaintings(prev => {
+            if (index >= prev.length - 1) return prev;
+            const newOrder = [...prev];
+            [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
+            return newOrder;
+        });
+    }, []);
+
+    const isValidCount = selectedPaintings.length >= 3 && selectedPaintings.length <= 8;
 
     const handleSave = async () => {
-        if (updatedCarouselPaintings.length < 3 || updatedCarouselPaintings.length > 8) {
+        if (selectedPaintings.length < 3 || selectedPaintings.length > 8) {
             setSaveError('You must select between 3 and 8 carousel paintings.');
+            return;
+        }
+
+        if (!homeContent?.id) {
+            setSaveError('Home page content not found.');
             return;
         }
 
@@ -65,20 +94,12 @@ export default function CarouselContentPage() {
         setSaveSuccess(false);
 
         try {
-            const promises = allPaintings.map(async (painting) => {
-                const shouldBeCarousel = selectedIds.has(painting.id);
-                if (shouldBeCarousel !== painting.isCarouselPainting) {
-                    await updatePainting(painting.id, { isCarouselPainting: shouldBeCarousel });
-                }
-            });
-
-            await Promise.all(promises);
+            // Use thumbnailUrl for photoUrls since that's what the carousel displays
+            const photoUrls = selectedPaintings.map(p => p.thumbnailUrl || p.imageUrl);
+            await updatePageContent(homeContent.id, { photoUrls });
             setSaveSuccess(true);
-
-            // Update local state to reflect saved changes
-            setAllPaintings(prev =>
-                prev.map(p => ({ ...p, isCarouselPainting: selectedIds.has(p.id) }))
-            );
+            // Update current carousel paintings to reflect saved changes
+            setCurrentCarouselPaintings(selectedPaintings);
         } catch (err) {
             setSaveError(err instanceof Error ? err.message : 'Failed to save changes');
         } finally {
@@ -111,19 +132,22 @@ export default function CarouselContentPage() {
     return (
         <div>
             <h1 className="text-3xl font-bold mb-2 text-[var(--title-color)]">Change Carousel Images</h1>
-            <p className="text-gray-400 mb-4">
-                This page allows you to select the paintings which are displayed in the homepage carousel.
+            <p className="text-gray-400 mb-6">
+                This page allows you to select and order the paintings displayed in the homepage carousel.
             </p>
 
             <div className="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-4 mb-6">
                 <p className="text-yellow-200 text-sm">
-                    <strong>Note:</strong> The carousel requires between 3 and 8 paintings to be selected.
+                    <strong>Note:</strong> The carousel requires between 3 and 8 paintings to be selected. Order determines display sequence.
+                </p>
+                <p className="text-yellow-200 text-sm mt-1">
+                    <strong>Requirement:</strong> Only paintings that are wider than they are tall (landscape orientation) can be added to the carousel.
                 </p>
             </div>
 
             {saveSuccess && (
                 <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-4 mb-6">
-                    <p className="text-green-200">Changes saved successfully! ({updatedCarouselPaintings.length} paintings selected)</p>
+                    <p className="text-green-200">Changes saved successfully! ({selectedPaintings.length} paintings selected)</p>
                 </div>
             )}
 
@@ -142,11 +166,14 @@ export default function CarouselContentPage() {
                     <p className="text-gray-400">No paintings are currently set for the carousel.</p>
                 ) : (
                     <div className="grid lg:grid-cols-6 gap-4">
-                        {currentCarouselPaintings.map((painting) => (
+                        {currentCarouselPaintings.map((painting, index) => (
                             <div
                                 key={painting.id}
-                                className="bg-[var(--navbar-footer-bg)] rounded-lg p-2"
+                                className="bg-[var(--navbar-footer-bg)] rounded-lg p-2 relative"
                             >
+                                <span className="absolute top-2 left-2 bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold z-10">
+                                    {index + 1}
+                                </span>
                                 <div className="aspect-square mb-1 overflow-hidden rounded relative">
                                     <Image
                                         src={painting.thumbnailUrl || painting.imageUrl}
@@ -168,17 +195,20 @@ export default function CarouselContentPage() {
             {/* Updated Carousel Paintings Preview */}
             <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-3 text-[var(--title-color)]">
-                    Updated Carousel Paintings ({updatedCarouselPaintings.length})
+                    Updated Carousel Paintings ({selectedPaintings.length})
                 </h2>
-                {updatedCarouselPaintings.length === 0 ? (
+                {selectedPaintings.length === 0 ? (
                     <p className="text-gray-400">No paintings selected yet. Click on paintings below to add them.</p>
                 ) : (
                     <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
-                        {updatedCarouselPaintings.map((painting) => (
+                        {selectedPaintings.map((painting, index) => (
                             <div
                                 key={painting.id}
-                                className="bg-[var(--navbar-footer-bg)] rounded-lg p-2"
+                                className="bg-[var(--navbar-footer-bg)] rounded-lg p-2 relative"
                             >
+                                <span className="absolute top-2 left-2 bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold z-10">
+                                    {index + 1}
+                                </span>
                                 <div className="aspect-square mb-1 overflow-hidden rounded relative">
                                     <Image
                                         src={painting.thumbnailUrl || painting.imageUrl}
@@ -188,9 +218,34 @@ export default function CarouselContentPage() {
                                         className="object-cover"
                                     />
                                 </div>
-                                <p className="text-xs text-white truncate">
+                                <p className="text-xs text-white truncate mb-1">
                                     {painting.title}
                                 </p>
+                                <div className="flex gap-1">
+                                    <button
+                                        onClick={() => moveUp(index)}
+                                        disabled={index === 0}
+                                        className="flex-1 px-1 py-0.5 text-xs bg-gray-600 text-white rounded hover:bg-gray-500 disabled:opacity-30"
+                                        title="Move up"
+                                    >
+                                        ↑
+                                    </button>
+                                    <button
+                                        onClick={() => moveDown(index)}
+                                        disabled={index >= selectedPaintings.length - 1}
+                                        className="flex-1 px-1 py-0.5 text-xs bg-gray-600 text-white rounded hover:bg-gray-500 disabled:opacity-30"
+                                        title="Move down"
+                                    >
+                                        ↓
+                                    </button>
+                                    <button
+                                        onClick={() => togglePainting(painting)}
+                                        className="px-1 py-0.5 text-xs bg-red-600 text-white rounded hover:bg-red-500"
+                                        title="Remove"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -206,14 +261,14 @@ export default function CarouselContentPage() {
                 >
                     {isSaving ? 'Saving...' : 'Save Selection'}
                 </button>
-                {updatedCarouselPaintings.length > 0 && updatedCarouselPaintings.length < 3 && (
+                {selectedPaintings.length > 0 && selectedPaintings.length < 3 && (
                     <p className="text-yellow-400 text-sm mt-2">
-                        Warning: You must select between 3 and 8 carousel paintings. You have selected {updatedCarouselPaintings.length}.
+                        Warning: You must select between 3 and 8 carousel paintings. You have selected {selectedPaintings.length}.
                     </p>
                 )}
-                {updatedCarouselPaintings.length > 8 && (
+                {selectedPaintings.length > 8 && (
                     <p className="text-yellow-400 text-sm mt-2">
-                        Warning: You must select between 3 and 8 carousel paintings. You have selected {updatedCarouselPaintings.length}.
+                        Warning: You must select between 3 and 8 carousel paintings. You have selected {selectedPaintings.length}.
                     </p>
                 )}
             </div>
@@ -221,18 +276,18 @@ export default function CarouselContentPage() {
             {/* All Paintings */}
             <div>
                 <h2 className="text-xl font-semibold mb-3 text-[var(--title-color)]">
-                    All Paintings ({allPaintings.length})
+                    Landscape Paintings ({allPaintings.filter(p => p.isLandscape).length})
                 </h2>
                 <p className="text-gray-400 text-sm mb-4">
-                    Click on a painting to toggle it as a {'"'}Carousel Painting{'"'}. Selected paintings are highlighted with a blue border.
+                    Click on a painting to toggle it in the carousel. Selected paintings are highlighted with a blue border.
                 </p>
                 <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
-                    {allPaintings.map((painting) => {
-                        const isSelected = selectedIds.has(painting.id);
+                    {allPaintings.filter(p => p.isLandscape).map((painting) => {
+                        const isSelected = selectedPaintings.find(p => p.id === painting.id);
                         return (
                             <button
                                 key={painting.id}
-                                onClick={() => togglePainting(painting.id)}
+                                onClick={() => togglePainting(painting)}
                                 className={`bg-[var(--navbar-footer-bg)] rounded-lg p-2 transition-colors group cursor-pointer ${isSelected
                                     ? 'ring-2 ring-blue-500'
                                     : 'hover:bg-[var(--background)]'

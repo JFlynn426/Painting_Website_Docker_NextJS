@@ -34,7 +34,7 @@ public class GetAllPaintingsHandler : IRequestHandler<GetAllPaintings, List<Pain
             Price = p.Price?.Value,
             IsAvailable = p.IsAvailable.Value,
             IsNew = p.IsNew.Value,
-            IsCarouselPainting = p.IsCarouselPainting.Value
+            IsLandscape = p.IsLandscape.Value
         }).ToList();
     }
 }

@@ -19,5 +19,5 @@ public interface IPaintingFactory
         PaintingYear? year = null,
         PaintingIsAvailable isAvailable = default!,
         PaintingIsNew isNew = default!,
-        PaintingIsCarouselPainting isCarouselPainting = default!);
+        PaintingIsLandscape isLandscape = default!);
 }

@@ -19,7 +19,7 @@ public class PaintingFactory : IPaintingFactory
         PaintingYear? year = null,
         PaintingIsAvailable isAvailable = default!,
         PaintingIsNew isNew = default!,
-        PaintingIsCarouselPainting isCarouselPainting = default!)
+        PaintingIsLandscape isLandscape = default!)
     {
         // Auto-generate ID (single source of truth for ID generation)
         var id = new PaintingID();
@@ -27,7 +27,7 @@ public class PaintingFactory : IPaintingFactory
         // Auto-generate slug from title (single source of truth for slug generation)
         var slug = PaintingSlug.FromTitle(title);
 
-        var painting = new Painting(id, title, slug, description, imageUrl, thumbnailUrl, categorySlug, price, width, height, depth, year, isAvailable, isNew, isCarouselPainting);
+        var painting = new Painting(id, title, slug, description, imageUrl, thumbnailUrl, categorySlug, price, width, height, depth, year, isAvailable, isNew, isLandscape);
         return painting;
     }
 }

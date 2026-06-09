@@ -17,7 +17,7 @@ public static class FlowersSeedData
             Price = 2700,
             IsAvailable = true,
             IsNew = true,
-            IsCarouselPainting = true
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -29,7 +29,8 @@ public static class FlowersSeedData
             CategorySlug = "flowers",
             Width = 8,
             Height = 6,
-            IsAvailable = false
+            IsAvailable = false,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -42,7 +43,8 @@ public static class FlowersSeedData
             Width = 16,
             Height = 14,
             Price = 400,
-            IsAvailable = true
+            IsAvailable = true,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -55,7 +57,8 @@ public static class FlowersSeedData
             Width = 18,
             Height = 14,
             Price = 600,
-            IsAvailable = true
+            IsAvailable = true,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -79,7 +82,8 @@ public static class FlowersSeedData
             CategorySlug = "flowers",
             Width = 15,
             Height = 12,
-            IsAvailable = false
+            IsAvailable = false,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -91,7 +95,8 @@ public static class FlowersSeedData
             CategorySlug = "flowers",
             Width = 8,
             Height = 6,
-            IsAvailable = false
+            IsAvailable = false,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -105,7 +110,8 @@ public static class FlowersSeedData
             Height = 14,
             Price = 600,
             IsAvailable = true,
-            IsNew = true
+            IsNew = true,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -144,6 +150,19 @@ public static class FlowersSeedData
             Width = 12,
             Height = 24,
             IsAvailable = false
+        },
+        new PaintingSeed
+        {
+            Title = "Purple Shamrocks",
+            Slug = "purple-shamrocks",
+            Description = "Oil on canvas. The purple shamrock can move on its own (photonastic). Its leaves fold up at night and reopen with the morning light.",
+            ImageUrl = "/Flowers-Full/Purple_Flowers.jpg",
+            ThumbnailUrl = "/Flowers-Thumbnail/Purple_Flowers_.jpg",
+            CategorySlug = "flowers",
+            Width = 15,
+            Height = 19,
+            Price = 600,
+            IsAvailable = true
         }
     };
 }

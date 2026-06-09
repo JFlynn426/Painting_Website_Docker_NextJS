@@ -37,11 +37,11 @@ export default async function PageContent({
                 </h1>
             )}
 
-            {/* Photo from page content */}
-            {pageContent.photoUrl && (
+            {/* Photo from page content (only first photo for about page) */}
+            {pageContent.photoUrls && pageContent.photoUrls.length > 0 && (
                 <div className="relative place-self-center mb-6 w-[400px] h-[400px]">
                     <Image
-                        src={pageContent.photoUrl}
+                        src={pageContent.photoUrls[0]}
                         alt={pageContent.title || 'Page photo'}
                         fill
                         className="rounded-lg object-contain"

@@ -18,5 +18,5 @@ public class UpdatePaintingRequest
     public decimal? Price { get; set; }
     public bool? IsAvailable { get; set; }
     public bool? IsNew { get; set; }
-    public bool? IsCarouselPainting { get; set; }
+    public bool? IsLandscape { get; set; }
 }

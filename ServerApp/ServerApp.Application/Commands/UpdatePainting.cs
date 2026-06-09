@@ -18,7 +18,7 @@ public record UpdatePainting(
     decimal? Price,
     bool? IsAvailable,
     bool? IsNew,
-    bool? IsCarouselPainting,
+    bool? IsLandscape,
     Guid AdminId,
     string? IdempotencyKey
 ) : IRequest<CommandCompletionResponse>;

@@ -1,33 +1,33 @@
 services:
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2025-latest
-    container_name: artgallery-sql-prod
+  postgres:
+    image: postgres:17-alpine
+    container_name: artgallery-postgres-prod
     environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD_FILE: /run/secrets/sqlserver_sa_password
-      MSSQL_PID: Express
+      POSTGRES_DB: artgallery
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
     volumes:
-      - sqlserver_data:/var/opt/mssql
-      - ${BACKUP_DIR:-./backups}:/var/opt/mssql/backup:ro
+      - postgres_data:/var/lib/postgresql/data
+      - ${BACKUP_DIR:-./backups}:/backups:ro
     secrets:
-      - sqlserver_sa_password
+      - postgres_password
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $$(cat /run/secrets/sqlserver_sa_password) -C -Q 'SELECT 1' -b -o /dev/null 2>&1 || exit 1"]
-      interval: 15s
-      timeout: 10s
+      test: ["CMD-SHELL", "pg_isready -U postgres -d artgallery"]
+      interval: 10s
+      timeout: 5s
       retries: 20
-      start_period: 60s
+      start_period: 30s
     networks:
       - artgallery-network
     restart: unless-stopped
     deploy:
       resources:
         limits:
-          cpus: '4'
-          memory: 8G
+          cpus: '2'
+          memory: 4G
         reservations:
-          cpus: '1'
-          memory: 2G
+          cpus: '0.5'
+          memory: 1G
 
   api:
     container_name: artgallery-api-prod
@@ -39,7 +39,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: Server=sqlserver,1433;Database=ArtGallery;User Id=sa;Password=${SQLSERVER_SA_PASSWORD};TrustServerCertificate=True;
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=artgallery;Username=postgres;Password=${POSTGRES_PASSWORD};
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
       GoogleAuth__ClientId: ${GOOGLE_AUTH_CLIENT_ID}
       GoogleAuth__ClientSecret: ${GOOGLE_AUTH_CLIENT_SECRET}
@@ -49,7 +49,7 @@ services:
       Admin__AuthorizedEmails: ${ADMIN_AUTHORIZED_EMAILS}
       Database__ReadOnlyMode: ${DATABASE_READ_ONLY_MODE:-true}
     depends_on:
-      sqlserver:
+      postgres:
         condition: service_healthy
     networks:
       - artgallery-network
@@ -151,7 +151,7 @@ services:
           memory: 256M
 
 volumes:
-  sqlserver_data:
+  postgres_data:
   # Note: nginx_logs volume removed - replaced with tmpfs for read-only container
 
 networks:
@@ -159,5 +159,5 @@ networks:
     driver: bridge
 
 secrets:
-  sqlserver_sa_password:
-    file: ./secrets/sqlserver_sa_password
+  postgres_password:
+    file: ./secrets/postgres_password

@@ -67,7 +67,7 @@ if [ ! -f "$ENV_FILE" ]; then
 fi
 
 if [ -f "$ENV_FILE" ]; then
-    SA_PASSWORD=$(grep SQLSERVER_SA_PASSWORD "$ENV_FILE" | head -1 | cut -d'=' -f2)
+    POSTGRES_PASSWORD=$(grep POSTGRES_PASSWORD "$ENV_FILE" | head -1 | cut -d'=' -f2)
     
     # Create config file
     cat > "$SCRIPTS_DIR/backup.config" << EOF
@@ -77,9 +77,9 @@ if [ -f "$ENV_FILE" ]; then
 # IMPORTANT: This file contains sensitive data.
 # Ensure permissions are set correctly (chmod 600).
 
-SQLSERVER_SA_PASSWORD=$SA_PASSWORD
-CONTAINER_NAME=artgallery-sql-prod
-DATABASE_NAME=ArtGallery
+POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+CONTAINER_NAME=artgallery-postgres-prod
+DATABASE_NAME=artgallery
 RETENTION_DAYS=30
 EOF
     
@@ -93,15 +93,15 @@ else
 # Art Gallery Backup Configuration
 # Copy this file to backup.config and fill in your settings
 
-SQLSERVER_SA_PASSWORD=YourStrongPassword!
-CONTAINER_NAME=artgallery-sql-prod
-DATABASE_NAME=ArtGallery
+POSTGRES_PASSWORD=YourStrongPassword!
+CONTAINER_NAME=artgallery-postgres-prod
+DATABASE_NAME=artgallery
 RETENTION_DAYS=120
 EOF
     
     chmod 600 "$SCRIPTS_DIR/backup.config"
     echo "Template created: $SCRIPTS_DIR/backup.config"
-    echo "ACTION REQUIRED: Edit the config file and set your SQL Server password!"
+    echo "ACTION REQUIRED: Edit the config file and set your PostgreSQL password!"
     echo ""
     read -r -p "Press Enter after updating the password, or Ctrl+C to cancel..."
 fi
@@ -136,11 +136,11 @@ if ! docker info >/dev/null 2>&1; then
 else
     echo "Docker is accessible."
 
-    # Check if SQL container exists
-    if docker ps -a --format '{{.Names}}' | grep -q "^artgallery-sql-prod$"; then
-        echo "SQL Server container found: artgallery-sql-prod"
+    # Check if PostgreSQL container exists
+    if docker ps -a --format '{{.Names}}' | grep -q "^artgallery-postgres-prod$"; then
+        echo "PostgreSQL container found: artgallery-postgres-prod"
     else
-        echo "WARNING: SQL Server container 'artgallery-sql-prod' not found."
+        echo "WARNING: PostgreSQL container 'artgallery-postgres-prod' not found."
         echo "Backup will fail until the container is running."
     fi
 fi
@@ -165,7 +165,7 @@ if "$SCRIPTS_DIR/backup.sh"; then
     echo "  Manual backup:  $SCRIPTS_DIR/backup.sh"
     echo "  Restore:        $SCRIPTS_DIR/restore.sh"
     echo "  View logs:      tail -f $BACKUP_DIR/backup.log"
-    echo "  List backups:   ls -lh $BACKUP_DIR/*.bak"
+    echo "  List backups:   ls -lh $BACKUP_DIR/*.dump"
     echo "  Cron schedule:  crontab -l"
     echo ""
 else
@@ -179,7 +179,7 @@ else
     echo ""
     echo "Common issues:"
     echo "  - Docker not running"
-    echo "  - SQL Server container not started"
+    echo "  - PostgreSQL container not started"
     echo "  - Docker secrets not available"
     echo "  - Insufficient permissions"
     echo ""

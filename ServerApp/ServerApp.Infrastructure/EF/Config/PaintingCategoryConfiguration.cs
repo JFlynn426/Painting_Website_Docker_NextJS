@@ -16,13 +16,13 @@ public class PaintingCategoryConfiguration : IEntityTypeConfiguration<PaintingCa
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id)
             .HasColumnName("Id")
-            .HasColumnType("uniqueidentifier")
+            .HasColumnType("uuid")
             .ValueGeneratedOnAdd();
 
         // Value object with a non-null backing primitive
         builder.Property(e => e.Name)
             .HasColumnName("Name")
-            .HasColumnType("nvarchar(50)")
+            .HasColumnType("varchar(50)")
             .IsRequired()
             .HasConversion(
                 n => n.Value,
@@ -31,7 +31,7 @@ public class PaintingCategoryConfiguration : IEntityTypeConfiguration<PaintingCa
         // Value object with a non-null backing primitive
         builder.Property(e => e.Slug)
             .HasColumnName("Slug")
-            .HasColumnType("nvarchar(100)")
+            .HasColumnType("varchar(100)")
             .IsRequired()
             .HasConversion(
                 s => s.Value,
@@ -40,7 +40,7 @@ public class PaintingCategoryConfiguration : IEntityTypeConfiguration<PaintingCa
         // Value object with nullable backing primitive
         builder.Property(e => e.Description)
             .HasColumnName("Description")
-            .HasColumnType("nvarchar(max)")
+            .HasColumnType("text")
             .IsRequired(false)
             .HasConversion(
                 new ValueConverter<PaintingCategoryDescription?, string?>(

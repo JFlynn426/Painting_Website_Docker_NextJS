@@ -54,7 +54,7 @@ public class UpdatePaintingHandler : CommandHandlerBase, IRequestHandler<UpdateP
                     command.Year != null ? new PaintingYear(command.Year.Value) : null,
                     command.IsAvailable != null ? new PaintingIsAvailable(command.IsAvailable.Value) : null,
                     command.IsNew != null ? new PaintingIsNew(command.IsNew.Value) : null,
-                    command.IsCarouselPainting != null ? new PaintingIsCarouselPainting(command.IsCarouselPainting.Value) : null);
+                    command.IsLandscape != null ? new PaintingIsLandscape(command.IsLandscape.Value) : null);
 
                 await _writeRepository.UpdateAsync(painting, ct);
                 await _unitOfWork.CommitAsync(ct);

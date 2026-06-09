@@ -1,8 +1,8 @@
 #!/bin/bash
 # =============================================================================
-# Art Gallery Database Restore Script
+# Art Gallery Database Restore Script (PostgreSQL)
 # =============================================================================
-# Usage: ./restore.sh [backup_file.bak]
+# Usage: ./restore.sh [backup_file.dump]
 #
 # If no backup file specified, lists available backups and prompts for selection.
 #
@@ -13,8 +13,8 @@
 set -euo pipefail
 
 # --- Configuration ---
-CONTAINER_NAME="artgallery-sql-prod"
-DATABASE_NAME="ArtGallery"
+CONTAINER_NAME="artgallery-postgres-prod"
+DATABASE_NAME="artgallery"
 BACKUP_DIR="/opt/artgallery/backups"
 LOG_FILE="/opt/artgallery/backups/restore.log"
 
@@ -25,10 +25,10 @@ log() {
 }
 
 usage() {
-    echo "Usage: $0 [backup_file.bak]"
+    echo "Usage: $0 [backup_file.dump]"
     echo ""
     echo "Available backups:"
-    ls -lh "$BACKUP_DIR"/*.bak 2>/dev/null || echo "  No backups found in $BACKUP_DIR"
+    ls -lh "$BACKUP_DIR"/*.dump 2>/dev/null || echo "  No backups found in $BACKUP_DIR"
     exit 1
 }
 
@@ -41,7 +41,7 @@ BACKUP_FILE="${1:-}"
 
 if [ -z "$BACKUP_FILE" ]; then
     # No file specified - list available backups
-    BACKUPS=$(ls -1t "$BACKUP_DIR"/*.bak 2>/dev/null || true)
+    BACKUPS=$(ls -1t "$BACKUP_DIR"/*.dump 2>/dev/null || true)
     if [ -z "$BACKUPS" ]; then
         log "ERROR: No backup files found in $BACKUP_DIR"
         exit 1
@@ -50,7 +50,7 @@ if [ -z "$BACKUP_FILE" ]; then
     echo "========================================="
     echo "Available Backups (newest first):"
     echo "========================================="
-    ls -lht "$BACKUP_DIR"/*.bak
+    ls -lht "$BACKUP_DIR"/*.dump
 
     echo ""
     echo "Enter backup filename to restore (or 'q' to quit):"
@@ -64,7 +64,7 @@ if [ -z "$BACKUP_FILE" ]; then
 fi
 
 # Resolve full path
-if [[ "$BACKUP_FILE" == *.bak ]]; then
+if [[ "$BACKUP_FILE" == *.dump ]]; then
     if [ -f "$BACKUP_FILE" ]; then
         BACKUP_PATH="$BACKUP_FILE"
     elif [ -f "$BACKUP_DIR/$BACKUP_FILE" ]; then
@@ -74,7 +74,7 @@ if [[ "$BACKUP_FILE" == *.bak ]]; then
         exit 1
     fi
 else
-    log "ERROR: File must be a .bak file"
+    log "ERROR: File must be a .dump file"
     usage
 fi
 
@@ -109,14 +109,13 @@ fi
 source "$CONFIG_FILE"
 
 # Use defaults if not overridden in config
-CONTAINER_NAME="${CONTAINER_NAME:-artgallery-sql-prod}"
-DATABASE_NAME="${DATABASE_NAME:-ArtGallery}"
+CONTAINER_NAME="${CONTAINER_NAME:-artgallery-postgres-prod}"
+DATABASE_NAME="${DATABASE_NAME:-artgallery}"
 
-if [ -z "$SQLSERVER_SA_PASSWORD" ]; then
-    log "ERROR: SQLSERVER_SA_PASSWORD not set in $CONFIG_FILE"
+if [ -z "$POSTGRES_PASSWORD" ]; then
+    log "ERROR: POSTGRES_PASSWORD not set in $CONFIG_FILE"
     exit 1
 fi
-SA_PASSWORD="$SQLSERVER_SA_PASSWORD"
 
 # --- Confirmation ---
 FILENAME=$(basename "$BACKUP_PATH")
@@ -152,44 +151,25 @@ log "Stopping API container..."
 docker stop artgallery-api-prod 2>/dev/null || true
 log "API container stopped"
 
-# Step 2: Copy backup file into the SQL Server container (use /tmp/ since backup volume is read-only)
+# Step 2: Copy backup file into the PostgreSQL container
 log "Copying backup file to container..."
 docker cp "$BACKUP_PATH" "$CONTAINER_NAME:/tmp/$FILENAME"
 
-# Step 3: Set database to SINGLE_USER mode to kill existing connections
-log "Setting database to SINGLE_USER mode..."
-docker exec "$CONTAINER_NAME" /opt/mssql-tools18/bin/sqlcmd \
-    -S localhost \
-    -U SA \
-    -P "$SA_PASSWORD" \
-    -C \
-    -Q "ALTER DATABASE [$DATABASE_NAME] SET SINGLE_USER WITH ROLLBACK IMMEDIATE"
-
-# Step 4: Restore the database
+# Step 3: Drop and recreate the database using pg_restore
 log "Restoring database..."
-docker exec "$CONTAINER_NAME" /opt/mssql-tools18/bin/sqlcmd \
-    -S localhost \
-    -U SA \
-    -P "$SA_PASSWORD" \
-    -C \
-    -Q "RESTORE DATABASE [$DATABASE_NAME] FROM DISK = N'/tmp/$FILENAME' WITH REPLACE, RECOVERY" \
+docker exec -i "$CONTAINER_NAME" pg_restore \
+    -U postgres \
+    -c \
+    -d "$DATABASE_NAME" \
+    "/tmp/$FILENAME" \
     2>&1 | tee -a "$LOG_FILE"
 
 RESTORE_EXIT=${PIPESTATUS[0]}
 
-# Step 5: Set database back to MULTI_USER mode
-log "Setting database to MULTI_USER mode..."
-docker exec "$CONTAINER_NAME" /opt/mssql-tools18/bin/sqlcmd \
-    -S localhost \
-    -U SA \
-    -P "$SA_PASSWORD" \
-    -C \
-    -Q "ALTER DATABASE [$DATABASE_NAME] SET MULTI_USER"
-
-# Step 6: Clean up temp file in container
+# Step 4: Clean up temp file in container
 docker exec "$CONTAINER_NAME" rm -f "/tmp/$FILENAME" 2>/dev/null || true
 
-# Step 7: Restart API container
+# Step 5: Restart API container
 log "Starting API container..."
 docker start artgallery-api-prod 2>/dev/null || true
 log "API container started"

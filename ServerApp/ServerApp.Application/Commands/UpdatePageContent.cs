@@ -7,7 +7,7 @@ public record UpdatePageContent(
     Guid Id,
     string? Title,
     string? Content,
-    string? PhotoUrl,
+    string[]? PhotoUrls,
     Guid AdminId,
     string? IdempotencyKey
 ) : IRequest<CommandCompletionResponse>;

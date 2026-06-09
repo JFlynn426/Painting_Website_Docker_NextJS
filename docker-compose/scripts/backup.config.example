@@ -2,14 +2,14 @@
 # Copy this file to backup.config and fill in your settings
 # The install script will create this automatically.
 
-# SQL Server SA Password (must match docker-compose .env)
-SQLSERVER_SA_PASSWORD=YourStrongPassword!
+# PostgreSQL Password (must match docker-compose .env)
+POSTGRES_PASSWORD=YourStrongPassword!
 
-# Optional: Container name (default: artgallery-sql-prod)
-# CONTAINER_NAME=artgallery-sql-prod
+# Optional: Container name (default: artgallery-postgres-prod)
+# CONTAINER_NAME=artgallery-postgres-prod
 
-# Optional: Database name (default: ArtGallery)
-# DATABASE_NAME=ArtGallery
+# Optional: Database name (default: artgallery)
+# DATABASE_NAME=artgallery
 
 # Optional: Backup retention days (default: 30)
 # RETENTION_DAYS=30

@@ -42,7 +42,8 @@ public static class SeascapesSeedData
             Width = 24,
             Height = 18,
             Price = 700,
-            IsAvailable = true
+            IsAvailable = true,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -67,7 +68,8 @@ public static class SeascapesSeedData
             CategorySlug = "seascapes",
             Width = 40,
             Height = 30,
-            IsAvailable = false
+            IsAvailable = false,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -80,7 +82,8 @@ public static class SeascapesSeedData
             Width = 30,
             Height = 24,
             Price = 1200,
-            IsAvailable = true
+            IsAvailable = true,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -105,7 +108,8 @@ public static class SeascapesSeedData
             Width = 31,
             Height = 25,
             Price = 1600,
-            IsAvailable = true
+            IsAvailable = true,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -118,7 +122,8 @@ public static class SeascapesSeedData
             Width = 20,
             Height = 16,
             IsAvailable = false,
-            IsNew = true
+            IsNew = true,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -130,7 +135,8 @@ public static class SeascapesSeedData
             CategorySlug = "seascapes",
             Width = 12,
             Height = 10,
-            IsAvailable = false
+            IsAvailable = false,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -143,7 +149,8 @@ public static class SeascapesSeedData
             Width = 23,
             Height = 19,
             Price = 750,
-            IsAvailable = true
+            IsAvailable = true,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -158,7 +165,7 @@ public static class SeascapesSeedData
             Price = 2500,
             IsAvailable = true,
             IsNew = true,
-            IsCarouselPainting = true
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -171,7 +178,8 @@ public static class SeascapesSeedData
             Width = 28,
             Height = 24,
             Price = 1500,
-            IsAvailable = true
+            IsAvailable = true,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -185,7 +193,7 @@ public static class SeascapesSeedData
             Height = 30,
             IsAvailable = false,
             IsNew = true,
-            IsCarouselPainting = true
+            IsLandscape = true
         },
         new PaintingSeed
         {

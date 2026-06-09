@@ -2,47 +2,39 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { getPageContent } from '@/lib/api';
 
 export default function ArtCarousel() {
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    // Image data
-    const images = [
-        {
-            src: "/Carousel-Paintings/Wind_and_Water-Carousel.jpg",
-            alt: "Wind and Water: Brilliant Sailboat on a Windy Day"
-        },
-        {
-            src: "/Carousel-Paintings/Manatees-Carousel.jpg",
-            alt: "Buddies: Manatee Buddies Swimming Together"
-        },
-        {
-            src: "/Carousel-Paintings/Solitude-Carousel.jpg",
-            alt: "A Lone Rowboat on a Foggy Lake"
-        },
-        {
-            src: "/Carousel-Paintings/Aspens-Carousel.jpg",
-            alt: "Aspens in Autumn"
-        },
-
-        {
-            src: "/Carousel-Paintings/Leatherback-Carousel.jpg",
-            alt: "Leatherback: Leatherback Turtle Swimming"
-        },
-        {
-            src: "/Carousel-Paintings/Bird_of_Paradise-Carousel.jpg",
-            alt: "Bird of Paradise Flower"
+    // Fetch carousel images from home page content photoUrls
+    useEffect(() => {
+        async function loadCarouselImages() {
+            try {
+                const homeContent = await getPageContent('home');
+                if (homeContent?.photoUrls && homeContent.photoUrls.length > 0) {
+                    setPhotoUrls(homeContent.photoUrls);
+                }
+            } catch (error) {
+                console.error('Failed to load carousel images:', error);
+            } finally {
+                setLoading(false);
+            }
         }
-    ];
+        loadCarouselImages();
+    }, []);
 
     // Auto-advance carousel
     useEffect(() => {
+        if (photoUrls.length === 0) return;
         const interval = setInterval(() => {
-            setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
+            setCurrentIndex((prevIndex) => (prevIndex + 1) % photoUrls.length);
         }, 5000); // Change image every 5 seconds
 
         return () => clearInterval(interval);
-    }, [images.length]);
+    }, [photoUrls.length]);
 
     const goToSlide = (index: number) => {
         setCurrentIndex(index);
@@ -50,21 +42,25 @@ export default function ArtCarousel() {
 
     const goToPrev = () => {
         setCurrentIndex((prevIndex) =>
-            prevIndex === 0 ? images.length - 1 : prevIndex - 1
+            prevIndex === 0 ? photoUrls.length - 1 : prevIndex - 1
         );
     };
 
     const goToNext = () => {
         setCurrentIndex((prevIndex) =>
-            prevIndex === images.length - 1 ? 0 : prevIndex + 1
+            prevIndex === photoUrls.length - 1 ? 0 : prevIndex + 1
         );
     };
 
+    if (loading || photoUrls.length === 0) {
+        return null;
+    }
+
     return (
-        <div className="relative w-full max-w-[50rem] h-[50vh] md:h-[75vh] overflow-hidden rounded-lg mx-auto bg-[var(--background)]">
+        <div className="relative w-full max-w-[50rem] aspect-[3/2] overflow-hidden rounded-lg mx-auto bg-[var(--navbar-footer-bg)]">
             {/* Images container */}
             <div className="relative w-full h-full">
-                {images.map((image, index) => (
+                {photoUrls.map((url, index) => (
                     <div
                         key={index}
                         className={`absolute inset-0 transition-opacity duration-500 ease-in-out ${index === currentIndex ? 'opacity-100' : 'opacity-0'
@@ -72,8 +68,8 @@ export default function ArtCarousel() {
                     >
                         <div className="flex items-center justify-center h-full">
                             <Image
-                                src={image.src}
-                                alt={image.alt}
+                                src={url}
+                                alt={`Carousel image ${index + 1}`}
                                 width={1000}
                                 height={750}
                                 className="object-contain h-full"
@@ -106,13 +102,15 @@ export default function ArtCarousel() {
                 </svg>
             </button>
 
-            {/* Indicators */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                {images.map((_, index) => (
+            {/* Dots indicator */}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+                {photoUrls.map((_, index) => (
                     <button
                         key={index}
                         onClick={() => goToSlide(index)}
-                        className={`w-3 h-3 rounded-full transition ${index === currentIndex ? 'bg-white' : 'bg-white bg-opacity-50'
+                        className={`w-3 h-3 rounded-full transition-all ${index === currentIndex
+                            ? 'bg-white scale-110'
+                            : 'bg-white bg-opacity-50 hover:bg-opacity-75'
                             }`}
                         aria-label={`Go to slide ${index + 1}`}
                     />

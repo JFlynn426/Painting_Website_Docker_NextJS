@@ -46,7 +46,7 @@ public class UpdatePageContentHandler : CommandHandlerBase, IRequestHandler<Upda
                 pageContent.Update(
                     PageTitle.FromNullable(command.Title),
                     PageContentText.FromNullable(command.Content),
-                    PagePhotoUrl.FromNullable(command.PhotoUrl));
+                    PagePhotoUrls.FromNullable(command.PhotoUrls));
 
                 await _writeRepository.UpdateAsync(pageContent, ct);
                 await _unitOfWork.CommitAsync(ct);

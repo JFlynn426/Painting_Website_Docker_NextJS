@@ -17,13 +17,13 @@ public class PaintingConfiguration : IEntityTypeConfiguration<Painting>
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id)
             .HasColumnName("Id")
-            .HasColumnType("uniqueidentifier")
+            .HasColumnType("uuid")
             .ValueGeneratedOnAdd();
 
         // Value object with a non-null backing primitive
         builder.Property(e => e.Title)
             .HasColumnName("Title")
-            .HasColumnType("nvarchar(200)")
+            .HasColumnType("varchar(200)")
             .IsRequired()
             .HasConversion(
                 n => n.Value,
@@ -32,7 +32,7 @@ public class PaintingConfiguration : IEntityTypeConfiguration<Painting>
         // Value object with a non-null backing primitive
         builder.Property(e => e.Slug)
             .HasColumnName("Slug")
-            .HasColumnType("nvarchar(200)")
+            .HasColumnType("varchar(200)")
             .IsRequired()
             .HasConversion(
                 s => s.Value,
@@ -41,7 +41,7 @@ public class PaintingConfiguration : IEntityTypeConfiguration<Painting>
         // Nullable value object - conversion must handle null both ways
         builder.Property(e => e.Description)
             .HasColumnName("Description")
-            .HasColumnType("nvarchar(max)")
+            .HasColumnType("text")
             .IsRequired(false)
             .HasConversion(
                 new ValueConverter<PaintingDescription?, string?>(
@@ -51,7 +51,7 @@ public class PaintingConfiguration : IEntityTypeConfiguration<Painting>
         // Value object with a non-null backing primitive
         builder.Property(e => e.ImageUrl)
             .HasColumnName("ImageUrl")
-            .HasColumnType("nvarchar(500)")
+            .HasColumnType("varchar(500)")
             .IsRequired()
             .HasConversion(
                 url => url.Value,
@@ -60,7 +60,7 @@ public class PaintingConfiguration : IEntityTypeConfiguration<Painting>
         // Nullable value object
         builder.Property(e => e.ThumbnailUrl)
             .HasColumnName("ThumbnailUrl")
-            .HasColumnType("nvarchar(500)")
+            .HasColumnType("varchar(500)")
             .IsRequired(false)
             .HasConversion(
                 new ValueConverter<PaintingThumbnailUrl?, string?>(
@@ -70,7 +70,7 @@ public class PaintingConfiguration : IEntityTypeConfiguration<Painting>
         // Value object with a non-null backing primitive
         builder.Property(e => e.CategorySlug)
             .HasColumnName("CategorySlug")
-            .HasColumnType("nvarchar(100)")
+            .HasColumnType("varchar(100)")
             .IsRequired()
             .HasConversion(
                 s => s.Value,
@@ -79,7 +79,7 @@ public class PaintingConfiguration : IEntityTypeConfiguration<Painting>
         // Nullable value objects for dimensions
         builder.Property(e => e.Width)
             .HasColumnName("Width")
-            .HasColumnType("decimal(18, 2)")
+            .HasColumnType("numeric(18, 2)")
             .HasConversion(
                 new ValueConverter<PaintingWidth?, decimal?>(
                     v => v == null ? null : v.Value,
@@ -87,7 +87,7 @@ public class PaintingConfiguration : IEntityTypeConfiguration<Painting>
 
         builder.Property(e => e.Height)
             .HasColumnName("Height")
-            .HasColumnType("decimal(18, 2)")
+            .HasColumnType("numeric(18, 2)")
             .HasConversion(
                 new ValueConverter<PaintingHeight?, decimal?>(
                     v => v == null ? null : v.Value,
@@ -95,7 +95,7 @@ public class PaintingConfiguration : IEntityTypeConfiguration<Painting>
 
         builder.Property(e => e.Depth)
             .HasColumnName("Depth")
-            .HasColumnType("decimal(18, 2)")
+            .HasColumnType("numeric(18, 2)")
             .HasConversion(
                 new ValueConverter<PaintingDepth?, decimal?>(
                     v => v == null ? null : v.Value,
@@ -104,7 +104,7 @@ public class PaintingConfiguration : IEntityTypeConfiguration<Painting>
         // Nullable value object for year
         builder.Property(e => e.Year)
             .HasColumnName("Year")
-            .HasColumnType("int")
+            .HasColumnType("integer")
             .HasConversion(
                 new ValueConverter<PaintingYear?, int?>(
                     v => v == null ? null : v.Value,
@@ -113,7 +113,7 @@ public class PaintingConfiguration : IEntityTypeConfiguration<Painting>
         // Nullable value object for price
         builder.Property(e => e.Price)
             .HasColumnName("Price")
-            .HasColumnType("decimal(18, 2)")
+            .HasColumnType("numeric(18, 2)")
             .HasConversion(
                 new ValueConverter<PaintingPrice?, decimal?>(
                     v => v == null ? null : v.Value,
@@ -122,7 +122,7 @@ public class PaintingConfiguration : IEntityTypeConfiguration<Painting>
         // Value object for boolean
         builder.Property(e => e.IsAvailable)
             .HasColumnName("IsAvailable")
-            .HasColumnType("bit")
+            .HasColumnType("boolean")
             .IsRequired()
             .HasConversion(
                 a => a.Value,
@@ -131,25 +131,25 @@ public class PaintingConfiguration : IEntityTypeConfiguration<Painting>
         // Value object for boolean
         builder.Property(e => e.IsNew)
             .HasColumnName("IsNew")
-            .HasColumnType("bit")
+            .HasColumnType("boolean")
             .IsRequired()
             .HasConversion(
                 a => a.Value,
                 value => new PaintingIsNew(value));
 
         // Value object for boolean
-        builder.Property(e => e.IsCarouselPainting)
-            .HasColumnName("IsCarouselPainting")
-            .HasColumnType("bit")
+        builder.Property(e => e.IsLandscape)
+            .HasColumnName("IsLandscape")
+            .HasColumnType("boolean")
             .IsRequired()
             .HasConversion(
                 a => a.Value,
-                value => new PaintingIsCarouselPainting(value));
+                value => new PaintingIsLandscape(value));
 
         // Navigation property
         builder.Property(e => e.CategoryId)
             .HasColumnName("CategoryId")
-            .HasColumnType("uniqueidentifier");
+            .HasColumnType("uuid");
 
         builder.HasOne(e => e.Category)
             .WithMany(c => c.Paintings)

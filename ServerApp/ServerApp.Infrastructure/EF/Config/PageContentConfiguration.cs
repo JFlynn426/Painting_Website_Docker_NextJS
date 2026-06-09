@@ -1,5 +1,6 @@
 namespace ServerApp.Infrastructure.EF.Config;
 
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -15,12 +16,12 @@ public class PageContentConfiguration : IEntityTypeConfiguration<PageContent>
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id)
             .HasColumnName("Id")
-            .HasColumnType("uniqueidentifier")
+            .HasColumnType("uuid")
             .ValueGeneratedOnAdd();
 
         builder.Property(e => e.Address)
             .HasColumnName("Address")
-            .HasColumnType("nvarchar(200)")
+            .HasColumnType("varchar(200)")
             .IsRequired()
             .HasConversion(
                 a => a.Value,
@@ -28,7 +29,7 @@ public class PageContentConfiguration : IEntityTypeConfiguration<PageContent>
 
         builder.Property(e => e.Title)
             .HasColumnName("Title")
-            .HasColumnType("nvarchar(200)")
+            .HasColumnType("varchar(200)")
             .IsRequired(false)
             .HasConversion(
                 new ValueConverter<PageTitle?, string?>(
@@ -37,20 +38,20 @@ public class PageContentConfiguration : IEntityTypeConfiguration<PageContent>
 
         builder.Property(e => e.Content)
             .HasColumnName("Content")
-            .HasColumnType("nvarchar(max)")
+            .HasColumnType("text")
             .IsRequired()
             .HasConversion(
                 c => c.Value,
                 value => new PageContentText(value));
 
-        builder.Property(e => e.PhotoUrl)
-            .HasColumnName("PhotoUrl")
-            .HasColumnType("nvarchar(max)")
-            .IsRequired(false)
+        builder.Property(e => e.PhotoUrls)
+            .HasColumnName("PhotoUrls")
+            .HasColumnType("jsonb")
+            .IsRequired()
             .HasConversion(
-                new ValueConverter<PagePhotoUrl?, string?>(
-                    v => v == null ? null : v.Value,
-                    v => v == null ? null : new PagePhotoUrl(v)));
+                new ValueConverter<PagePhotoUrls, string>(
+                    v => JsonSerializer.Serialize(v.ToArray()),
+                    v => new PagePhotoUrls(JsonSerializer.Deserialize<string[]>(v) ?? Array.Empty<string>())));
 
         builder.HasIndex(e => e.Address).IsUnique();
     }

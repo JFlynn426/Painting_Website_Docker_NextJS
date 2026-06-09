@@ -2,69 +2,69 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ServerApp.Infrastructure.EF.Contexts;
 
 #nullable disable
 
-namespace ServerApp.Infrastructure.Migrations
+namespace ServerApp.Infrastructure.EF.Migrations
 {
     [DbContext(typeof(WriteDbContext))]
-    [Migration("20260518194137_AddAdminUser")]
-    partial class AddAdminUser
+    [Migration("20260609164049_InitialPostgresMigration")]
+    partial class InitialPostgresMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.5")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+                .HasAnnotation("ProductVersion", "10.0.8")
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("ServerApp.Domain.Entities.AdminUser", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
+                        .HasColumnType("uuid")
                         .HasColumnName("Id");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2")
+                        .HasColumnType("timestamptz")
                         .HasColumnName("CreatedAt");
 
                     b.Property<string>("DisplayName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(100)")
+                        .HasColumnType("varchar(100)")
                         .HasColumnName("DisplayName");
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(256)")
+                        .HasColumnType("varchar(256)")
                         .HasColumnName("Email");
 
                     b.Property<string>("GoogleSubjectId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(100)")
+                        .HasColumnType("varchar(100)")
                         .HasColumnName("GoogleSubjectId");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit")
+                        .HasColumnType("boolean")
                         .HasColumnName("IsActive");
 
                     b.Property<DateTime>("LastLoginAt")
-                        .HasColumnType("datetime2")
+                        .HasColumnType("timestamptz")
                         .HasColumnName("LastLoginAt");
 
                     b.Property<string>("PictureUrl")
-                        .HasColumnType("nvarchar(500)")
+                        .HasColumnType("varchar(500)")
                         .HasColumnName("PictureUrl");
 
                     b.Property<int>("Version")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -81,25 +81,30 @@ namespace ServerApp.Infrastructure.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
+                        .HasColumnType("uuid")
                         .HasColumnName("Id");
 
                     b.Property<string>("Address")
                         .IsRequired()
-                        .HasColumnType("nvarchar(200)")
+                        .HasColumnType("varchar(200)")
                         .HasColumnName("Address");
 
                     b.Property<string>("Content")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)")
+                        .HasColumnType("text")
                         .HasColumnName("Content");
 
+                    b.Property<string>("PhotoUrls")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("PhotoUrls");
+
                     b.Property<string>("Title")
-                        .HasColumnType("nvarchar(200)")
+                        .HasColumnType("varchar(200)")
                         .HasColumnName("Title");
 
                     b.Property<int>("Version")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -113,70 +118,70 @@ namespace ServerApp.Infrastructure.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
+                        .HasColumnType("uuid")
                         .HasColumnName("Id");
 
                     b.Property<Guid?>("CategoryId")
-                        .HasColumnType("uniqueidentifier")
+                        .HasColumnType("uuid")
                         .HasColumnName("CategoryId");
 
                     b.Property<string>("CategorySlug")
                         .IsRequired()
-                        .HasColumnType("nvarchar(100)")
+                        .HasColumnType("varchar(100)")
                         .HasColumnName("CategorySlug");
 
                     b.Property<decimal?>("Depth")
-                        .HasColumnType("decimal(18, 2)")
+                        .HasColumnType("numeric(18, 2)")
                         .HasColumnName("Depth");
 
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)")
+                        .HasColumnType("text")
                         .HasColumnName("Description");
 
                     b.Property<decimal?>("Height")
-                        .HasColumnType("decimal(18, 2)")
+                        .HasColumnType("numeric(18, 2)")
                         .HasColumnName("Height");
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()
-                        .HasColumnType("nvarchar(500)")
+                        .HasColumnType("varchar(500)")
                         .HasColumnName("ImageUrl");
 
                     b.Property<bool>("IsAvailable")
-                        .HasColumnType("bit")
+                        .HasColumnType("boolean")
                         .HasColumnName("IsAvailable");
 
                     b.Property<bool>("IsNew")
-                        .HasColumnType("bit")
+                        .HasColumnType("boolean")
                         .HasColumnName("IsNew");
 
                     b.Property<decimal?>("Price")
-                        .HasColumnType("decimal(18, 2)")
+                        .HasColumnType("numeric(18, 2)")
                         .HasColumnName("Price");
 
                     b.Property<string>("Slug")
                         .IsRequired()
-                        .HasColumnType("nvarchar(200)")
+                        .HasColumnType("varchar(200)")
                         .HasColumnName("Slug");
 
                     b.Property<string>("ThumbnailUrl")
-                        .HasColumnType("nvarchar(500)")
+                        .HasColumnType("varchar(500)")
                         .HasColumnName("ThumbnailUrl");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("nvarchar(200)")
+                        .HasColumnType("varchar(200)")
                         .HasColumnName("Title");
 
                     b.Property<int>("Version")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<decimal?>("Width")
-                        .HasColumnType("decimal(18, 2)")
+                        .HasColumnType("numeric(18, 2)")
                         .HasColumnName("Width");
 
                     b.Property<int?>("Year")
-                        .HasColumnType("int")
+                        .HasColumnType("integer")
                         .HasColumnName("Year");
 
                     b.HasKey("Id");
@@ -195,25 +200,25 @@ namespace ServerApp.Infrastructure.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
+                        .HasColumnType("uuid")
                         .HasColumnName("Id");
 
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)")
+                        .HasColumnType("text")
                         .HasColumnName("Description");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(50)")
+                        .HasColumnType("varchar(50)")
                         .HasColumnName("Name");
 
                     b.Property<string>("Slug")
                         .IsRequired()
-                        .HasColumnType("nvarchar(100)")
+                        .HasColumnType("varchar(100)")
                         .HasColumnName("Slug");
 
                     b.Property<int>("Version")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 

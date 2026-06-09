@@ -16,13 +16,13 @@ public class AdminUserConfiguration : IEntityTypeConfiguration<AdminUser>
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id)
             .HasColumnName("Id")
-            .HasColumnType("uniqueidentifier")
+            .HasColumnType("uuid")
             .ValueGeneratedOnAdd();
 
         // Email - required, unique
         builder.Property(e => e.Email)
             .HasColumnName("Email")
-            .HasColumnType("nvarchar(256)")
+            .HasColumnType("varchar(256)")
             .IsRequired()
             .HasConversion(
                 e => e.Value,
@@ -32,7 +32,7 @@ public class AdminUserConfiguration : IEntityTypeConfiguration<AdminUser>
         // DisplayName - required
         builder.Property(e => e.DisplayName)
             .HasColumnName("DisplayName")
-            .HasColumnType("nvarchar(100)")
+            .HasColumnType("varchar(100)")
             .IsRequired()
             .HasConversion(
                 n => n.Value,
@@ -41,7 +41,7 @@ public class AdminUserConfiguration : IEntityTypeConfiguration<AdminUser>
         // PictureUrl - nullable
         builder.Property(e => e.PictureUrl)
             .HasColumnName("PictureUrl")
-            .HasColumnType("nvarchar(500)")
+            .HasColumnType("varchar(500)")
             .IsRequired(false)
             .HasConversion(
                 new ValueConverter<AdminPictureUrl?, string?>(
@@ -51,7 +51,7 @@ public class AdminUserConfiguration : IEntityTypeConfiguration<AdminUser>
         // GoogleSubjectId - required, unique
         builder.Property(e => e.GoogleSubjectId)
             .HasColumnName("GoogleSubjectId")
-            .HasColumnType("nvarchar(100)")
+            .HasColumnType("varchar(100)")
             .IsRequired()
             .HasConversion(
                 g => g.Value,
@@ -61,7 +61,7 @@ public class AdminUserConfiguration : IEntityTypeConfiguration<AdminUser>
         // LastLoginAt - required
         builder.Property(e => e.LastLoginAt)
             .HasColumnName("LastLoginAt")
-            .HasColumnType("datetime2")
+            .HasColumnType("timestamptz")
             .IsRequired()
             .HasConversion(
                 t => t.Value,
@@ -70,7 +70,7 @@ public class AdminUserConfiguration : IEntityTypeConfiguration<AdminUser>
         // CreatedAt - required
         builder.Property(e => e.CreatedAt)
             .HasColumnName("CreatedAt")
-            .HasColumnType("datetime2")
+            .HasColumnType("timestamptz")
             .IsRequired()
             .HasConversion(
                 t => t.Value,
@@ -79,7 +79,7 @@ public class AdminUserConfiguration : IEntityTypeConfiguration<AdminUser>
         // IsActive - required
         builder.Property(e => e.IsActive)
             .HasColumnName("IsActive")
-            .HasColumnType("bit")
+            .HasColumnType("boolean")
             .IsRequired()
             .HasConversion(
                 a => a.Value,

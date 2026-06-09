@@ -107,8 +107,8 @@ public class PaintingsController : BaseController
         var adminId = (Guid)HttpContext.Items["AdminId"]!;
         var command = new UpdatePainting(id, request.Name, request.Description, request.ImageUrl,
             request.ThumbnailUrl, request.Slug, request.CategoryId, request.Width, request.Height,
-            request.Depth, request.Year, request.Price, request.IsAvailable, request.IsNew,
-            request.IsCarouselPainting, adminId, idempotencyKey);
+            request.Depth, request.Year, request.Price, request.IsAvailable, request.IsNew, request.IsLandscape,
+            adminId, idempotencyKey);
         var result = await _mediator.Send(command);
         return Ok(result);
     }

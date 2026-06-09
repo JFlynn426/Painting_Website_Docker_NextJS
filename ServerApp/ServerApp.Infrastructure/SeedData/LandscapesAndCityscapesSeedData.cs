@@ -16,7 +16,7 @@ public static class LandscapesAndCityscapesSeedData
             Height = 20,
             IsAvailable = false,
             IsNew = true,
-            IsCarouselPainting = true
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -28,7 +28,8 @@ public static class LandscapesAndCityscapesSeedData
             CategorySlug = "landscapes-and-cityscapes",
             Width = 40,
             Height = 30,
-            IsAvailable = false
+            IsAvailable = false,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -55,7 +56,8 @@ public static class LandscapesAndCityscapesSeedData
             Height = 16,
             Price = 800,
             IsAvailable = true,
-            IsNew = true
+            IsNew = true,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -68,7 +70,8 @@ public static class LandscapesAndCityscapesSeedData
             Width = 18,
             Height = 14,
             Price = 630,
-            IsAvailable = true
+            IsAvailable = true,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -80,7 +83,8 @@ public static class LandscapesAndCityscapesSeedData
             CategorySlug = "landscapes-and-cityscapes",
             Width = 30,
             Height = 24,
-            IsAvailable = false
+            IsAvailable = false,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -129,7 +133,8 @@ public static class LandscapesAndCityscapesSeedData
             CategorySlug = "landscapes-and-cityscapes",
             Width = 18,
             Height = 14,
-            IsAvailable = false
+            IsAvailable = false,
+            IsLandscape = true
         },
         new PaintingSeed
         {

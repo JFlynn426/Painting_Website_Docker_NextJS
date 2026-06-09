@@ -246,7 +246,7 @@ export async function getAllPageContents(): Promise<PageContent[]> {
             slug: r.address,
             title: r.title,
             content: r.content,
-            photoUrl: r.photoUrl
+            photoUrls: r.photoUrls
         }));
     } catch (error) {
         throw error;
@@ -271,7 +271,7 @@ export async function getPageContent(slug: string): Promise<PageContent | null> 
             slug: result.address,
             title: result.title,
             content: result.content,
-            photoUrl: result.photoUrl
+            photoUrls: result.photoUrls
         };
     } catch (error) {
         throw error;
@@ -283,7 +283,7 @@ interface RawPageContentDto {
     address: string;
     title?: string;
     content: string;
-    photoUrl?: string;
+    photoUrls?: string[];
 }
 
 // ============================================================================
@@ -367,7 +367,6 @@ export interface UpdatePaintingRequest {
     price?: number;
     isAvailable?: boolean;
     isNew?: boolean;
-    isCarouselPainting?: boolean;
 }
 
 /** Request body for adding a painting category */
@@ -393,7 +392,7 @@ export interface AddPageContentRequest {
 export interface UpdatePageContentRequest {
     title?: string;
     content?: string;
-    photoUrl?: string;
+    photoUrls?: string[];
 }
 
 /** Request body for updating an admin user */

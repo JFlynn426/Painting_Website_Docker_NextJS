@@ -32,7 +32,7 @@ public class GetPageContentHandler : IRequestHandler<GetPageContent, PageContent
             Address = pageContent.Address.Value,
             Title = pageContent.Title?.Value,
             Content = pageContent.Content.Value,
-            PhotoUrl = pageContent.PhotoUrl?.Value
+            PhotoUrls = pageContent.PhotoUrls.ToArray()
         };
     }
 }

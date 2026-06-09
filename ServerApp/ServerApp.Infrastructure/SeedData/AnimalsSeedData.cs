@@ -27,7 +27,8 @@ public static class AnimalsSeedData
             Width = 26,
             Height = 22,
             Price = 850,
-            IsAvailable = true
+            IsAvailable = true,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -40,7 +41,8 @@ public static class AnimalsSeedData
             Width = 18,
             Height = 14,
             Price = 680,
-            IsAvailable = true
+            IsAvailable = true,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -89,7 +91,8 @@ public static class AnimalsSeedData
             CategorySlug = "animals",
             Width = 30,
             Height = 18,
-            IsAvailable = false
+            IsAvailable = false,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -108,13 +111,14 @@ public static class AnimalsSeedData
             Slug = "leatherback",
             Description = "Framed on canvas. The leatherback is the largest of all living turtles and the heaviest. It has existed since the first turtles on earth, and its carapace is covered by oily flesh and flexible, leather-like skin, for which it is named. The leatherback is an endangered species.",
             ImageUrl = "/Animals-Full/Leatherback.jpg",
+            ThumbnailUrl = "/Animals-Thumbnail/Leatherback_.jpg",
             CategorySlug = "animals",
             Width = 30,
             Height = 25,
             Price = 1600,
             IsAvailable = true,
             IsNew = true,
-            IsCarouselPainting = true
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -129,7 +133,7 @@ public static class AnimalsSeedData
             Price = 1600,
             IsAvailable = true,
             IsNew = true,
-            IsCarouselPainting = true
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -152,7 +156,8 @@ public static class AnimalsSeedData
             Width = 15,
             Height = 12,
             Price = 350,
-            IsAvailable = true
+            IsAvailable = true,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -188,7 +193,8 @@ public static class AnimalsSeedData
             Width = 20,
             Height = 15,
             Price = 700,
-            IsAvailable = true
+            IsAvailable = true,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -201,7 +207,8 @@ public static class AnimalsSeedData
             Width = 30,
             Height = 24,
             IsAvailable = false,
-            IsNew = true
+            IsNew = true,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -227,7 +234,8 @@ public static class AnimalsSeedData
             Height = 20,
             Price = 550,
             IsAvailable = true,
-            IsNew = true
+            IsNew = true,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -240,7 +248,8 @@ public static class AnimalsSeedData
             Width = 26,
             Height = 22,
             Price = 750,
-            IsAvailable = true
+            IsAvailable = true,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -252,7 +261,8 @@ public static class AnimalsSeedData
             CategorySlug = "animals",
             Width = 14,
             Height = 10,
-            IsAvailable = false
+            IsAvailable = false,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -265,7 +275,8 @@ public static class AnimalsSeedData
             Width = 25,
             Height = 21,
             Price = 950,
-            IsAvailable = true
+            IsAvailable = true,
+            IsLandscape = true
         },
         new PaintingSeed
         {
@@ -291,6 +302,33 @@ public static class AnimalsSeedData
             Width = 12,
             Height = 16,
             IsAvailable = false
+        },
+        new PaintingSeed
+        {
+            Title = "Hawksbill Turtle",
+            Slug = "hawksbill-turtle",
+            Description = "Framed oil on canvas. The hawksbill turtle is critically endangered. I had the exceptional experience to swim with one while I was with my family in the Caribbean Sea. Hawksbill turtles became endangered because their shells were used for decorative purposes (tortoise shell combs, etc.).",
+            ImageUrl = "/Animals-Full/Hawksbill_Turtle.jpg",
+            ThumbnailUrl = "/Animals-Thumbnail/Hawksbill_Turtle_.jpg",
+            CategorySlug = "animals",
+            Width = 33,
+            Height = 25,
+            Price = 2500,
+            IsAvailable = true,
+            IsLandscape = true
+        },
+        new PaintingSeed
+        {
+            Title = "Coral Reef Color",
+            Slug = "coral-reef-color",
+            Description = "Framed oil on canvas. I photographed these fish in an aquarium in the Florida Keys.",
+            ImageUrl = "/Animals-Full/Coral_Reef_Color.jpg",
+            ThumbnailUrl = "/Animals-Thumbnail/Coral_Reef_Color_.jpg",
+            CategorySlug = "animals",
+            Width = 30,
+            Height = 30,
+            Price = 2000,
+            IsAvailable = true
         }
     };
 }
