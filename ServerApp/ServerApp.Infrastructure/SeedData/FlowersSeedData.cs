@@ -162,7 +162,8 @@ public static class FlowersSeedData
             Width = 15,
             Height = 19,
             Price = 600,
-            IsAvailable = true
+            IsAvailable = true,
+            IsNew = true
         }
     };
 }

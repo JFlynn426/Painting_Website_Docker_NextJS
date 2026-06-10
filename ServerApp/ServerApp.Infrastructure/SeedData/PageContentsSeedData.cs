@@ -26,6 +26,7 @@ My oil paintings are acts of devotion — to nature, to memory, and to the fleet
             PhotoUrls = new[]
             {
                 "/Seascapes-Thumbnail/Wind_and_Water_.jpg",
+                "/Animals-Thumbnail/Hawksbill_Turtle_.jpg",
                 "/Animals-Thumbnail/Buddies_.jpg",
                 "/Seascapes-Thumbnail/Solitude.jpg",
                 "/Landscapes-Thumbnail/Aspens_.jpg",

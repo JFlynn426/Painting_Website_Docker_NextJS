@@ -315,6 +315,7 @@ public static class AnimalsSeedData
             Height = 25,
             Price = 2500,
             IsAvailable = true,
+            IsNew = true,
             IsLandscape = true
         },
         new PaintingSeed
@@ -328,7 +329,8 @@ public static class AnimalsSeedData
             Width = 30,
             Height = 30,
             Price = 2000,
-            IsAvailable = true
+            IsAvailable = true,
+            IsNew = true
         }
     };
 }
