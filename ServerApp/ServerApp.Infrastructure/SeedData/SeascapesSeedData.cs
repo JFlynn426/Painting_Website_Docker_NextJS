@@ -156,7 +156,7 @@ public static class SeascapesSeedData
         {
             Title = "Solitude",
             Slug = "solitude",
-            Description = "Framed oil on canvas. The sailboat is waiting for a journey to a peaceful shore.",
+            Description = "Framed oil on canvas. The rowboat is waiting for a journey to a peaceful shore.",
             ImageUrl = "/Seascapes-Full/Solitude.jpg",
             ThumbnailUrl = "/Seascapes-Thumbnail/Solitude.jpg",
             CategorySlug = "seascapes",

@@ -188,7 +188,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
 
             <div className="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-4 mb-6">
                 <p className="text-yellow-200 text-sm">
-                    <strong>Note:</strong> Required fields are marked with a red asterisk. Attempt to fill out the same fields for every painting to maintain consistency across the site.
+                    <strong>Note:</strong> Required fields are marked with a red asterisk. Attempt to fill out the same fields for every painting, where possible, to maintain consistency across the site.
                 </p>
             </div>
 

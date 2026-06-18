@@ -32,7 +32,7 @@ public static class PaintingCategoriesSeedData
         {
             Name = "Animals",
             Slug = "animals",
-            Description = "Portraits and animal paintings"
+            Description = "Paintings of a variety of different animals"
         },
         new PaintingCategorySeed
         {
