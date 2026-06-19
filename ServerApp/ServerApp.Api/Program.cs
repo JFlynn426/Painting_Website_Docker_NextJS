@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.MicrosoftExtensions;
 using ServerApp.Application;
 using ServerApp.Infrastructure;
@@ -68,6 +70,14 @@ namespace ServerApp.Api
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
+            // Serve uploaded images statically
+            var imagesPath = builder.Configuration["ImageProcessing:StoragePath"] ?? "/app/images";
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(imagesPath),
+                RequestPath = "/images"
+            });
 
             app.MapControllers();
 

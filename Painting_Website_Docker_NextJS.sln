@@ -4,6 +4,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 18.1.11312.151
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose\docker-compose.dcproj", "{8D33F181-7DDE-04EB-E05A-075C5C0D4E39}"
+	ProjectSection(ProjectDependencies) = postProject
+		{121CE53B-2AF1-44E9-DC92-373891F9F84C} = {121CE53B-2AF1-44E9-DC92-373891F9F84C}
+		{28B13B11-6113-4C38-8D38-84B7A8FC68FE} = {28B13B11-6113-4C38-8D38-84B7A8FC68FE}
+		{749D25EE-A83F-4F86-B1D2-790D1992AF88} = {749D25EE-A83F-4F86-B1D2-790D1992AF88}
+		{9CEB742E-7674-4D14-8ED8-11DC369B1972} = {9CEB742E-7674-4D14-8ED8-11DC369B1972}
+		{C06B2848-5A13-436A-BB2B-78E3E86EB827} = {C06B2848-5A13-436A-BB2B-78E3E86EB827}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerApp.Api", "ServerApp\ServerApp.Api\ServerApp.Api.csproj", "{121CE53B-2AF1-44E9-DC92-373891F9F84C}"
 EndProject
@@ -48,8 +55,6 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {145809D4-D0AC-4FEC-8625-A57151E94532}

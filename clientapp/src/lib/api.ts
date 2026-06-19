@@ -503,6 +503,86 @@ export async function updateAdminUser(
 }
 
 // ============================================================================
+// Image Upload Endpoints
+// ============================================================================
+
+/**
+ * Result from image upload operation
+ */
+export interface ImageUploadResult {
+    originalUrl: string;
+    highResUrl: string;
+    thumbnailUrl: string;
+}
+
+/**
+ * Upload an image file for a painting
+ * Endpoint: POST api/images/upload
+ * Requires admin_token cookie authentication
+ */
+export async function uploadImage(file: File): Promise<ImageUploadResult> {
+    try {
+        const API_BASE_URL = getApiBaseUrl();
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch(`${API_BASE_URL}/images/upload`, {
+            method: 'POST',
+            credentials: 'include',
+            cache: 'no-store',
+            body: formData
+        });
+
+        if (response.status === 401) {
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('admin_user');
+                window.location.href = '/admin/login';
+            }
+            throw new Error('Unauthorized');
+        }
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to upload image: ${errorText || response.statusText}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        throw error;
+    }
+}
+
+/**
+ * Delete an image file
+ * Endpoint: DELETE api/images/{fileName}
+ * Requires admin_token cookie authentication
+ */
+export async function deleteImage(fileName: string): Promise<void> {
+    try {
+        const API_BASE_URL = getApiBaseUrl();
+        const response = await fetch(`${API_BASE_URL}/images/${fileName}`, {
+            method: 'DELETE',
+            credentials: 'include',
+            cache: 'no-store'
+        });
+
+        if (response.status === 401) {
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('admin_user');
+                window.location.href = '/admin/login';
+            }
+            throw new Error('Unauthorized');
+        }
+
+        if (!response.ok) {
+            throw new Error(`Failed to delete image: ${response.statusText}`);
+        }
+    } catch (error) {
+        throw error;
+    }
+}
+
+// ============================================================================
 // Painting Mutation Endpoints
 // ============================================================================
 

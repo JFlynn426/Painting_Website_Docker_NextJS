@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getPaintingBySlug, updatePainting, UpdatePaintingRequest } from '@/lib/api';
+import { getPaintingBySlug, updatePainting, uploadImage, UpdatePaintingRequest, ImageUploadResult } from '@/lib/api';
 import type { Painting } from '@/types/paintings';
 
 interface EditPaintingPageProps {
@@ -21,6 +21,7 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
     const [description, setDescription] = useState('');
     const [imageUrl, setImageUrl] = useState('');
     const [thumbnailUrl, setThumbnailUrl] = useState('');
+    const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
     const [price, setPrice] = useState('');
     const [width, setWidth] = useState('');
     const [height, setHeight] = useState('');
@@ -29,6 +30,7 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
     const [isAvailable, setIsAvailable] = useState(true);
     const [isNew, setIsNew] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [submitSuccess, setSubmitSuccess] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -44,6 +46,9 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                     setDescription(data.description || '');
                     setImageUrl(data.imageUrl);
                     setThumbnailUrl(data.thumbnailUrl || data.imageUrl);
+                    // Extract filename from URL for tracking old image
+                    const oldFileName = data.imageUrl.split('/').pop() || null;
+                    setUploadedFileName(oldFileName);
                     setPrice(data.price?.toString() || '');
                     setWidth(data.width?.toString() || '');
                     setHeight(data.height?.toString() || '');
@@ -63,26 +68,49 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
         loadPainting();
     }, [paintingSlug]);
 
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            if (!file.type.startsWith('image/')) {
-                setErrors((prev: Record<string, string>) => ({ ...prev, file: 'Please select an image file (.jpg)' }));
+            // Validate file type - only JPG/JPEG allowed
+            const validTypes = ['image/jpeg', 'image/jpg'];
+            if (!validTypes.includes(file.type)) {
+                setErrors((prev: Record<string, string>) => ({ ...prev, file: 'Please select a JPG/JPEG image file' }));
                 return;
             }
 
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const result = reader.result as string;
-                setImageUrl(result);
-                setThumbnailUrl(result);
-                setErrors((prev: Record<string, string>) => {
-                    const next = { ...prev };
-                    delete next.file;
-                    return next;
-                });
-            };
-            reader.readAsDataURL(file);
+            // Validate file size (max 20MB)
+            if (file.size > 20 * 1024 * 1024) {
+                setErrors((prev: Record<string, string>) => ({ ...prev, file: 'File size must be less than 20MB' }));
+                return;
+            }
+
+            setIsUploading(true);
+            setErrors((prev: Record<string, string>) => {
+                const next = { ...prev };
+                delete next.file;
+                return next;
+            });
+
+            try {
+                // Show local preview while uploading
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const result = reader.result as string;
+                    setImageUrl(result);
+                };
+                reader.readAsDataURL(file);
+
+                // Upload to server
+                const result: ImageUploadResult = await uploadImage(file);
+                setImageUrl(result.highResUrl);
+                setThumbnailUrl(result.thumbnailUrl);
+                setUploadedFileName(result.originalUrl.split('/').pop() || null);
+            } catch (err) {
+                const message = err instanceof Error ? err.message : 'Failed to upload image';
+                setErrors((prev: Record<string, string>) => ({ ...prev, file: message }));
+            } finally {
+                setIsUploading(false);
+            }
         }
     };
 
@@ -293,8 +321,10 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                         type="file"
                         accept=".jpg,.jpeg"
                         onChange={handleFileUpload}
-                        className="w-full text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+                        disabled={isUploading}
+                        className="w-full text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 disabled:opacity-50"
                     />
+                    {isUploading && <p className="text-blue-400 text-sm mt-1">Uploading and processing image...</p>}
                     {errors.file && <p className="text-red-500 text-sm mt-1">{errors.file}</p>}
                     {imageUrl !== originalImageUrl && imageUrl && (
                         <div className="mt-2">

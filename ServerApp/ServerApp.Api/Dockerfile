@@ -40,6 +40,8 @@ WORKDIR /app
 # Switch to root to install curl, then switch back to non-root
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+# Create images directory for image processing service
+RUN mkdir -p /app/images/original /app/images/high-res /app/images/thumbnail && chown -R $APP_UID /app/images
 # Copy published files from the publish stage
 COPY --from=publish /app/publish .
 # Switch to non-root user (the .NET base image already sets up permissions correctly)

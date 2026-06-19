@@ -63,6 +63,9 @@ public static class InfrastructureExtensions
         services.AddSingleton<IConcurrencyLockService, ConcurrencyLockService>();
         services.AddSingleton<IIdempotencyKeyService, IdempotencyKeyService>();
 
+        // Register image processing service
+        services.AddScoped<IImageProcessingService, ImageProcessingService>();
+
         return services;
     }
 }
