@@ -76,6 +76,7 @@ export default function ArtCarousel() {
                                 style={{ width: 'auto' }}
                                 priority={index === 0}
                                 quality={50}
+                                unoptimized={url.startsWith('/images/')}
                             />
                         </div>
                     </div>

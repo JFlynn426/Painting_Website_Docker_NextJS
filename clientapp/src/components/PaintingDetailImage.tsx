@@ -55,6 +55,7 @@ export default function PaintingDetailImage({ src, alt, className }: PaintingDet
             priority
             sizes="100vw"
             quality={95}
+            unoptimized={src.startsWith('/images/')}
         />
     );
 }

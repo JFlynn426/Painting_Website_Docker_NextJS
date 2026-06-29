@@ -6,5 +6,6 @@ namespace ServerApp.Domain.Services;
 public record ImageProcessingResult(
     string OriginalUrl,
     string HighResUrl,
-    string ThumbnailUrl
+    string ThumbnailUrl,
+    bool IsLandscape
 );

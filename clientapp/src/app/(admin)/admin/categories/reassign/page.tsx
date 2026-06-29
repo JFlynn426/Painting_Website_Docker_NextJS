@@ -262,6 +262,7 @@ export default function ReassignPaintingsPage() {
                                                     fill
                                                     sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                                                     className="object-cover"
+                                                    unoptimized={(painting.thumbnailUrl || painting.imageUrl).startsWith('/images/')}
                                                 />
                                             </div>
                                             <p className="text-xs text-white truncate mb-2">
@@ -302,6 +303,7 @@ export default function ReassignPaintingsPage() {
                                                         fill
                                                         sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                                                         className="object-cover"
+                                                        unoptimized={(painting.thumbnailUrl || painting.imageUrl).startsWith('/images/')}
                                                     />
                                                 </div>
                                                 <p className="text-xs text-white truncate">

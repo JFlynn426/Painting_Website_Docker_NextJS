@@ -350,6 +350,7 @@ export interface AddPaintingRequest {
     year?: number;
     isAvailable: boolean;
     isNew: boolean;
+    isLandscape: boolean;
 }
 
 /** Request body for updating a painting */
@@ -367,6 +368,7 @@ export interface UpdatePaintingRequest {
     price?: number;
     isAvailable?: boolean;
     isNew?: boolean;
+    isLandscape?: boolean;
 }
 
 /** Request body for adding a painting category */
@@ -513,6 +515,7 @@ export interface ImageUploadResult {
     originalUrl: string;
     highResUrl: string;
     thumbnailUrl: string;
+    isLandscape: boolean;
 }
 
 /**
@@ -611,7 +614,15 @@ export async function addPainting(request: AddPaintingRequest): Promise<Painting
         }
 
         if (!response.ok) {
-            throw new Error(`Failed to add painting: ${response.statusText}`);
+            // Try to read the error message from the response body
+            let errorMessage = `Failed to add painting: ${response.statusText || `(status ${response.status})`}`;
+            try {
+                const errorBody = await response.json();
+                errorMessage = errorBody.message || errorBody.error || errorMessage;
+            } catch {
+                // If response is not JSON, use the default error message
+            }
+            throw new Error(errorMessage);
         }
 
         return await response.json();

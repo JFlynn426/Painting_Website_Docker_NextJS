@@ -40,7 +40,7 @@ public class AddPaintingHandler : IRequestHandler<AddPainting, PaintingCreatedRe
 
         try
         {
-            var (title, description, imageUrl, thumbnailUrl, categorySlug, price, width, height, depth, year, isAvailable, isNew) = command;
+            var (title, description, imageUrl, thumbnailUrl, categorySlug, price, width, height, depth, year, isAvailable, isNew, isLandscape) = command;
 
             // Validate that the category exists
             var categorySlugVO = new PaintingCategorySlug(categorySlug);
@@ -74,7 +74,8 @@ public class AddPaintingHandler : IRequestHandler<AddPainting, PaintingCreatedRe
                 depth,
                 year,
                 isAvailable,
-                isNew);
+                isNew,
+                isLandscape);
 
             await _paintingWriteRepository.AddAsync(painting, cancellationToken);
             await _unitOfWork.CommitAsync(cancellationToken);

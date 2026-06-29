@@ -15,5 +15,6 @@ public record AddPainting(
     decimal? Depth,
     int? Year,
     bool IsAvailable,
-    bool IsNew
+    bool IsNew,
+    bool IsLandscape
 ) : IRequest<PaintingCreatedResult>;

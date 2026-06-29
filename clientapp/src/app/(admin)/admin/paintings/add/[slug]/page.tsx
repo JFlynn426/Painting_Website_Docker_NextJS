@@ -23,6 +23,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
     const [year, setYear] = useState('');
     const [isAvailable, setIsAvailable] = useState(true);
     const [isNew, setIsNew] = useState(true);
+    const [isLandscape, setIsLandscape] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
@@ -61,11 +62,12 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                 };
                 reader.readAsDataURL(file);
 
-                // Upload to server
+                // Upload to server - isLandscape detected from JPEG dimensions on backend
                 const result: ImageUploadResult = await uploadImage(file);
                 setImageUrl(result.highResUrl);
                 setThumbnailUrl(result.thumbnailUrl);
                 setUploadedFileName(result.originalUrl.split('/').pop() || null);
+                setIsLandscape(result.isLandscape);
             } catch (err) {
                 const message = err instanceof Error ? err.message : 'Failed to upload image';
                 setErrors((prev: Record<string, string>) => ({ ...prev, file: message }));
@@ -183,6 +185,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
             year: year !== '' ? parseInt(year, 10) : undefined,
             isAvailable,
             isNew,
+            isLandscape,
         };
 
         try {

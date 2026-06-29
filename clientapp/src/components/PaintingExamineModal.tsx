@@ -169,6 +169,7 @@ export default function PaintingExamineModal({ onClose, painting }: PaintingExam
                                     priority
                                     sizes="100vw"
                                     quality={95}
+                                    unoptimized={painting.imageUrl.startsWith('/images/')}
                                 />
                             </div>
                         </div>

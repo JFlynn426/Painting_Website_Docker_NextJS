@@ -259,7 +259,7 @@ export default function EditPageContentPage({ params }: EditPageContentProps) {
                         <p className="text-red-400 text-sm mt-1">{errors.content}</p>
                     )}
                 </div>
-                {slug === 'about' && (<div className="mb-4"><h2 className="text-sm font-medium text-gray-300 mb-2">Photo (Only 1 photo allowed for About page)</h2><div className="flex justify-center relative w-full max-w-xs mx-auto h-48"><Image src={content.photoUrls?.[0] || '/placeholder.jpg'} alt="Photo" fill className="rounded object-contain" /></div><input type="file" accept=".jpg,.jpeg" onChange={handleFileUpload} className="w-full text-gray-300 mt-2 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700" /></div>)}
+                {slug === 'about' && (<div className="mb-4"><h2 className="text-sm font-medium text-gray-300 mb-2">Photo (Only 1 photo allowed for About page)</h2><div className="flex justify-center relative w-full max-w-xs mx-auto h-48"><Image src={content.photoUrls?.[0] || '/placeholder.jpg'} alt="Photo" fill className="rounded object-contain" unoptimized={(content.photoUrls?.[0] || '/placeholder.jpg').startsWith('/images/')} /></div><input type="file" accept=".jpg,.jpeg" onChange={handleFileUpload} className="w-full text-gray-300 mt-2 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700" /></div>)}
 
                 <div className="flex gap-4">
                     <button

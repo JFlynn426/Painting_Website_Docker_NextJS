@@ -1,5 +1,6 @@
 namespace ServerApp.Infrastructure.Services;
 
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Jpeg;
@@ -49,7 +50,8 @@ public class ImageProcessingService : IImageProcessingService
 
         // Generate unique filename using GUID
         var uniqueId = Guid.NewGuid().ToString("N");
-        var baseFileName = $"{uniqueId}_{safeFileName}";
+        var sanitizedFileName = SanitizeFileName(safeFileName);
+        var baseFileName = $"{uniqueId}_{sanitizedFileName}";
 
         // Ensure directories exist
         var originalDir = Path.Combine(_storagePath, "original");
@@ -68,6 +70,9 @@ public class ImageProcessingService : IImageProcessingService
         {
             throw new InvalidOperationException("Image dimensions exceed maximum allowed size of 20000x20000 pixels");
         }
+
+        // Detect orientation from JPEG pixel dimensions
+        bool isLandscape = image.Width > image.Height;
 
         // Save original
         var originalPath = Path.Combine(originalDir, $"{baseFileName}{extension}");
@@ -94,7 +99,8 @@ public class ImageProcessingService : IImageProcessingService
         return new ImageProcessingResult(
             OriginalUrl: $"/images/original/{Path.GetFileName(originalPath)}",
             HighResUrl: $"/images/high-res/{Path.GetFileName(highResPath)}",
-            ThumbnailUrl: $"/images/thumbnail/{Path.GetFileName(thumbnailPath)}"
+            ThumbnailUrl: $"/images/thumbnail/{Path.GetFileName(thumbnailPath)}",
+            IsLandscape: isLandscape
         );
     }
 
@@ -112,5 +118,35 @@ public class ImageProcessingService : IImageProcessingService
                 await Task.Run(() => File.Delete(fullPath), cancellationToken);
             }
         }
+    }
+
+    /// <summary>
+    /// Sanitizes a filename to be URL-safe by replacing spaces with hyphens
+    /// and removing characters that are unsafe in URLs.
+    /// </summary>
+    private static string SanitizeFileName(string fileName)
+    {
+        // Replace spaces with hyphens
+        var sanitized = fileName.Replace(' ', '-');
+
+        // Remove characters that are unsafe in URLs (keep alphanumeric, hyphens, underscores, dots)
+        sanitized = Regex.Replace(sanitized, @"[^a-zA-Z0-9\-\._]", "");
+
+        // Collapse multiple consecutive hyphens/underscores/dots into one
+        sanitized = Regex.Replace(sanitized, @"[-]{2,}", "-");
+        sanitized = Regex.Replace(sanitized, @"[_]{2,}", "_");
+        sanitized = Regex.Replace(sanitized, @"[.]{2,}", ".");
+
+        // Remove leading/trailing hyphens, underscores, dots
+        sanitized = sanitized.TrimStart('-', '_', '.').TrimEnd('-', '_', '.');
+
+        // Truncate if too long (keep under 100 chars for filename safety)
+        if (sanitized.Length > 100)
+        {
+            sanitized = sanitized[..100];
+            sanitized = sanitized.TrimEnd('-', '_', '.');
+        }
+
+        return sanitized;
     }
 }

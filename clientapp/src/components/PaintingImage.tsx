@@ -66,6 +66,7 @@ export default function PaintingImage({
                     priority={priority}
                     sizes="(max-width: 768px) 100vw, 50vw"
                     quality={50}
+                    unoptimized={displaySrc.startsWith('/images/')}
                 />
                 <div className={styles.hoverOverlay}>
                     <div className={styles.hoverContent}>

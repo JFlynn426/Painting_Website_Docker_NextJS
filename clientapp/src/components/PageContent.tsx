@@ -45,6 +45,7 @@ export default async function PageContent({
                         alt={pageContent.title || 'Page photo'}
                         fill
                         className="rounded-lg object-contain"
+                        unoptimized={pageContent.photoUrls[0].startsWith('/images/')}
                     />
                 </div>
             )}

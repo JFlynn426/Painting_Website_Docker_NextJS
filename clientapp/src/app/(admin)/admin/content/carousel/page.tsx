@@ -181,6 +181,7 @@ export default function CarouselContentPage() {
                                         fill
                                         sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 16vw"
                                         className="object-cover"
+                                        unoptimized={(painting.thumbnailUrl || painting.imageUrl).startsWith('/images/')}
                                     />
                                 </div>
                                 <p className="text-xs text-white truncate">
@@ -216,6 +217,7 @@ export default function CarouselContentPage() {
                                         fill
                                         sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 16vw"
                                         className="object-cover"
+                                        unoptimized={(painting.thumbnailUrl || painting.imageUrl).startsWith('/images/')}
                                     />
                                 </div>
                                 <p className="text-xs text-white truncate mb-1">
@@ -300,6 +302,7 @@ export default function CarouselContentPage() {
                                         fill
                                         sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 16vw"
                                         className="object-cover group-hover:opacity-80 transition-opacity"
+                                        unoptimized={(painting.thumbnailUrl || painting.imageUrl).startsWith('/images/')}
                                     />
                                 </div>
                                 <p className={`text-xs truncate group-hover:text-[var(--title-color)] transition-colors ${isSelected ? 'text-[var(--title-color)]' : 'text-white'
