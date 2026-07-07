@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { addPaintingCategory, AddPaintingCategoryRequest } from '@/lib/api';
+import { AddPaintingCategoryRequest } from '@/lib/api';
+import { addPaintingCategoryAction } from '@/actions/category-actions';
 
 export default function AddCategoryPage() {
     const [name, setName] = useState('');
@@ -46,7 +47,7 @@ export default function AddCategoryPage() {
         };
 
         try {
-            await addPaintingCategory(request);
+            await addPaintingCategoryAction(request);
             setSubmitSuccess(true);
             setName('');
             setDescription('');

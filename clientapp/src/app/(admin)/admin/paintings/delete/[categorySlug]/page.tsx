@@ -3,7 +3,8 @@
 import { use, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getPaintingsByCategory, deletePainting } from '@/lib/api';
+import { getPaintingsByCategory } from '@/lib/api';
+import { deletePaintingAction } from '@/actions/painting-actions';
 import type { PaintingCategoryWithPaintings } from '@/types/paintings';
 
 interface DeleteCategoryPaintingsPageProps {
@@ -27,7 +28,7 @@ export default function DeleteCategoryPaintingsPage({ params }: DeleteCategoryPa
         setDeleteError(null);
         try {
             setDeletingId(paintingId);
-            await deletePainting(paintingId);
+            await deletePaintingAction(paintingId);
             setDeletedCount(prev => prev + 1);
             // Remove from local list
             setCategory(prev => {

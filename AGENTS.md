@@ -47,17 +47,27 @@ This file provides guidance to agents when working with code in this repository.
 - **Shared UI components** (PaintingGrid, PaintingImage, ArtCarousel) should be in `/src/components/`
 - **Data models and types** should be in `/src/types/` or `/src/app/models/`
 - **API service functions** should be in `/src/lib/api.ts`
+- **Server Actions** should be in `/src/actions/` directory
 
 ### Server-Side Rendering & Caching
 - **Prefer server components** over client components when possible for better performance
-- **Use Next.js 16 data fetching with caching** for API calls:
+- **Use tag-based cache invalidation** for API calls with 24-hour fallback revalidation:
   ```typescript
-  const res = await fetch(url, { next: { revalidate: 3600 } }); // Cache for 1 hour
+  const res = await fetch(url, {
+      cache: 'force-cache',
+      next: {
+          revalidate: 86400,  // 24-hour fallback
+          tags: [CacheTags.paintings, CacheTags.allContent]
+      }
+  });
   ```
-- **Caching durations**:
-  - Painting Categories: 24 hours (`revalidate: 86400`)
-  - Painting Images: 1 hour (`revalidate: 3600`)
-  - Carousel Images: 2 hours (`revalidate: 7200`)
+- **All API fetches use 24-hour cache duration** with tag-based invalidation
+- **Cache tags are defined** in `/clientapp/src/lib/cache-tags.ts`
+- **Cache invalidation** is handled by Server Actions in `/clientapp/src/actions/`:
+  - `painting-actions.ts` - Invalidates `paintings`, `newPaintings`, `carousel`, `allContent` tags
+  - `category-actions.ts` - Invalidates `paintingCategories`, `allContent` tags
+  - `page-content-actions.ts` - Invalidates `pageContents`, `allContent` tags
+- **Admin panel mutations MUST use Server Actions** (not direct API calls) to ensure cache is invalidated
 - **Convert client components to server components** when they don't require interactivity
 - **Use `await params`** in server components instead of `use(params)`
 

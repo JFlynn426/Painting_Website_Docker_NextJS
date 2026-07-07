@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getAllPaintings, updatePainting } from '@/lib/api';
+import { getAllPaintings } from '@/lib/api';
+import { updatePaintingAction } from '@/actions/painting-actions';
 import type { Painting } from '@/types/paintings';
 
 export default function SelectNewPaintingsPage() {
@@ -62,7 +63,7 @@ export default function SelectNewPaintingsPage() {
             const promises = allPaintings.map(async (painting) => {
                 const shouldBeNew = selectedIds.has(painting.id);
                 if (shouldBeNew !== painting.isNew) {
-                    await updatePainting(painting.id, { isNew: shouldBeNew });
+                    await updatePaintingAction(painting.id, { isNew: shouldBeNew });
                 }
             });
 

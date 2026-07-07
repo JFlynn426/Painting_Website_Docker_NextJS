@@ -2,7 +2,8 @@
 
 import { use, useState } from 'react';
 import Link from 'next/link';
-import { addPainting, uploadImage, AddPaintingRequest, ImageUploadResult } from '@/lib/api';
+import { uploadImage, AddPaintingRequest, ImageUploadResult } from '@/lib/api';
+import { addPaintingAction } from '@/actions/painting-actions';
 
 interface AddPaintingToCategoryPageProps {
     params: Promise<{ slug: string }>;
@@ -189,7 +190,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
         };
 
         try {
-            await addPainting(request);
+            await addPaintingAction(request);
             setSubmitSuccess(true);
             // Reset form
             setTitle('');

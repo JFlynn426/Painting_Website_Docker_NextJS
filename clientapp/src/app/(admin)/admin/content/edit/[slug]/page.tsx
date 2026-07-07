@@ -3,7 +3,8 @@
 import { use, useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getPageContent, updatePageContent, UpdatePageContentRequest } from '@/lib/api';
+import { getPageContent, UpdatePageContentRequest } from '@/lib/api';
+import { updatePageContentAction } from '@/actions/page-content-actions';
 import { renderParagraphsClient, htmlToPlainText } from '@/lib/client-sanitization';
 import type { PageContent } from '@/types/page-content';
 
@@ -63,8 +64,16 @@ export default function EditPageContentPage({ params }: EditPageContentProps) {
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            if (!file.type.startsWith('image/')) {
-                setErrors((prev: Record<string, string>) => ({ ...prev, file: 'Please select an image file (.jpg)' }));
+            // Validate file type - only JPG/JPEG allowed
+            const validTypes = ['image/jpeg', 'image/jpg'];
+            if (!validTypes.includes(file.type)) {
+                setErrors((prev: Record<string, string>) => ({ ...prev, file: 'Please select a JPG/JPEG image file' }));
+                return;
+            }
+
+            // Validate file size (max 20MB)
+            if (file.size > 20 * 1024 * 1024) {
+                setErrors((prev: Record<string, string>) => ({ ...prev, file: 'File size must be less than 20MB' }));
                 return;
             }
 
@@ -116,7 +125,7 @@ export default function EditPageContentPage({ params }: EditPageContentProps) {
         };
 
         try {
-            await updatePageContent(content.id, request);
+            await updatePageContentAction(content.id, request);
             setSubmitSuccess(true);
             setContent(prev => prev ? { ...prev, title: title.trim() || undefined, content: plainText, photoUrls: photoUrl.trim() ? [photoUrl.trim()] : undefined } : null);
         } catch (err) {
@@ -259,7 +268,18 @@ export default function EditPageContentPage({ params }: EditPageContentProps) {
                         <p className="text-red-400 text-sm mt-1">{errors.content}</p>
                     )}
                 </div>
-                {slug === 'about' && (<div className="mb-4"><h2 className="text-sm font-medium text-gray-300 mb-2">Photo (Only 1 photo allowed for About page)</h2><div className="flex justify-center relative w-full max-w-xs mx-auto h-48"><Image src={content.photoUrls?.[0] || '/placeholder.jpg'} alt="Photo" fill className="rounded object-contain" unoptimized={(content.photoUrls?.[0] || '/placeholder.jpg').startsWith('/images/')} /></div><input type="file" accept=".jpg,.jpeg" onChange={handleFileUpload} className="w-full text-gray-300 mt-2 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700" /></div>)}
+                {slug === 'about' && (
+                    <div className="mb-4">
+                        <h2 className="text-sm font-medium text-gray-300 mb-2">Photo (Only 1 photo allowed for About page)</h2>
+                        <div className="flex justify-center relative w-full max-w-xs mx-auto h-48">
+                            <Image src={content.photoUrls?.[0] || '/placeholder.jpg'} alt="Photo" fill className="rounded object-contain" unoptimized={(content.photoUrls?.[0] || '/placeholder.jpg').startsWith('/images/')} />
+                        </div>
+                        <input type="file" accept=".jpg,.jpeg" onChange={handleFileUpload} className="w-full text-gray-300 mt-2 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700" />
+                        {errors.file && (
+                            <p className="text-red-400 text-sm mt-1">{errors.file}</p>
+                        )}
+                    </div>
+                )}
 
                 <div className="flex gap-4">
                     <button

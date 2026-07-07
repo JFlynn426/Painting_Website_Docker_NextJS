@@ -2,7 +2,8 @@
 
 import { use, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getCategoryData, updatePaintingCategory, UpdatePaintingCategoryRequest } from '@/lib/api';
+import { getCategoryData, UpdatePaintingCategoryRequest } from '@/lib/api';
+import { updatePaintingCategoryAction } from '@/actions/category-actions';
 import type { PaintingCategory } from '@/types/paintings';
 
 interface EditCategoryPageProps {
@@ -81,7 +82,7 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
         };
 
         try {
-            await updatePaintingCategory(category.id, request);
+            await updatePaintingCategoryAction(category.id, request);
             setSubmitSuccess(true);
         } catch (err) {
             setSubmitError(err instanceof Error ? err.message : 'Failed to update category');

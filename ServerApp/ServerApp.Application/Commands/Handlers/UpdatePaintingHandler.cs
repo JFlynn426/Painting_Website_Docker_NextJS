@@ -53,8 +53,9 @@ public class UpdatePaintingHandler : CommandHandlerBase, IRequestHandler<UpdateP
                     command.Depth != null ? new PaintingDepth(command.Depth.Value) : null,
                     command.Year != null ? new PaintingYear(command.Year.Value) : null,
                     command.IsAvailable != null ? new PaintingIsAvailable(command.IsAvailable.Value) : null,
-                    command.IsNew != null ? new PaintingIsNew(command.IsNew.Value) : null,
-                    command.IsLandscape != null ? new PaintingIsLandscape(command.IsLandscape.Value) : null);
+                    command.IsNew != null ? new PaintingIsNew(command.IsNew.Value) : null);
+                // NOTE: isLandscape is NOT updated here - it is a derived property from the image file
+                // and should only be set during image upload via ImageProcessingService
 
                 await _writeRepository.UpdateAsync(painting, ct);
                 await _unitOfWork.CommitAsync(ct);

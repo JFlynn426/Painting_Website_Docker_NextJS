@@ -2,7 +2,8 @@
 
 import { use, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getPaintingBySlug, updatePainting, uploadImage, UpdatePaintingRequest, ImageUploadResult } from '@/lib/api';
+import { getPaintingBySlug, uploadImage, UpdatePaintingRequest, ImageUploadResult } from '@/lib/api';
+import { updatePaintingAction } from '@/actions/painting-actions';
 import type { Painting } from '@/types/paintings';
 
 interface EditPaintingPageProps {
@@ -222,11 +223,12 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
             year: year !== '' ? parseInt(year, 10) : undefined,
             isAvailable,
             isNew,
-            isLandscape,
+            // NOTE: isLandscape is intentionally NOT sent - it is a derived property
+            // from the image file and should only be set during image upload
         };
 
         try {
-            await updatePainting(painting.id, request);
+            await updatePaintingAction(painting.id, request);
             setSubmitSuccess(true);
         } catch (err) {
             setSubmitError(err instanceof Error ? err.message : 'Failed to update painting');

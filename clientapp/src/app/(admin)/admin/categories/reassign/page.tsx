@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getAllPaintings, getAllPaintingCategories, reassignPaintings } from '@/lib/api';
+import { getAllPaintings, getAllPaintingCategories } from '@/lib/api';
+import { reassignPaintingsAction } from '@/actions/painting-actions';
 import type { Painting, PaintingCategory } from '@/types/paintings';
 import type { ReassignPaintingsRequest } from '@/lib/api';
 
@@ -142,7 +143,7 @@ export default function ReassignPaintingsPage() {
                 paintingIdToCategoryId
             };
 
-            await reassignPaintings(request);
+            await reassignPaintingsAction(request);
             setSaveSuccess(true);
 
             // Update local state to reflect saved changes

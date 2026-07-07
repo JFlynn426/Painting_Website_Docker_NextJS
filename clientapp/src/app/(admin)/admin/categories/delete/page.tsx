@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getAllPaintingCategories, getCategoryData, deletePaintingCategory } from '@/lib/api';
+import { getAllPaintingCategories, getCategoryData } from '@/lib/api';
+import { deletePaintingCategoryAction } from '@/actions/category-actions';
 import { PaintingCategory } from '@/types';
 
 interface CategoryWithPaintingCount extends PaintingCategory {
@@ -61,7 +62,7 @@ export default function DeleteCategoryPage() {
             setDeletingId(id);
             setSuccess(null);
             setError(null);
-            await deletePaintingCategory(id);
+            await deletePaintingCategoryAction(id);
             setSuccess(`Category "${name}" has been deleted successfully.`);
             setCategories(prev => prev.filter(c => c.id !== id));
         } catch (err) {

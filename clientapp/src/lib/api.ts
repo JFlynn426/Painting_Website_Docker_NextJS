@@ -58,18 +58,25 @@ import {
     PageContent,
     CarouselImage
 } from '@/types';
+import { CacheTags } from '@/lib/cache-tags';
+
+// Cache duration constant - 24 hours in seconds
+const CACHE_DURATION_24H = 86400;
 
 /**
  * Fetch all painting categories
  * Endpoint: GET api/paintingcategories
- * Uses runtime fetching with caching to avoid build-time API calls
+ * Uses tag-based caching with 24-hour fallback revalidation
  */
 export async function getAllPaintingCategories(): Promise<PaintingCategory[]> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/paintingcategories`, {
-            cache: 'force-cache', // Runtime fetching with caching
-            next: { revalidate: 86400 } // Cache for 24 hours
+            cache: 'force-cache',
+            next: {
+                revalidate: CACHE_DURATION_24H,
+                tags: [CacheTags.paintingCategories, CacheTags.allContent]
+            }
         });
 
         if (!response.ok) {
@@ -85,14 +92,17 @@ export async function getAllPaintingCategories(): Promise<PaintingCategory[]> {
 /**
  * Fetch a specific painting category with its paintings
  * Endpoint: GET api/paintingcategories/{slug}
- * Uses runtime fetching with caching to avoid build-time API calls
+ * Uses tag-based caching with 24-hour fallback revalidation
  */
 export async function getCategoryData(categorySlug: string): Promise<PaintingCategoryWithPaintings | null> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/paintingcategories/${categorySlug}`, {
-            cache: 'force-cache', // Runtime fetching with caching
-            next: { revalidate: 86400 } // Cache for 24 hours
+            cache: 'force-cache',
+            next: {
+                revalidate: CACHE_DURATION_24H,
+                tags: [CacheTags.paintingCategories, CacheTags.paintingCategory(categorySlug), CacheTags.allContent]
+            }
         });
 
         if (!response.ok) {
@@ -108,14 +118,17 @@ export async function getCategoryData(categorySlug: string): Promise<PaintingCat
 /**
  * Fetch all paintings
  * Endpoint: GET api/paintings
- * Uses runtime fetching with caching to avoid build-time API calls
+ * Uses tag-based caching with 24-hour fallback revalidation
  */
 export async function getAllPaintings(): Promise<Painting[]> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/paintings`, {
-            cache: 'force-cache', // Runtime fetching with caching
-            next: { revalidate: 3600 } // Cache for 1 hour
+            cache: 'force-cache',
+            next: {
+                revalidate: CACHE_DURATION_24H,
+                tags: [CacheTags.paintings, CacheTags.allContent]
+            }
         });
 
         if (!response.ok) {
@@ -131,14 +144,17 @@ export async function getAllPaintings(): Promise<Painting[]> {
 /**
  * Fetch a specific painting by slug
  * Endpoint: GET api/paintings/{slug}
- * Uses runtime fetching with caching to avoid build-time API calls
+ * Uses tag-based caching with 24-hour fallback revalidation
  */
 export async function getPaintingBySlug(slug: string): Promise<Painting | null> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/paintings/${slug}`, {
-            cache: 'force-cache', // Runtime fetching with caching
-            next: { revalidate: 3600 } // Cache for 1 hour
+            cache: 'force-cache',
+            next: {
+                revalidate: CACHE_DURATION_24H,
+                tags: [CacheTags.paintings, CacheTags.painting(slug), CacheTags.allContent]
+            }
         });
 
         if (!response.ok) {
@@ -154,14 +170,17 @@ export async function getPaintingBySlug(slug: string): Promise<Painting | null> 
 /**
  * Fetch paintings by category slug
  * Endpoint: GET api/paintings/category/{categorySlug}
- * Uses runtime fetching with caching to avoid build-time API calls
+ * Uses tag-based caching with 24-hour fallback revalidation
  */
 export async function getPaintingsByCategory(categorySlug: string): Promise<PaintingCategoryWithPaintings | null> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/paintings/category/${categorySlug}`, {
-            cache: 'force-cache', // Runtime fetching with caching
-            next: { revalidate: 3600 } // Cache for 1 hour
+            cache: 'force-cache',
+            next: {
+                revalidate: CACHE_DURATION_24H,
+                tags: [CacheTags.paintings, CacheTags.paintingCategory(categorySlug), CacheTags.allContent]
+            }
         });
 
         if (!response.ok) {
@@ -180,14 +199,17 @@ export { getPaintingBySlug as getPainting };
 /**
  * Fetch all new paintings (where IsNew=true)
  * Endpoint: GET api/paintings/new
- * Uses runtime fetching with caching to avoid build-time API calls
+ * Uses tag-based caching with 24-hour fallback revalidation
  */
 export async function getNewPaintings(): Promise<Painting[]> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/paintings/new`, {
-            cache: 'force-cache', // Runtime fetching with caching
-            next: { revalidate: 86400 } // Cache for 24 hours
+            cache: 'force-cache',
+            next: {
+                revalidate: CACHE_DURATION_24H,
+                tags: [CacheTags.newPaintings, CacheTags.paintings, CacheTags.allContent]
+            }
         });
 
         if (!response.ok) {
@@ -203,14 +225,17 @@ export async function getNewPaintings(): Promise<Painting[]> {
 /**
  * Fetch carousel images
  * Endpoint: GET api/carousel
- * Uses runtime fetching with caching to avoid build-time API calls
+ * Uses tag-based caching with 24-hour fallback revalidation
  */
 export async function getCarouselImages(): Promise<CarouselImage[]> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/carousel`, {
-            cache: 'force-cache', // Runtime fetching with caching
-            next: { revalidate: 7200 } // Cache for 2 hours
+            cache: 'force-cache',
+            next: {
+                revalidate: CACHE_DURATION_24H,
+                tags: [CacheTags.carousel, CacheTags.allContent]
+            }
         });
 
         if (!response.ok) {
@@ -224,16 +249,19 @@ export async function getCarouselImages(): Promise<CarouselImage[]> {
 }
 
 /**
- * Fetch page content by slug
- * Endpoint: GET api/pagecontent/{slug}
- * Uses runtime fetching with caching to avoid build-time API calls
+ * Fetch all page contents
+ * Endpoint: GET api/pagecontent
+ * Uses tag-based caching with 24-hour fallback revalidation
  */
 export async function getAllPageContents(): Promise<PageContent[]> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/pagecontent`, {
             cache: 'force-cache',
-            next: { revalidate: 86400 }
+            next: {
+                revalidate: CACHE_DURATION_24H,
+                tags: [CacheTags.pageContents, CacheTags.allContent]
+            }
         });
 
         if (!response.ok) {
@@ -253,12 +281,20 @@ export async function getAllPageContents(): Promise<PageContent[]> {
     }
 }
 
+/**
+ * Fetch page content by slug
+ * Endpoint: GET api/pagecontent/{slug}
+ * Uses tag-based caching with 24-hour fallback revalidation
+ */
 export async function getPageContent(slug: string): Promise<PageContent | null> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/pagecontent/${slug}`, {
-            cache: 'force-cache', // Runtime fetching with caching
-            next: { revalidate: 86400 } // Cache for 24 hours
+            cache: 'force-cache',
+            next: {
+                revalidate: CACHE_DURATION_24H,
+                tags: [CacheTags.pageContents, CacheTags.pageContent(slug), CacheTags.allContent]
+            }
         });
 
         if (!response.ok) {
@@ -368,7 +404,8 @@ export interface UpdatePaintingRequest {
     price?: number;
     isAvailable?: boolean;
     isNew?: boolean;
-    isLandscape?: boolean;
+    // NOTE: isLandscape is intentionally NOT included - it is a derived property
+    // from the image file and should only be set during image upload
 }
 
 /** Request body for adding a painting category */

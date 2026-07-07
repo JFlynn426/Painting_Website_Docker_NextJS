@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getAllPaintings, getPageContent, updatePageContent } from '@/lib/api';
+import { getAllPaintings, getPageContent } from '@/lib/api';
+import { updatePageContentAction } from '@/actions/page-content-actions';
 import type { Painting } from '@/types/paintings';
 import type { PageContent } from '@/types/page-content';
 
@@ -96,7 +97,7 @@ export default function CarouselContentPage() {
         try {
             // Use thumbnailUrl for photoUrls since that's what the carousel displays
             const photoUrls = selectedPaintings.map(p => p.thumbnailUrl || p.imageUrl);
-            await updatePageContent(homeContent.id, { photoUrls });
+            await updatePageContentAction(homeContent.id, { photoUrls });
             setSaveSuccess(true);
             // Update current carousel paintings to reflect saved changes
             setCurrentCarouselPaintings(selectedPaintings);
