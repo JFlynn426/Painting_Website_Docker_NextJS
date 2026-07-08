@@ -91,7 +91,7 @@ export default function AdminHeader() {
                         <Link
                             key={link.href}
                             href={link.href}
-                            className={`px-3 py-2 rounded transition-colors whitespace-nowrap ${activeHref === link.href
+                            className={`px-3 py-2 rounded transition-colors whitespace-nowrap ${link.href === '/admin/history' ? 'hidden' : ''} ${activeHref === link.href
                                 ? 'bg-blue-600 text-white'
                                 : 'text-gray-300 hover:bg-gray-700'
                                 }`}

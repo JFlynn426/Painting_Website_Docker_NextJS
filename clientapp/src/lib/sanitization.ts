@@ -2,15 +2,24 @@ import DOMPurify from 'dompurify';
 import { JSDOM } from 'jsdom';
 
 /**
+ * Cached server-side DOMPurify instance.
+ * Creating a new JSDOM instance per call can cause DOMPurify to behave inconsistently,
+ * stripping tags like <strong>. Caching ensures consistent behavior across calls.
+ */
+let serverSidePurify: ReturnType<typeof DOMPurify> | null = null;
+
+/**
  * Initialize DOMPurify with a virtual DOM environment for server-side rendering.
  * DOMPurify requires a window/document object which isn't available in Node.js by default.
  */
 function getDOMPurify() {
     if (typeof window === 'undefined') {
-        // Server-side: create a virtual DOM environment
-        const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
-        // Return DOMPurify initialized with the JSDOM window
-        return DOMPurify(dom.window);
+        // Server-side: use cached instance to ensure consistent behavior
+        if (serverSidePurify === null) {
+            const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+            serverSidePurify = DOMPurify(dom.window);
+        }
+        return serverSidePurify;
     }
     // Client-side: return DOMPurify as-is (it will use the browser's window)
     return DOMPurify;
@@ -103,17 +112,25 @@ function sanitizeParagraphs(html: string): string {
 }
 
 /**
- * Renders plain text content as HTML paragraphs (SERVER-SIDE ONLY).
- * Splits content by double newlines (\\n\\n) to create paragraphs.
- * Preserves <strong> and <br/> tags within paragraphs.
+ * Renders content as sanitized HTML paragraphs (SERVER-SIDE ONLY).
+ * If content is already HTML (contains <p> tags), sanitizes it directly.
+ * If content is plain text, splits by double newlines to create paragraphs.
+ * Preserves <strong>, <em>, <u>, and <br/> tags within paragraphs.
  *
- * @param content - Plain text content with optional <strong> and <br/> tags
- * @returns HTML string with paragraphs wrapped in <p> tags
+ * @param content - HTML or plain text content
+ * @returns Sanitized HTML string with paragraphs
  */
 export function renderParagraphs(content: string): string {
     if (!content || typeof content !== 'string') {
         return '';
     }
+
+    // If content already contains <p> tags, it's HTML - sanitize directly
+    if (content.includes('<p ')) {
+        return sanitizeParagraphs(content);
+    }
+
+    // Otherwise, treat as plain text and build paragraphs
     const html = buildParagraphs(content);
     return sanitizeParagraphs(html);
 }

@@ -11,7 +11,7 @@ export default async function EditCategoriesPage() {
     let error: string | null = null;
 
     try {
-        const allCategories = await getAllPaintingCategories();
+        const allCategories = await getAllPaintingCategories({ noCache: true });
         categories = allCategories;
     } catch (err) {
         error = err instanceof Error ? err.message : 'Failed to fetch categories';

@@ -1,7 +1,8 @@
 'use server';
 
+import { cookies } from 'next/headers';
 import { revalidateTag } from 'next/cache';
-import { CacheTags, paintingMutationTags, categoryAssignmentTags } from '@/lib/cache-tags';
+import { paintingMutationTags, categoryAssignmentTags } from '@/lib/cache-tags';
 import {
     addPainting,
     updatePainting,
@@ -29,7 +30,9 @@ import type {
  * Invalidates all painting-related cache tags after successful mutation.
  */
 export async function addPaintingAction(data: AddPaintingRequest): Promise<PaintingCreatedResult> {
-    const result = await addPainting(data);
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get('admin_token')?.value;
+    const result = await addPainting(data, authToken);
 
     // Invalidate all painting-related caches
     for (const tag of paintingMutationTags) {
@@ -48,7 +51,9 @@ export async function updatePaintingAction(
     data: UpdatePaintingRequest,
     idempotencyKey?: string
 ): Promise<CommandCompletionResponse> {
-    const result = await updatePainting(id, data, idempotencyKey);
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get('admin_token')?.value;
+    const result = await updatePainting(id, data, idempotencyKey, authToken);
 
     // Invalidate all painting-related caches
     for (const tag of paintingMutationTags) {
@@ -63,7 +68,9 @@ export async function updatePaintingAction(
  * Invalidates all painting-related cache tags after successful mutation.
  */
 export async function deletePaintingAction(id: string): Promise<void> {
-    await deletePainting(id);
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get('admin_token')?.value;
+    await deletePainting(id, authToken);
 
     // Invalidate all painting-related caches
     for (const tag of paintingMutationTags) {
@@ -80,7 +87,9 @@ export async function assignPaintingCategoryAction(
     categoryId: string,
     idempotencyKey?: string
 ): Promise<CommandCompletionResponse> {
-    const result = await assignPaintingCategory(paintingId, categoryId, idempotencyKey);
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get('admin_token')?.value;
+    const result = await assignPaintingCategory(paintingId, categoryId, idempotencyKey, authToken);
 
     // Invalidate painting and category caches
     for (const tag of categoryAssignmentTags) {
@@ -98,7 +107,9 @@ export async function reassignPaintingsAction(
     data: ReassignPaintingsRequest,
     idempotencyKey?: string
 ): Promise<CommandCompletionResponse> {
-    const result = await reassignPaintings(data, idempotencyKey);
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get('admin_token')?.value;
+    const result = await reassignPaintings(data, idempotencyKey, authToken);
 
     // Invalidate painting and category caches
     for (const tag of categoryAssignmentTags) {

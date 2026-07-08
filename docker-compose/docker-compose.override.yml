@@ -1,0 +1,22 @@
+# ============================================================================
+# Local Development Override
+# ============================================================================
+# This file overrides docker-compose.yml for local Windows testing.
+# It redirects NGINX to use localhost-specific configuration with self-signed
+# SSL certificates, allowing you to test the full production stack locally.
+# ============================================================================
+
+services:
+  api:
+    ports:
+      - "8080:8080" # Expose API directly for local development
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.local # Use local Dockerfile with dos2unix for Windows CRLF handling
+    volumes:
+      # Override nginx.conf with localhost-specific configuration
+      - ./nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
+      # Override SSL certificates with localhost self-signed certs
+      - ./nginx/ssl/localhost:/etc/nginx/ssl:ro

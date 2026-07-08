@@ -1,4 +1,4 @@
-import { getPaintingBySlug, getCategoryData } from "@/lib/api";
+import { getPaintingBySlug } from "@/lib/api";
 import PaintingDetailsClient from "./PaintingDetailsClient";
 import Link from "next/link";
 import styles from "./page.module.css";

@@ -8,27 +8,6 @@ interface CategoryPageProps {
     }>;
 }
 
-/**
- * Determines if a painting is landscape or portrait based on its dimensions.
- * @param width - The width of the painting
- * @param height - The height of the painting
- * @returns 'landscape' if width > height, 'portrait' if height > width, 'square' if equal
- */
-function getPaintingOrientation(width: number | undefined, height: number | undefined): 'landscape' | 'portrait' | 'square' {
-    // Default to square if dimensions are not available
-    if (width === undefined || height === undefined) {
-        return 'square';
-    }
-
-    if (width > height) {
-        return 'landscape';
-    } else if (height > width) {
-        return 'portrait';
-    } else {
-        return 'square';
-    }
-}
-
 export default async function CategoryPage({ params }: CategoryPageProps) {
     const { category } = await params;
 
@@ -45,6 +24,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
     // Convert API paintings to PaintingImageItem format
     // The PaintingGrid component will use smart row building to group paintings by orientation
+    // IMPORTANT: Use isLandscape from the API (based on JPEG pixel dimensions) NOT physical dimensions
     const images: PaintingImageItem[] = categoryData.paintings.map(painting => ({
         src: painting.imageUrl,
         thumbnailUrl: painting.thumbnailUrl,
@@ -56,7 +36,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         height: painting.height,
         depth: painting.depth,
         isAvailable: painting.isAvailable,
-        orientation: getPaintingOrientation(painting.width, painting.height)
+        orientation: painting.isLandscape ? 'landscape' : 'portrait'
     }));
 
     return (

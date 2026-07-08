@@ -37,7 +37,7 @@ public class UpdatePageContentHandler : CommandHandlerBase, IRequestHandler<Upda
 
             try
             {
-                var pageContent = await _readRepository.GetByIdAsync(command.Id, ct);
+                var pageContent = await _writeRepository.GetByIdAsync(command.Id, ct);
                 if (pageContent == null)
                 {
                     throw new PageContentNotFoundException(command.Id.ToString());

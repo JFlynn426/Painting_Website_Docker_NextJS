@@ -7,14 +7,14 @@ using ServerApp.Domain.ValueObjects.Page;
 using ServerApp.Infrastructure.EF.Contexts;
 
 /// <summary>
-/// SQL Server implementation of IPageContentReadRepository.
+/// EF Core implementation of IPageContentReadRepository.
 /// Handles only read operations using ReadDbContext.
 /// </summary>
-internal class SQLServerPageContentReadRepository : IPageContentReadRepository
+internal class PageContentReadRepository : IPageContentReadRepository
 {
     private readonly ReadDbContext _readContext;
 
-    public SQLServerPageContentReadRepository(ReadDbContext readContext)
+    public PageContentReadRepository(ReadDbContext readContext)
     {
         _readContext = readContext;
     }

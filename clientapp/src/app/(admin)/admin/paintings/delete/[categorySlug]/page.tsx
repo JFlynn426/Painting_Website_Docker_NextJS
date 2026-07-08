@@ -51,7 +51,7 @@ export default function DeleteCategoryPaintingsPage({ params }: DeleteCategoryPa
         async function loadCategory() {
             try {
                 setLoading(true);
-                const data = await getPaintingsByCategory(categorySlug);
+                const data = await getPaintingsByCategory(categorySlug, { noCache: true });
                 setCategory(data);
             } catch (err) {
                 setLoadError(err instanceof Error ? err.message : 'Failed to fetch category paintings');

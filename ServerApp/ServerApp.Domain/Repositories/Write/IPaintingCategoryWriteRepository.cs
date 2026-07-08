@@ -8,6 +8,7 @@ using ServerApp.Domain.Entities;
 /// </summary>
 public interface IPaintingCategoryWriteRepository
 {
+    Task<PaintingCategory?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task AddAsync(PaintingCategory category, CancellationToken cancellationToken = default);
     Task UpdateAsync(PaintingCategory category, CancellationToken cancellationToken = default);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);

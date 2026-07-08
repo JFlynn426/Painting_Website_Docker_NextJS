@@ -29,7 +29,7 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
         async function loadCategory() {
             try {
                 setLoading(true);
-                const data = await getCategoryData(slug);
+                const data = await getCategoryData(slug, { noCache: true });
                 if (data) {
                     setCategory(data);
                     setName(data.name);

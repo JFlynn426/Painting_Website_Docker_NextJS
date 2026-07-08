@@ -1,5 +1,6 @@
 'use server';
 
+import { cookies } from 'next/headers';
 import { revalidateTag } from 'next/cache';
 import { categoryMutationTags } from '@/lib/cache-tags';
 import {
@@ -25,7 +26,9 @@ import type {
 export async function addPaintingCategoryAction(
     data: AddPaintingCategoryRequest
 ): Promise<PaintingCategoryCreatedResult> {
-    const result = await addPaintingCategory(data);
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get('admin_token')?.value;
+    const result = await addPaintingCategory(data, authToken);
 
     // Invalidate all category-related caches
     for (const tag of categoryMutationTags) {
@@ -44,7 +47,9 @@ export async function updatePaintingCategoryAction(
     data: UpdatePaintingCategoryRequest,
     idempotencyKey?: string
 ): Promise<CommandCompletionResponse> {
-    const result = await updatePaintingCategory(id, data, idempotencyKey);
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get('admin_token')?.value;
+    const result = await updatePaintingCategory(id, data, idempotencyKey, authToken);
 
     // Invalidate all category-related caches
     for (const tag of categoryMutationTags) {
@@ -59,7 +64,9 @@ export async function updatePaintingCategoryAction(
  * Invalidates all category-related cache tags after successful mutation.
  */
 export async function deletePaintingCategoryAction(id: string): Promise<void> {
-    await deletePaintingCategory(id);
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get('admin_token')?.value;
+    await deletePaintingCategory(id, authToken);
 
     // Invalidate all category-related caches
     for (const tag of categoryMutationTags) {

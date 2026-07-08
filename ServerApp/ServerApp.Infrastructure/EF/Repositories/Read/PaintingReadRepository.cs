@@ -8,14 +8,14 @@ using ServerApp.Domain.ValueObjects.PaintingCategory;
 using ServerApp.Infrastructure.EF.Contexts;
 
 /// <summary>
-/// SQL Server implementation of IPaintingReadRepository.
+/// EF Core implementation of IPaintingReadRepository.
 /// Handles only read operations using ReadDbContext.
 /// </summary>
-internal class SQLServerPaintingReadRepository : IPaintingReadRepository
+internal class PaintingReadRepository : IPaintingReadRepository
 {
     private readonly ReadDbContext _readContext;
 
-    public SQLServerPaintingReadRepository(ReadDbContext readContext)
+    public PaintingReadRepository(ReadDbContext readContext)
     {
         _readContext = readContext;
     }

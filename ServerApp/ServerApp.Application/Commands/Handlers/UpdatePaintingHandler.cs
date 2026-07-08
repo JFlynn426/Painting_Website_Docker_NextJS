@@ -37,13 +37,29 @@ public class UpdatePaintingHandler : CommandHandlerBase, IRequestHandler<UpdateP
 
             try
             {
-                var painting = await _readRepository.GetByIdAsync(command.Id, ct);
+                var painting = await _writeRepository.GetByIdAsync(command.Id, ct);
                 if (painting == null)
                 {
                     throw new PaintingNotFoundException(command.Id.ToString());
                 }
 
+                // Determine if title is changing and compute new slug
+                string? newSlug = null;
+                if (command.Name != null && command.Name.Trim() != painting.Title.Value)
+                {
+                    newSlug = PaintingSlug.FromTitle(new PaintingName(command.Name.Trim())).Value;
+                    if (newSlug != painting.Slug.Value)
+                    {
+                        var slugExists = await _readRepository.ExistsBySlugAsync(new PaintingSlug(newSlug), ct);
+                        if (slugExists)
+                        {
+                            throw new PaintingSlugAlreadyExistsException();
+                        }
+                    }
+                }
+
                 painting.Update(
+                    command.Name != null && command.Name.Trim() != painting.Title.Value ? new PaintingName(command.Name.Trim()) : null,
                     PaintingDescription.FromNullable(command.Description),
                     command.ImageUrl != null ? new PaintingImageUrl(command.ImageUrl) : null,
                     PaintingThumbnailUrl.FromNullable(command.ThumbnailUrl),
@@ -53,13 +69,12 @@ public class UpdatePaintingHandler : CommandHandlerBase, IRequestHandler<UpdateP
                     command.Depth != null ? new PaintingDepth(command.Depth.Value) : null,
                     command.Year != null ? new PaintingYear(command.Year.Value) : null,
                     command.IsAvailable != null ? new PaintingIsAvailable(command.IsAvailable.Value) : null,
-                    command.IsNew != null ? new PaintingIsNew(command.IsNew.Value) : null);
-                // NOTE: isLandscape is NOT updated here - it is a derived property from the image file
-                // and should only be set during image upload via ImageProcessingService
+                    command.IsNew != null ? new PaintingIsNew(command.IsNew.Value) : null,
+                    command.IsLandscape != null ? new PaintingIsLandscape(command.IsLandscape.Value) : null);
 
                 await _writeRepository.UpdateAsync(painting, ct);
                 await _unitOfWork.CommitAsync(ct);
-                return 1;
+                return (1, newSlug);
             }
             catch
             {

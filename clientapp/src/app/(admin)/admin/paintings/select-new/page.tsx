@@ -20,7 +20,7 @@ export default function SelectNewPaintingsPage() {
         async function loadPaintings() {
             try {
                 setLoading(true);
-                const paintings = await getAllPaintings();
+                const paintings = await getAllPaintings({ noCache: true });
                 setAllPaintings(paintings);
                 // Initialize selected IDs from paintings that currently have isNew=true
                 const currentNewIds = new Set<string>();
@@ -69,6 +69,7 @@ export default function SelectNewPaintingsPage() {
 
             await Promise.all(promises);
             setSaveSuccess(true);
+            window.scrollTo(0, 0);
 
             // Update local state to reflect saved changes
             setAllPaintings(prev =>

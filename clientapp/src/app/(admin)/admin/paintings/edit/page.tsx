@@ -11,7 +11,7 @@ export default async function EditPaintingsPage() {
     let error: string | null = null;
 
     try {
-        const allCategories = await getAllPaintingCategories();
+        const allCategories = await getAllPaintingCategories({ noCache: true });
         // Exclude "New Paintings" - it's a special category, not for editing paintings
         categories = allCategories.filter(c => c.slug !== 'new-paintings');
     } catch (err) {

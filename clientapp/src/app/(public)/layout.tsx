@@ -8,11 +8,6 @@ export default function PublicLayout({
 }>) {
     return (
         <div className="flex flex-col min-h-screen">
-            <style>{`
-                strong {
-                    -webkit-text-stroke: 0.7npx var(--foreground);
-                }
-            `}</style>
             <NavBar />
             <main className="py-4 flex-1">
                 {children}

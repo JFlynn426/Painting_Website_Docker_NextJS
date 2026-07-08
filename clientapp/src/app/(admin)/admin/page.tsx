@@ -72,7 +72,7 @@ export default function AdminDashboardPage() {
                     </div>
                 </Link>
 
-                <Link href="/admin/history" className="block">
+                <Link href="/admin/history" className="hidden">
                     <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">History</h2>
                         <p className="text-gray-400">

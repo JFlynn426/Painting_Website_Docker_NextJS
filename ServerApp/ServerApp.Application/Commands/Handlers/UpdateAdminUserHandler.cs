@@ -36,7 +36,7 @@ public class UpdateAdminUserHandler : CommandHandlerBase, IRequestHandler<Update
 
             try
             {
-                var adminUser = await _readRepository.GetByIdAsync(command.Id, ct);
+                var adminUser = await _writeRepository.GetByIdAsync(command.Id, ct);
                 if (adminUser == null)
                 {
                     throw new InvalidOperationException($"Admin user with ID {command.Id} not found.");

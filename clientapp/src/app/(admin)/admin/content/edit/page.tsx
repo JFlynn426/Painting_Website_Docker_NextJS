@@ -11,7 +11,7 @@ export default async function EditContentPage() {
     let error: string | null = null;
 
     try {
-        const allContents = await getAllPageContents();
+        const allContents = await getAllPageContents({ noCache: true });
         pageContents = allContents;
     } catch (err) {
         error = err instanceof Error ? err.message : 'Failed to fetch page contents';

@@ -29,8 +29,8 @@ public static class InfrastructureExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // Register SQL Server DbContexts and repositories
-        services.AddSQLServer(configuration);
+        // Register EF Core DbContexts and repositories
+        services.AddEFRepositories(configuration);
 
         // Register UnitOfWork for transaction management with read-only mode support
         var readOnlyMode = bool.Parse(configuration["Database:ReadOnlyMode"] ?? "false");

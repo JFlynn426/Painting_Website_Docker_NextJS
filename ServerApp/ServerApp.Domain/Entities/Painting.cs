@@ -58,6 +58,7 @@ public class Painting : AggregateRoot<Guid>
 
     // Consolidated update method - applies only non-null parameters
     public void Update(
+        PaintingName? title = null,
         PaintingDescription? description = null,
         PaintingImageUrl? imageUrl = null,
         PaintingThumbnailUrl? thumbnailUrl = null,
@@ -70,6 +71,12 @@ public class Painting : AggregateRoot<Guid>
         PaintingIsNew? isNew = null,
         PaintingIsLandscape? isLandscape = null)
     {
+        if (title != null)
+        {
+            Title = title;
+            // Regenerate slug when title changes
+            Slug = PaintingSlug.FromTitle(title);
+        }
         if (description != null) Description = description;
         if (imageUrl != null) ImageUrl = imageUrl;
         if (thumbnailUrl != null) ThumbnailUrl = thumbnailUrl;

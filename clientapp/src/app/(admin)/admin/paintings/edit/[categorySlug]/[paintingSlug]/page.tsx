@@ -1,10 +1,12 @@
 'use client';
 
-import { use, useState, useEffect } from 'react';
+import { Fragment, use, useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { getPaintingBySlug, uploadImage, UpdatePaintingRequest, ImageUploadResult } from '@/lib/api';
 import { updatePaintingAction } from '@/actions/painting-actions';
 import type { Painting } from '@/types/paintings';
+import UploadSpinnerModal from '@/components/UploadSpinnerModal';
 
 interface EditPaintingPageProps {
     params: Promise<{ categorySlug: string; paintingSlug: string }>;
@@ -12,6 +14,7 @@ interface EditPaintingPageProps {
 
 export default function EditPaintingPage({ params }: EditPaintingPageProps) {
     const { categorySlug, paintingSlug } = use(params);
+    const router = useRouter();
 
     const [painting, setPainting] = useState<Painting | null>(null);
     const [loading, setLoading] = useState(true);
@@ -22,7 +25,6 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
     const [description, setDescription] = useState('');
     const [imageUrl, setImageUrl] = useState('');
     const [thumbnailUrl, setThumbnailUrl] = useState('');
-    const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
     const [price, setPrice] = useState('');
     const [width, setWidth] = useState('');
     const [height, setHeight] = useState('');
@@ -30,7 +32,6 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
     const [year, setYear] = useState('');
     const [isAvailable, setIsAvailable] = useState(true);
     const [isNew, setIsNew] = useState(true);
-    const [isLandscape, setIsLandscape] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
@@ -41,16 +42,13 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
         async function loadPainting() {
             try {
                 setLoading(true);
-                const data = await getPaintingBySlug(paintingSlug);
+                const data = await getPaintingBySlug(paintingSlug, { noCache: true });
                 if (data) {
                     setPainting(data);
                     setTitle(data.title);
                     setDescription(data.description || '');
                     setImageUrl(data.imageUrl);
                     setThumbnailUrl(data.thumbnailUrl || data.imageUrl);
-                    // Extract filename from URL for tracking old image
-                    const oldFileName = data.imageUrl.split('/').pop() || null;
-                    setUploadedFileName(oldFileName);
                     setPrice(data.price?.toString() || '');
                     setWidth(data.width?.toString() || '');
                     setHeight(data.height?.toString() || '');
@@ -58,7 +56,6 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                     setYear(data.year?.toString() || '');
                     setIsAvailable(data.isAvailable);
                     setIsNew(data.isNew);
-                    setIsLandscape(data.isLandscape);
                 } else {
                     setLoadError('Painting not found');
                 }
@@ -107,8 +104,6 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                 const result: ImageUploadResult = await uploadImage(file);
                 setImageUrl(result.highResUrl);
                 setThumbnailUrl(result.thumbnailUrl);
-                setUploadedFileName(result.originalUrl.split('/').pop() || null);
-                setIsLandscape(result.isLandscape);
             } catch (err) {
                 const message = err instanceof Error ? err.message : 'Failed to upload image';
                 setErrors((prev: Record<string, string>) => ({ ...prev, file: message }));
@@ -228,8 +223,13 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
         };
 
         try {
-            await updatePaintingAction(painting.id, request);
+            const result = await updatePaintingAction(painting.id, request);
             setSubmitSuccess(true);
+            window.scrollTo(0, 0);
+            // If title changed (and thus slug), redirect to the new URL
+            if (result.newSlug && result.newSlug !== paintingSlug) {
+                router.replace(`/admin/paintings/edit/${categorySlug}/${result.newSlug}`);
+            }
         } catch (err) {
             setSubmitError(err instanceof Error ? err.message : 'Failed to update painting');
         } finally {
@@ -282,266 +282,270 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
     const originalIsNew = painting.isNew;
 
     return (
-        <div>
-            <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">
-                Edit Painting: {painting.title}
-            </h1>
+        <Fragment>
+            <UploadSpinnerModal isVisible={isUploading} />
+            <div>
+                <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">
+                    Edit Painting: {painting.title}
+                </h1>
 
-            <div className="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-4 mb-6">
-                <p className="text-yellow-200 text-sm">
-                    <strong>Note:</strong> Required fields are marked with a red asterisk. Attempt to fill out the same fields for every painting, where possible, to maintain consistency across the site.
-                </p>
-            </div>
-
-            {submitSuccess && (
-                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-4 mb-6">
-                    <p className="text-green-200">Painting updated successfully!</p>
+                <div className="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-4 mb-6">
+                    <p className="text-yellow-200 text-sm">
+                        <strong>Note:</strong> Required fields are marked with a red asterisk. Attempt to fill out the same fields for every painting, where possible, to maintain consistency across the site.
+                    </p>
                 </div>
-            )}
 
-            {submitError && (
-                <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-4 mb-6">
-                    <p className="text-red-200">Error: {submitError}</p>
+                {submitSuccess && (
+                    <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-4 mb-6">
+                        <p className="text-green-200">Painting updated successfully!</p>
+                    </div>
+                )}
+
+                {submitError && (
+                    <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-4 mb-6">
+                        <p className="text-red-200">Error: {submitError}</p>
+                    </div>
+                )}
+
+                {/* Original Image Display */}
+                <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 mb-6">
+                    <h2 className="text-xl font-semibold text-[var(--title-color)] mb-4">Current Image</h2>
+                    <div className="flex justify-center">
+                        <img
+                            src={originalImageUrl}
+                            alt={originalTitle}
+                            className="max-w-md max-h-96 rounded object-contain"
+                        />
+                    </div>
                 </div>
-            )}
 
-            {/* Original Image Display */}
-            <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 mb-6">
-                <h2 className="text-xl font-semibold text-[var(--title-color)] mb-4">Current Image</h2>
-                <div className="flex justify-center">
-                    <img
-                        src={originalImageUrl}
-                        alt={originalTitle}
-                        className="max-w-md max-h-96 rounded object-contain"
-                    />
-                </div>
-            </div>
+                <form onSubmit={handleSubmit} className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 space-y-4">
+                    {/* Replace Image */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Replace Image (.jpg)
+                        </label>
+                        <input
+                            type="file"
+                            accept=".jpg,.jpeg"
+                            onChange={handleFileUpload}
+                            disabled={isUploading}
+                            className="w-full text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 disabled:opacity-50"
+                        />
+                        {isUploading && <p className="text-blue-400 text-sm mt-1">Uploading and processing image...</p>}
+                        {errors.file && <p className="text-red-500 text-sm mt-1">{errors.file}</p>}
+                        {imageUrl !== originalImageUrl && imageUrl && (
+                            <div className="mt-2">
+                                <p className="text-sm text-gray-400 mb-1">New Image Preview:</p>
+                                <img src={imageUrl} alt="Preview" className="max-w-xs rounded" />
+                            </div>
+                        )}
+                    </div>
 
-            <form onSubmit={handleSubmit} className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 space-y-4">
-                {/* Replace Image */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Replace Image (.jpg)
-                    </label>
-                    <input
-                        type="file"
-                        accept=".jpg,.jpeg"
-                        onChange={handleFileUpload}
-                        disabled={isUploading}
-                        className="w-full text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 disabled:opacity-50"
-                    />
-                    {isUploading && <p className="text-blue-400 text-sm mt-1">Uploading and processing image...</p>}
-                    {errors.file && <p className="text-red-500 text-sm mt-1">{errors.file}</p>}
-                    {imageUrl !== originalImageUrl && imageUrl && (
-                        <div className="mt-2">
-                            <p className="text-sm text-gray-400 mb-1">New Image Preview:</p>
-                            <img src={imageUrl} alt="Preview" className="max-w-xs rounded" />
+                    {/* Title */}
+                    <div>
+                        <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-1">
+                            Title <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="title"
+                            value={title}
+                            onChange={e => setTitle(e.target.value)}
+                            maxLength={100}
+                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                        />
+                        <p className="text-gray-500 text-xs mt-1">{title.length}/100 characters</p>
+                        {title !== originalTitle && (
+                            <p className="text-white text-xs mt-1">Original: {originalTitle}</p>
+                        )}
+                        {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                        <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">
+                            Description
+                        </label>
+                        <textarea
+                            id="description"
+                            value={description}
+                            onChange={e => setDescription(e.target.value)}
+                            maxLength={500}
+                            rows={4}
+                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                        />
+                        <p className="text-gray-500 text-xs mt-1">{description.length}/500 characters</p>
+                        {description !== originalDescription && (
+                            <p className="text-white text-xs mt-1">Original: {originalDescription || '(empty)'}</p>
+                        )}
+                        {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+                    </div>
+
+                    {/* Dimensions */}
+                    <div className="grid grid-cols-3 gap-4">
+                        <div>
+                            <label htmlFor="width" className="block text-sm font-medium text-gray-300 mb-1">
+                                Width
+                            </label>
+                            <input
+                                type="number"
+                                id="width"
+                                value={width}
+                                onChange={e => setWidth(e.target.value)}
+                                step="0.01"
+                                min="0.01"
+                                className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                            {width !== originalWidth && (
+                                <p className="text-white text-xs mt-1">Original: {originalWidth || '(empty)'}</p>
+                            )}
+                            {errors.width && <p className="text-red-500 text-sm mt-1">{errors.width}</p>}
                         </div>
-                    )}
-                </div>
-
-                {/* Title */}
-                <div>
-                    <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-1">
-                        Title <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                        type="text"
-                        id="title"
-                        value={title}
-                        onChange={e => setTitle(e.target.value)}
-                        maxLength={100}
-                        className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                    />
-                    <p className="text-gray-500 text-xs mt-1">{title.length}/100 characters</p>
-                    {title !== originalTitle && (
-                        <p className="text-white text-xs mt-1">Original: {originalTitle}</p>
-                    )}
-                    {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
-                </div>
-
-                {/* Description */}
-                <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">
-                        Description
-                    </label>
-                    <textarea
-                        id="description"
-                        value={description}
-                        onChange={e => setDescription(e.target.value)}
-                        maxLength={500}
-                        rows={4}
-                        className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                    />
-                    <p className="text-gray-500 text-xs mt-1">{description.length}/500 characters</p>
-                    {description !== originalDescription && (
-                        <p className="text-white text-xs mt-1">Original: {originalDescription || '(empty)'}</p>
-                    )}
-                    {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
-                </div>
-
-                {/* Dimensions */}
-                <div className="grid grid-cols-3 gap-4">
-                    <div>
-                        <label htmlFor="width" className="block text-sm font-medium text-gray-300 mb-1">
-                            Width
-                        </label>
-                        <input
-                            type="number"
-                            id="width"
-                            value={width}
-                            onChange={e => setWidth(e.target.value)}
-                            step="0.01"
-                            min="0.01"
-                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        />
-                        {width !== originalWidth && (
-                            <p className="text-white text-xs mt-1">Original: {originalWidth || '(empty)'}</p>
-                        )}
-                        {errors.width && <p className="text-red-500 text-sm mt-1">{errors.width}</p>}
+                        <div>
+                            <label htmlFor="height" className="block text-sm font-medium text-gray-300 mb-1">
+                                Height
+                            </label>
+                            <input
+                                type="number"
+                                id="height"
+                                value={height}
+                                onChange={e => setHeight(e.target.value)}
+                                step="0.01"
+                                min="0.01"
+                                className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                            {height !== originalHeight && (
+                                <p className="text-white text-xs mt-1">Original: {originalHeight || '(empty)'}</p>
+                            )}
+                            {errors.height && <p className="text-red-500 text-sm mt-1">{errors.height}</p>}
+                        </div>
+                        <div>
+                            <label htmlFor="depth" className="block text-sm font-medium text-gray-300 mb-1">
+                                Depth
+                            </label>
+                            <input
+                                type="number"
+                                id="depth"
+                                value={depth}
+                                onChange={e => setDepth(e.target.value)}
+                                step="0.01"
+                                min="0.01"
+                                className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                            {depth !== originalDepth && (
+                                <p className="text-white text-xs mt-1">Original: {originalDepth || '(empty)'}</p>
+                            )}
+                            {errors.depth && <p className="text-red-500 text-sm mt-1">{errors.depth}</p>}
+                        </div>
                     </div>
-                    <div>
-                        <label htmlFor="height" className="block text-sm font-medium text-gray-300 mb-1">
-                            Height
-                        </label>
-                        <input
-                            type="number"
-                            id="height"
-                            value={height}
-                            onChange={e => setHeight(e.target.value)}
-                            step="0.01"
-                            min="0.01"
-                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        />
-                        {height !== originalHeight && (
-                            <p className="text-white text-xs mt-1">Original: {originalHeight || '(empty)'}</p>
-                        )}
-                        {errors.height && <p className="text-red-500 text-sm mt-1">{errors.height}</p>}
-                    </div>
-                    <div>
-                        <label htmlFor="depth" className="block text-sm font-medium text-gray-300 mb-1">
-                            Depth
-                        </label>
-                        <input
-                            type="number"
-                            id="depth"
-                            value={depth}
-                            onChange={e => setDepth(e.target.value)}
-                            step="0.01"
-                            min="0.01"
-                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        />
-                        {depth !== originalDepth && (
-                            <p className="text-white text-xs mt-1">Original: {originalDepth || '(empty)'}</p>
-                        )}
-                        {errors.depth && <p className="text-red-500 text-sm mt-1">{errors.depth}</p>}
-                    </div>
-                </div>
 
-                {/* Year and Price */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label htmlFor="year" className="block text-sm font-medium text-gray-300 mb-1">
-                            Year
-                        </label>
-                        <input
-                            type="number"
-                            id="year"
-                            value={year}
-                            onChange={e => setYear(e.target.value)}
-                            min={1900}
-                            max={2100}
-                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        />
-                        {year !== originalYear && (
-                            <p className="text-white text-xs mt-1">Original: {originalYear || '(empty)'}</p>
-                        )}
-                        {errors.year && <p className="text-red-500 text-sm mt-1">{errors.year}</p>}
+                    {/* Year and Price */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label htmlFor="year" className="block text-sm font-medium text-gray-300 mb-1">
+                                Year
+                            </label>
+                            <input
+                                type="number"
+                                id="year"
+                                value={year}
+                                onChange={e => setYear(e.target.value)}
+                                min={1900}
+                                max={2100}
+                                className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                            {year !== originalYear && (
+                                <p className="text-white text-xs mt-1">Original: {originalYear || '(empty)'}</p>
+                            )}
+                            {errors.year && <p className="text-red-500 text-sm mt-1">{errors.year}</p>}
+                        </div>
+                        <div>
+                            <label htmlFor="price" className="block text-sm font-medium text-gray-300 mb-1">
+                                Price ($)
+                            </label>
+                            <input
+                                type="number"
+                                id="price"
+                                value={price}
+                                onChange={e => setPrice(e.target.value)}
+                                step="0.01"
+                                min="0"
+                                className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                            {price !== originalPrice && (
+                                <p className="text-white text-xs mt-1">Original: {originalPrice || '(empty)'}</p>
+                            )}
+                            {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
+                        </div>
                     </div>
-                    <div>
-                        <label htmlFor="price" className="block text-sm font-medium text-gray-300 mb-1">
-                            Price ($)
-                        </label>
+
+                    {/* Is Available */}
+                    <div className="flex items-center">
                         <input
-                            type="number"
-                            id="price"
-                            value={price}
-                            onChange={e => setPrice(e.target.value)}
-                            step="0.01"
-                            min="0"
-                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            type="checkbox"
+                            id="isAvailable"
+                            checked={isAvailable}
+                            onChange={e => setIsAvailable(e.target.checked)}
+                            className="w-4 h-4 text-blue-600 bg-[var(--background)] border-gray-600 rounded focus:ring-blue-500"
                         />
-                        {price !== originalPrice && (
-                            <p className="text-white text-xs mt-1">Original: {originalPrice || '(empty)'}</p>
+                        <label htmlFor="isAvailable" className="ml-2 block text-sm font-medium text-gray-300">
+                            Painting is available
+                        </label>
+                        {isAvailable !== originalIsAvailable && (
+                            <span className="ml-2 text-xs text-white">
+                                (Original: {originalIsAvailable ? 'Available' : 'Not Available'})
+                            </span>
                         )}
-                        {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
                     </div>
-                </div>
 
-                {/* Is Available */}
-                <div className="flex items-center">
-                    <input
-                        type="checkbox"
-                        id="isAvailable"
-                        checked={isAvailable}
-                        onChange={e => setIsAvailable(e.target.checked)}
-                        className="w-4 h-4 text-blue-600 bg-[var(--background)] border-gray-600 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor="isAvailable" className="ml-2 block text-sm font-medium text-gray-300">
-                        Painting is available
-                    </label>
-                    {isAvailable !== originalIsAvailable && (
-                        <span className="ml-2 text-xs text-white">
-                            (Original: {originalIsAvailable ? 'Available' : 'Not Available'})
-                        </span>
-                    )}
-                </div>
+                    {/* Is New */}
+                    <div className="flex items-center">
+                        <input
+                            type="checkbox"
+                            id="isNew"
+                            checked={isNew}
+                            onChange={e => setIsNew(e.target.checked)}
+                            className="w-4 h-4 text-blue-600 bg-[var(--background)] border-gray-600 rounded focus:ring-blue-500"
+                        />
+                        <label htmlFor="isNew" className="ml-2 block text-sm font-medium text-gray-300">
+                            Show in New Paintings
+                        </label>
+                        {isNew !== originalIsNew && (
+                            <span className="ml-2 text-xs text-white">
+                                (Original: {originalIsNew ? 'Yes' : 'No'})
+                            </span>
+                        )}
+                    </div>
 
-                {/* Is New */}
-                <div className="flex items-center">
-                    <input
-                        type="checkbox"
-                        id="isNew"
-                        checked={isNew}
-                        onChange={e => setIsNew(e.target.checked)}
-                        className="w-4 h-4 text-blue-600 bg-[var(--background)] border-gray-600 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor="isNew" className="ml-2 block text-sm font-medium text-gray-300">
-                        Show in New Paintings
-                    </label>
-                    {isNew !== originalIsNew && (
-                        <span className="ml-2 text-xs text-white">
-                            (Original: {originalIsNew ? 'Yes' : 'No'})
-                        </span>
-                    )}
-                </div>
+                    {/* Submit */}
+                    <div className="flex gap-4 pt-4">
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+                        >
+                            {isSubmitting ? 'Updating...' : 'Update Painting'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => { window.scrollTo(0, 0); window.location.href = `/admin/paintings/edit/${categorySlug}`; }}
+                            className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-center"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </form>
 
-                {/* Submit */}
-                <div className="flex gap-4 pt-4">
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
-                    >
-                        {isSubmitting ? 'Updating...' : 'Update Painting'}
-                    </button>
-                    <Link
-                        href={`/admin/paintings/edit/${categorySlug}`}
-                        className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-center"
-                    >
-                        Cancel
+                <div className="mt-6 space-y-2">
+                    <Link href={`/admin/paintings/edit/${categorySlug}`} className="block text-[var(--title-color)] hover:underline">
+                        &larr; Back to {categoryName} Paintings
+                    </Link>
+                    <Link href="/admin/paintings/edit" className="block text-[var(--title-color)] hover:underline">
+                        &larr; Back to Edit Categories
                     </Link>
                 </div>
-            </form>
-
-            <div className="mt-6 space-y-2">
-                <Link href={`/admin/paintings/edit/${categorySlug}`} className="block text-[var(--title-color)] hover:underline">
-                    &larr; Back to {categoryName} Paintings
-                </Link>
-                <Link href="/admin/paintings/edit" className="block text-[var(--title-color)] hover:underline">
-                    &larr; Back to Edit Categories
-                </Link>
             </div>
-        </div>
+        </Fragment>
     );
 }

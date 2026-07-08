@@ -68,7 +68,7 @@ public class LoginWithGoogleHandler : IRequestHandler<LoginWithGoogle, GoogleAut
             var googleSub = new AdminGoogleSub(userProfile.GoogleSubjectId);
 
             // Try to find existing admin user by email
-            var existingAdmin = await _adminReadRepository.GetByEmailAsync(userProfile.Email, cancellationToken);
+            var existingAdmin = await _adminWriteRepository.GetByEmailAsync(userProfile.Email, cancellationToken);
 
             AdminUser adminUser;
             if (existingAdmin != null)

@@ -67,16 +67,20 @@ const CACHE_DURATION_24H = 86400;
  * Fetch all painting categories
  * Endpoint: GET api/paintingcategories
  * Uses tag-based caching with 24-hour fallback revalidation
+ * @param options - Optional configuration
+ * @param options.noCache - If true, bypasses cache entirely (use for admin panels)
  */
-export async function getAllPaintingCategories(): Promise<PaintingCategory[]> {
+export async function getAllPaintingCategories(options?: { noCache?: boolean }): Promise<PaintingCategory[]> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/paintingcategories`, {
-            cache: 'force-cache',
-            next: {
-                revalidate: CACHE_DURATION_24H,
-                tags: [CacheTags.paintingCategories, CacheTags.allContent]
-            }
+            cache: options?.noCache ? 'no-store' : 'force-cache',
+            ...(options?.noCache ? {} : {
+                next: {
+                    revalidate: CACHE_DURATION_24H,
+                    tags: [CacheTags.paintingCategories, CacheTags.allContent]
+                }
+            })
         });
 
         if (!response.ok) {
@@ -93,16 +97,20 @@ export async function getAllPaintingCategories(): Promise<PaintingCategory[]> {
  * Fetch a specific painting category with its paintings
  * Endpoint: GET api/paintingcategories/{slug}
  * Uses tag-based caching with 24-hour fallback revalidation
+ * @param options - Optional configuration
+ * @param options.noCache - If true, bypasses cache entirely (use for admin panels)
  */
-export async function getCategoryData(categorySlug: string): Promise<PaintingCategoryWithPaintings | null> {
+export async function getCategoryData(categorySlug: string, options?: { noCache?: boolean }): Promise<PaintingCategoryWithPaintings | null> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/paintingcategories/${categorySlug}`, {
-            cache: 'force-cache',
-            next: {
-                revalidate: CACHE_DURATION_24H,
-                tags: [CacheTags.paintingCategories, CacheTags.paintingCategory(categorySlug), CacheTags.allContent]
-            }
+            cache: options?.noCache ? 'no-store' : 'force-cache',
+            ...(options?.noCache ? {} : {
+                next: {
+                    revalidate: CACHE_DURATION_24H,
+                    tags: [CacheTags.paintingCategories, CacheTags.paintingCategory(categorySlug), CacheTags.allContent]
+                }
+            })
         });
 
         if (!response.ok) {
@@ -119,16 +127,20 @@ export async function getCategoryData(categorySlug: string): Promise<PaintingCat
  * Fetch all paintings
  * Endpoint: GET api/paintings
  * Uses tag-based caching with 24-hour fallback revalidation
+ * @param options - Optional configuration
+ * @param options.noCache - If true, bypasses cache entirely (use for admin panels)
  */
-export async function getAllPaintings(): Promise<Painting[]> {
+export async function getAllPaintings(options?: { noCache?: boolean }): Promise<Painting[]> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/paintings`, {
-            cache: 'force-cache',
-            next: {
-                revalidate: CACHE_DURATION_24H,
-                tags: [CacheTags.paintings, CacheTags.allContent]
-            }
+            cache: options?.noCache ? 'no-store' : 'force-cache',
+            ...(options?.noCache ? {} : {
+                next: {
+                    revalidate: CACHE_DURATION_24H,
+                    tags: [CacheTags.paintings, CacheTags.allContent]
+                }
+            })
         });
 
         if (!response.ok) {
@@ -145,16 +157,20 @@ export async function getAllPaintings(): Promise<Painting[]> {
  * Fetch a specific painting by slug
  * Endpoint: GET api/paintings/{slug}
  * Uses tag-based caching with 24-hour fallback revalidation
+ * @param options - Optional configuration
+ * @param options.noCache - If true, bypasses cache entirely (use for admin panels)
  */
-export async function getPaintingBySlug(slug: string): Promise<Painting | null> {
+export async function getPaintingBySlug(slug: string, options?: { noCache?: boolean }): Promise<Painting | null> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/paintings/${slug}`, {
-            cache: 'force-cache',
-            next: {
-                revalidate: CACHE_DURATION_24H,
-                tags: [CacheTags.paintings, CacheTags.painting(slug), CacheTags.allContent]
-            }
+            cache: options?.noCache ? 'no-store' : 'force-cache',
+            ...(options?.noCache ? {} : {
+                next: {
+                    revalidate: CACHE_DURATION_24H,
+                    tags: [CacheTags.paintings, CacheTags.painting(slug), CacheTags.allContent]
+                }
+            })
         });
 
         if (!response.ok) {
@@ -171,16 +187,20 @@ export async function getPaintingBySlug(slug: string): Promise<Painting | null> 
  * Fetch paintings by category slug
  * Endpoint: GET api/paintings/category/{categorySlug}
  * Uses tag-based caching with 24-hour fallback revalidation
+ * @param options - Optional configuration
+ * @param options.noCache - If true, bypasses cache entirely (use for admin panels)
  */
-export async function getPaintingsByCategory(categorySlug: string): Promise<PaintingCategoryWithPaintings | null> {
+export async function getPaintingsByCategory(categorySlug: string, options?: { noCache?: boolean }): Promise<PaintingCategoryWithPaintings | null> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/paintings/category/${categorySlug}`, {
-            cache: 'force-cache',
-            next: {
-                revalidate: CACHE_DURATION_24H,
-                tags: [CacheTags.paintings, CacheTags.paintingCategory(categorySlug), CacheTags.allContent]
-            }
+            cache: options?.noCache ? 'no-store' : 'force-cache',
+            ...(options?.noCache ? {} : {
+                next: {
+                    revalidate: CACHE_DURATION_24H,
+                    tags: [CacheTags.paintings, CacheTags.paintingCategory(categorySlug), CacheTags.allContent]
+                }
+            })
         });
 
         if (!response.ok) {
@@ -252,16 +272,20 @@ export async function getCarouselImages(): Promise<CarouselImage[]> {
  * Fetch all page contents
  * Endpoint: GET api/pagecontent
  * Uses tag-based caching with 24-hour fallback revalidation
+ * @param options - Optional configuration
+ * @param options.noCache - If true, bypasses cache entirely (use for admin panels)
  */
-export async function getAllPageContents(): Promise<PageContent[]> {
+export async function getAllPageContents(options?: { noCache?: boolean }): Promise<PageContent[]> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/pagecontent`, {
-            cache: 'force-cache',
-            next: {
-                revalidate: CACHE_DURATION_24H,
-                tags: [CacheTags.pageContents, CacheTags.allContent]
-            }
+            cache: options?.noCache ? 'no-store' : 'force-cache',
+            ...(options?.noCache ? {} : {
+                next: {
+                    revalidate: CACHE_DURATION_24H,
+                    tags: [CacheTags.pageContents, CacheTags.allContent]
+                }
+            })
         });
 
         if (!response.ok) {
@@ -285,16 +309,20 @@ export async function getAllPageContents(): Promise<PageContent[]> {
  * Fetch page content by slug
  * Endpoint: GET api/pagecontent/{slug}
  * Uses tag-based caching with 24-hour fallback revalidation
+ * @param options - Optional configuration
+ * @param options.noCache - If true, bypasses cache entirely (use for admin panels)
  */
-export async function getPageContent(slug: string): Promise<PageContent | null> {
+export async function getPageContent(slug: string, options?: { noCache?: boolean }): Promise<PageContent | null> {
     try {
         const API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/pagecontent/${slug}`, {
-            cache: 'force-cache',
-            next: {
-                revalidate: CACHE_DURATION_24H,
-                tags: [CacheTags.pageContents, CacheTags.pageContent(slug), CacheTags.allContent]
-            }
+            cache: options?.noCache ? 'no-store' : 'force-cache',
+            ...(options?.noCache ? {} : {
+                next: {
+                    revalidate: CACHE_DURATION_24H,
+                    tags: [CacheTags.pageContents, CacheTags.pageContent(slug), CacheTags.allContent]
+                }
+            })
         });
 
         if (!response.ok) {
@@ -332,6 +360,8 @@ export interface CommandCompletionResponse {
     message: string;
     completedAt: string;
     affectedRecords?: number;
+    /** Set when a painting title change results in a new slug. */
+    newSlug?: string;
 }
 
 /** Result returned when a painting is created */
@@ -631,13 +661,17 @@ export async function deleteImage(fileName: string): Promise<void> {
  * Endpoint: POST api/paintings
  * Requires admin_token cookie authentication
  */
-export async function addPainting(request: AddPaintingRequest): Promise<PaintingCreatedResult> {
+export async function addPainting(request: AddPaintingRequest, authToken?: string): Promise<PaintingCreatedResult> {
     try {
         const API_BASE_URL = getApiBaseUrl();
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (authToken) {
+            headers['Cookie'] = `admin_token=${authToken}`;
+        }
         const response = await fetch(`${API_BASE_URL}/paintings`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
+            headers,
+            credentials: authToken ? undefined : 'include',
             cache: 'no-store',
             body: JSON.stringify(request)
         });
@@ -676,7 +710,8 @@ export async function addPainting(request: AddPaintingRequest): Promise<Painting
 export async function updatePainting(
     id: string,
     request: UpdatePaintingRequest,
-    idempotencyKey?: string
+    idempotencyKey?: string,
+    authToken?: string
 ): Promise<CommandCompletionResponse> {
     try {
         const API_BASE_URL = getApiBaseUrl();
@@ -684,11 +719,14 @@ export async function updatePainting(
         if (idempotencyKey) {
             headers['X-Idempotency-Key'] = idempotencyKey;
         }
+        if (authToken) {
+            headers['Cookie'] = `admin_token=${authToken}`;
+        }
 
         const response = await fetch(`${API_BASE_URL}/paintings/${id}`, {
             method: 'PATCH',
             headers,
-            credentials: 'include',
+            credentials: authToken ? undefined : 'include',
             cache: 'no-store',
             body: JSON.stringify(request)
         });
@@ -716,12 +754,17 @@ export async function updatePainting(
  * Endpoint: DELETE api/paintings/{id}
  * Requires admin_token cookie authentication
  */
-export async function deletePainting(id: string): Promise<void> {
+export async function deletePainting(id: string, authToken?: string): Promise<void> {
     try {
         const API_BASE_URL = getApiBaseUrl();
+        const headers: Record<string, string> = {};
+        if (authToken) {
+            headers['Cookie'] = `admin_token=${authToken}`;
+        }
         const response = await fetch(`${API_BASE_URL}/paintings/${id}`, {
             method: 'DELETE',
-            credentials: 'include',
+            headers,
+            credentials: authToken ? undefined : 'include',
             cache: 'no-store'
         });
 
@@ -749,7 +792,8 @@ export async function deletePainting(id: string): Promise<void> {
 export async function assignPaintingCategory(
     paintingId: string,
     categoryId: string,
-    idempotencyKey?: string
+    idempotencyKey?: string,
+    authToken?: string
 ): Promise<CommandCompletionResponse> {
     try {
         const API_BASE_URL = getApiBaseUrl();
@@ -757,11 +801,14 @@ export async function assignPaintingCategory(
         if (idempotencyKey) {
             headers['X-Idempotency-Key'] = idempotencyKey;
         }
+        if (authToken) {
+            headers['Cookie'] = `admin_token=${authToken}`;
+        }
 
         const response = await fetch(`${API_BASE_URL}/paintings/${paintingId}/category/${categoryId}`, {
             method: 'PATCH',
             headers,
-            credentials: 'include',
+            credentials: authToken ? undefined : 'include',
             cache: 'no-store'
         });
 
@@ -790,7 +837,8 @@ export async function assignPaintingCategory(
  */
 export async function reassignPaintings(
     request: ReassignPaintingsRequest,
-    idempotencyKey?: string
+    idempotencyKey?: string,
+    authToken?: string
 ): Promise<CommandCompletionResponse> {
     try {
         const API_BASE_URL = getApiBaseUrl();
@@ -798,11 +846,14 @@ export async function reassignPaintings(
         if (idempotencyKey) {
             headers['X-Idempotency-Key'] = idempotencyKey;
         }
+        if (authToken) {
+            headers['Cookie'] = `admin_token=${authToken}`;
+        }
 
         const response = await fetch(`${API_BASE_URL}/paintings/reassign`, {
             method: 'POST',
             headers,
-            credentials: 'include',
+            credentials: authToken ? undefined : 'include',
             cache: 'no-store',
             body: JSON.stringify(request)
         });
@@ -834,13 +885,17 @@ export async function reassignPaintings(
  * Endpoint: POST api/paintingcategories
  * Requires admin_token cookie authentication
  */
-export async function addPaintingCategory(request: AddPaintingCategoryRequest): Promise<PaintingCategoryCreatedResult> {
+export async function addPaintingCategory(request: AddPaintingCategoryRequest, authToken?: string): Promise<PaintingCategoryCreatedResult> {
     try {
         const API_BASE_URL = getApiBaseUrl();
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (authToken) {
+            headers['Cookie'] = `admin_token=${authToken}`;
+        }
         const response = await fetch(`${API_BASE_URL}/paintingcategories`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
+            headers,
+            credentials: authToken ? undefined : 'include',
             cache: 'no-store',
             body: JSON.stringify(request)
         });
@@ -871,7 +926,8 @@ export async function addPaintingCategory(request: AddPaintingCategoryRequest): 
 export async function updatePaintingCategory(
     id: string,
     request: UpdatePaintingCategoryRequest,
-    idempotencyKey?: string
+    idempotencyKey?: string,
+    authToken?: string
 ): Promise<CommandCompletionResponse> {
     try {
         const API_BASE_URL = getApiBaseUrl();
@@ -879,11 +935,14 @@ export async function updatePaintingCategory(
         if (idempotencyKey) {
             headers['X-Idempotency-Key'] = idempotencyKey;
         }
+        if (authToken) {
+            headers['Cookie'] = `admin_token=${authToken}`;
+        }
 
         const response = await fetch(`${API_BASE_URL}/paintingcategories/${id}`, {
             method: 'PATCH',
             headers,
-            credentials: 'include',
+            credentials: authToken ? undefined : 'include',
             cache: 'no-store',
             body: JSON.stringify(request)
         });
@@ -911,12 +970,17 @@ export async function updatePaintingCategory(
  * Endpoint: DELETE api/paintingcategories/{id}
  * Requires admin_token cookie authentication
  */
-export async function deletePaintingCategory(id: string): Promise<void> {
+export async function deletePaintingCategory(id: string, authToken?: string): Promise<void> {
     try {
         const API_BASE_URL = getApiBaseUrl();
+        const headers: Record<string, string> = {};
+        if (authToken) {
+            headers['Cookie'] = `admin_token=${authToken}`;
+        }
         const response = await fetch(`${API_BASE_URL}/paintingcategories/${id}`, {
             method: 'DELETE',
-            credentials: 'include',
+            headers,
+            credentials: authToken ? undefined : 'include',
             cache: 'no-store'
         });
 
@@ -945,13 +1009,17 @@ export async function deletePaintingCategory(id: string): Promise<void> {
  * Endpoint: POST api/pagecontent
  * Requires admin_token cookie authentication
  */
-export async function addPageContent(request: AddPageContentRequest): Promise<PageContentCreatedResult> {
+export async function addPageContent(request: AddPageContentRequest, authToken?: string): Promise<PageContentCreatedResult> {
     try {
         const API_BASE_URL = getApiBaseUrl();
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (authToken) {
+            headers['Cookie'] = `admin_token=${authToken}`;
+        }
         const response = await fetch(`${API_BASE_URL}/pagecontent`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
+            headers,
+            credentials: authToken ? undefined : 'include',
             cache: 'no-store',
             body: JSON.stringify(request)
         });
@@ -982,7 +1050,8 @@ export async function addPageContent(request: AddPageContentRequest): Promise<Pa
 export async function updatePageContent(
     id: string,
     request: UpdatePageContentRequest,
-    idempotencyKey?: string
+    idempotencyKey?: string,
+    authToken?: string
 ): Promise<CommandCompletionResponse> {
     try {
         const API_BASE_URL = getApiBaseUrl();
@@ -990,11 +1059,14 @@ export async function updatePageContent(
         if (idempotencyKey) {
             headers['X-Idempotency-Key'] = idempotencyKey;
         }
+        if (authToken) {
+            headers['Cookie'] = `admin_token=${authToken}`;
+        }
 
         const response = await fetch(`${API_BASE_URL}/pagecontent/${id}`, {
             method: 'PATCH',
             headers,
-            credentials: 'include',
+            credentials: authToken ? undefined : 'include',
             cache: 'no-store',
             body: JSON.stringify(request)
         });
@@ -1022,12 +1094,17 @@ export async function updatePageContent(
  * Endpoint: DELETE api/pagecontent/{address}
  * Requires admin_token cookie authentication
  */
-export async function deletePageContent(address: string): Promise<void> {
+export async function deletePageContent(address: string, authToken?: string): Promise<void> {
     try {
         const API_BASE_URL = getApiBaseUrl();
+        const headers: Record<string, string> = {};
+        if (authToken) {
+            headers['Cookie'] = `admin_token=${authToken}`;
+        }
         const response = await fetch(`${API_BASE_URL}/pagecontent/${address}`, {
             method: 'DELETE',
-            credentials: 'include',
+            headers,
+            credentials: authToken ? undefined : 'include',
             cache: 'no-store'
         });
 

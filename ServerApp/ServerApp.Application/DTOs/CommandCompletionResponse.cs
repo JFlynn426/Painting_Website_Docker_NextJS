@@ -9,4 +9,8 @@ public class CommandCompletionResponse
     public string Message { get; set; } = string.Empty;
     public DateTime CompletedAt { get; set; }
     public int? AffectedRecords { get; set; }
+    /// <summary>
+    /// Set when a painting title change results in a new slug.
+    /// </summary>
+    public string? NewSlug { get; set; }
 }

@@ -56,7 +56,7 @@ public class ReassignPaintingsHandler : CommandHandlerBase, IRequestHandler<Reas
                 int affectedCount = 0;
                 foreach (var kvp in command.PaintingIdToCategoryId)
                 {
-                    var painting = await _paintingReadRepository.GetByIdAsync(kvp.Key, ct);
+                    var painting = await _paintingWriteRepository.GetByIdAsync(kvp.Key, ct);
                     if (painting != null)
                     {
                         painting.AssignCategory(categories[kvp.Value]);

@@ -24,8 +24,8 @@ export default function CarouselContentPage() {
             try {
                 setLoading(true);
                 const [paintings, homePage] = await Promise.all([
-                    getAllPaintings(),
-                    getPageContent('home')
+                    getAllPaintings({ noCache: true }),
+                    getPageContent('home', { noCache: true })
                 ]);
                 setAllPaintings(paintings);
                 setHomeContent(homePage);
@@ -101,6 +101,8 @@ export default function CarouselContentPage() {
             setSaveSuccess(true);
             // Update current carousel paintings to reflect saved changes
             setCurrentCarouselPaintings(selectedPaintings);
+            // Scroll to top of page
+            window.scrollTo(0, 0);
         } catch (err) {
             setSaveError(err instanceof Error ? err.message : 'Failed to save changes');
         } finally {

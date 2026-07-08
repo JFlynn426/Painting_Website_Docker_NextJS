@@ -16,27 +16,27 @@ namespace ServerApp.Infrastructure.EF;
 public static class EfExtensions
 {
     /// <summary>
-    /// Registers SQL Server DbContexts and repositories with the DI container.
+    /// Registers EF Core DbContexts and repositories with the DI container.
     /// Implements CQRS pattern with separate read and write repositories.
     /// </summary>
     /// <param name="services">The service collection to add services to.</param>
     /// <param name="configuration">The application configuration.</param>
-    public static IServiceCollection AddSQLServer(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddEFRepositories(this IServiceCollection services, IConfiguration configuration)
     {
         // Register read repositories (query operations)
-        services.AddScoped<IPaintingReadRepository, SQLServerPaintingReadRepository>();
-        services.AddScoped<IPaintingCategoryReadRepository, SQLServerPaintingCategoryReadRepository>();
-        services.AddScoped<IPageContentReadRepository, SQLServerPageContentReadRepository>();
-        services.AddScoped<IAdminUserReadRepository, SQLServerAdminUserReadRepository>();
+        services.AddScoped<IPaintingReadRepository, PaintingReadRepository>();
+        services.AddScoped<IPaintingCategoryReadRepository, PaintingCategoryReadRepository>();
+        services.AddScoped<IPageContentReadRepository, PageContentReadRepository>();
+        services.AddScoped<IAdminUserReadRepository, AdminUserReadRepository>();
 
         // Register write repositories (command operations)
-        services.AddScoped<IPaintingWriteRepository, SQLServerPaintingWriteRepository>();
-        services.AddScoped<IPaintingCategoryWriteRepository, SQLServerPaintingCategoryWriteRepository>();
-        services.AddScoped<IPageContentWriteRepository, SQLServerPageContentWriteRepository>();
-        services.AddScoped<IAdminUserWriteRepository, SQLServerAdminUserWriteRepository>();
+        services.AddScoped<IPaintingWriteRepository, PaintingWriteRepository>();
+        services.AddScoped<IPaintingCategoryWriteRepository, PaintingCategoryWriteRepository>();
+        services.AddScoped<IPageContentWriteRepository, PageContentWriteRepository>();
+        services.AddScoped<IAdminUserWriteRepository, AdminUserWriteRepository>();
 
         var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? configuration[$"{nameof(SQLServerOptions)}:ConnectionString"]
+            ?? configuration[$"{nameof(EFRepositoryOptions)}:ConnectionString"]
             ?? string.Empty;
 
         services.AddDbContext<ReadDbContext>(ctx => ctx.UseNpgsql(connectionString));

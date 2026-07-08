@@ -39,7 +39,7 @@ public class AssignPaintingCategoryHandler : CommandHandlerBase, IRequestHandler
 
             try
             {
-                var painting = await _paintingReadRepository.GetByIdAsync(command.PaintingId, ct);
+                var painting = await _paintingWriteRepository.GetByIdAsync(command.PaintingId, ct);
                 if (painting == null)
                 {
                     throw new PaintingNotFoundException(command.PaintingId.ToString());

@@ -68,21 +68,30 @@ public class PagePhotoUrls : IList<string>
 
     public static implicit operator PagePhotoUrls(string[] urls) => new(urls);
 
-    public static PagePhotoUrls FromNullable(IEnumerable<string>? urls)
+    public static PagePhotoUrls? FromNullable(IEnumerable<string>? urls)
     {
-        if (urls == null || !urls.Any())
+        if (urls == null)
+        {
+            return null;
+        }
+        if (!urls.Any())
         {
             return new PagePhotoUrls();
         }
         return new PagePhotoUrls(urls);
     }
 
-    public static PagePhotoUrls FromNullable(string?[]? urls)
+    public static PagePhotoUrls? FromNullable(string?[]? urls)
     {
-        if (urls == null || !urls.Any(u => u != null))
+        if (urls == null)
+        {
+            return null;
+        }
+        var filtered = urls.Where(u => u != null).Select(u => u!).ToList();
+        if (filtered.Count == 0)
         {
             return new PagePhotoUrls();
         }
-        return new PagePhotoUrls(urls.Where(u => u != null).Select(u => u!));
+        return new PagePhotoUrls(filtered);
     }
 }

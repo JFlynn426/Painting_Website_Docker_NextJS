@@ -6,16 +6,21 @@ using ServerApp.Domain.Repositories.Write;
 using ServerApp.Infrastructure.EF.Contexts;
 
 /// <summary>
-/// SQL Server implementation of IPaintingCategoryWriteRepository.
+/// EF Core implementation of IPaintingCategoryWriteRepository.
 /// Handles only write operations using WriteDbContext.
 /// </summary>
-internal class SQLServerPaintingCategoryWriteRepository : IPaintingCategoryWriteRepository
+internal class PaintingCategoryWriteRepository : IPaintingCategoryWriteRepository
 {
     private readonly WriteDbContext _writeContext;
 
-    public SQLServerPaintingCategoryWriteRepository(WriteDbContext writeContext)
+    public PaintingCategoryWriteRepository(WriteDbContext writeContext)
     {
         _writeContext = writeContext;
+    }
+
+    public async Task<PaintingCategory?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _writeContext.PaintingCategories.FindAsync(new object[] { id }, cancellationToken);
     }
 
     public async Task AddAsync(PaintingCategory category, CancellationToken cancellationToken = default)

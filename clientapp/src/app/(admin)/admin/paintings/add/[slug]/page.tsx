@@ -1,9 +1,10 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, Fragment } from 'react';
 import Link from 'next/link';
 import { uploadImage, AddPaintingRequest, ImageUploadResult } from '@/lib/api';
 import { addPaintingAction } from '@/actions/painting-actions';
+import UploadSpinnerModal from '@/components/UploadSpinnerModal';
 
 interface AddPaintingToCategoryPageProps {
     params: Promise<{ slug: string }>;
@@ -16,7 +17,6 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
     const [description, setDescription] = useState('');
     const [imageUrl, setImageUrl] = useState('');
     const [thumbnailUrl, setThumbnailUrl] = useState('');
-    const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
     const [price, setPrice] = useState('');
     const [width, setWidth] = useState('');
     const [height, setHeight] = useState('');
@@ -67,7 +67,6 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                 const result: ImageUploadResult = await uploadImage(file);
                 setImageUrl(result.highResUrl);
                 setThumbnailUrl(result.thumbnailUrl);
-                setUploadedFileName(result.originalUrl.split('/').pop() || null);
                 setIsLandscape(result.isLandscape);
             } catch (err) {
                 const message = err instanceof Error ? err.message : 'Failed to upload image';
@@ -192,6 +191,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
         try {
             await addPaintingAction(request);
             setSubmitSuccess(true);
+            window.scrollTo(0, 0);
             // Reset form
             setTitle('');
             setDescription('');
@@ -212,226 +212,230 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
     };
 
     return (
-        <div>
-            <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">
-                Add Painting to: {slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-            </h1>
+        <Fragment>
+            <div>
+                <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">
+                    Add Painting to: {slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                </h1>
 
-            <div className="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-4 mb-6">
-                <p className="text-yellow-200 text-sm">
-                    <strong>Note:</strong> Required fields are marked with a red asterisk. Attempt to fill out the same fields for every painting, where possible, to maintain consistency across the site.
-                </p>
-            </div>
-
-            {submitSuccess && (
-                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-4 mb-6">
-                    <p className="text-green-200">Painting added successfully!</p>
+                <div className="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-4 mb-6">
+                    <p className="text-yellow-200 text-sm">
+                        <strong>Note:</strong> Required fields are marked with a red asterisk. Attempt to fill out the same fields for every painting, where possible, to maintain consistency across the site.
+                    </p>
                 </div>
-            )}
 
-            {submitError && (
-                <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-4 mb-6">
-                    <p className="text-red-200">Error: {submitError}</p>
-                </div>
-            )}
+                {submitSuccess && (
+                    <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-4 mb-6">
+                        <p className="text-green-200">Painting added successfully!</p>
+                    </div>
+                )}
 
-            <form onSubmit={handleSubmit} className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 space-y-4">
-                {/* Image Upload */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Painting Image (.jpg) <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                        type="file"
-                        accept=".jpg,.jpeg"
-                        onChange={handleFileUpload}
-                        disabled={isUploading}
-                        className="w-full text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 disabled:opacity-50"
-                    />
-                    {isUploading && <p className="text-blue-400 text-sm mt-1">Uploading and processing image...</p>}
-                    {errors.file && <p className="text-red-500 text-sm mt-1">{errors.file}</p>}
-                    {imageUrl && (
-                        <div className="mt-2">
-                            <img src={imageUrl} alt="Preview" className="max-w-xs rounded" />
+                {submitError && (
+                    <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-4 mb-6">
+                        <p className="text-red-200">Error: {submitError}</p>
+                    </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 space-y-4">
+                    {/* Image Upload */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Painting Image (.jpg) <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="file"
+                            accept=".jpg,.jpeg"
+                            onChange={handleFileUpload}
+                            disabled={isUploading}
+                            className="w-full text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 disabled:opacity-50"
+                        />
+                        {isUploading && <p className="text-blue-400 text-sm mt-1">Uploading and processing image...</p>}
+                        {errors.file && <p className="text-red-500 text-sm mt-1">{errors.file}</p>}
+                        {imageUrl && (
+                            <div className="mt-2">
+                                <img src={imageUrl} alt="Preview" className="max-w-xs rounded" />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Title */}
+                    <div>
+                        <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-1">
+                            Title <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="title"
+                            value={title}
+                            onChange={e => setTitle(e.target.value)}
+                            maxLength={100}
+                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                            placeholder="Enter painting title (Required)"
+                        />
+                        <p className="text-gray-500 text-xs mt-1">{title.length}/100 characters</p>
+                        {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                        <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">
+                            Description
+                        </label>
+                        <textarea
+                            id="description"
+                            value={description}
+                            onChange={e => setDescription(e.target.value)}
+                            maxLength={500}
+                            rows={4}
+                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                            placeholder="Enter painting description (Suggested)"
+                        />
+                        <p className="text-gray-500 text-xs mt-1">{description.length}/500 characters</p>
+                        {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+                    </div>
+
+                    {/* Dimensions */}
+                    <div className="grid grid-cols-3 gap-4">
+                        <div>
+                            <label htmlFor="width" className="block text-sm font-medium text-gray-300 mb-1">
+                                Width
+                            </label>
+                            <input
+                                type="number"
+                                id="width"
+                                value={width}
+                                onChange={e => setWidth(e.target.value)}
+                                step="0.01"
+                                min="0.01"
+                                className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                                placeholder="Width (Suggested)"
+                            />
+                            {errors.width && <p className="text-red-500 text-sm mt-1">{errors.width}</p>}
                         </div>
-                    )}
-                </div>
-
-                {/* Title */}
-                <div>
-                    <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-1">
-                        Title <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                        type="text"
-                        id="title"
-                        value={title}
-                        onChange={e => setTitle(e.target.value)}
-                        maxLength={100}
-                        className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                        placeholder="Enter painting title (Required)"
-                    />
-                    <p className="text-gray-500 text-xs mt-1">{title.length}/100 characters</p>
-                    {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
-                </div>
-
-                {/* Description */}
-                <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">
-                        Description
-                    </label>
-                    <textarea
-                        id="description"
-                        value={description}
-                        onChange={e => setDescription(e.target.value)}
-                        maxLength={500}
-                        rows={4}
-                        className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                        placeholder="Enter painting description (Suggested)"
-                    />
-                    <p className="text-gray-500 text-xs mt-1">{description.length}/500 characters</p>
-                    {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
-                </div>
-
-                {/* Dimensions */}
-                <div className="grid grid-cols-3 gap-4">
-                    <div>
-                        <label htmlFor="width" className="block text-sm font-medium text-gray-300 mb-1">
-                            Width
-                        </label>
-                        <input
-                            type="number"
-                            id="width"
-                            value={width}
-                            onChange={e => setWidth(e.target.value)}
-                            step="0.01"
-                            min="0.01"
-                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                            placeholder="Width (Suggested)"
-                        />
-                        {errors.width && <p className="text-red-500 text-sm mt-1">{errors.width}</p>}
+                        <div>
+                            <label htmlFor="height" className="block text-sm font-medium text-gray-300 mb-1">
+                                Height
+                            </label>
+                            <input
+                                type="number"
+                                id="height"
+                                value={height}
+                                onChange={e => setHeight(e.target.value)}
+                                step="0.01"
+                                min="0.01"
+                                className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                                placeholder="Height (Suggested)"
+                            />
+                            {errors.height && <p className="text-red-500 text-sm mt-1">{errors.height}</p>}
+                        </div>
+                        <div>
+                            <label htmlFor="depth" className="block text-sm font-medium text-gray-300 mb-1">
+                                Depth
+                            </label>
+                            <input
+                                type="number"
+                                id="depth"
+                                value={depth}
+                                onChange={e => setDepth(e.target.value)}
+                                step="0.01"
+                                min="0.01"
+                                className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                                placeholder="Depth (Optional)"
+                            />
+                            {errors.depth && <p className="text-red-500 text-sm mt-1">{errors.depth}</p>}
+                        </div>
                     </div>
-                    <div>
-                        <label htmlFor="height" className="block text-sm font-medium text-gray-300 mb-1">
-                            Height
-                        </label>
-                        <input
-                            type="number"
-                            id="height"
-                            value={height}
-                            onChange={e => setHeight(e.target.value)}
-                            step="0.01"
-                            min="0.01"
-                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                            placeholder="Height (Suggested)"
-                        />
-                        {errors.height && <p className="text-red-500 text-sm mt-1">{errors.height}</p>}
-                    </div>
-                    <div>
-                        <label htmlFor="depth" className="block text-sm font-medium text-gray-300 mb-1">
-                            Depth
-                        </label>
-                        <input
-                            type="number"
-                            id="depth"
-                            value={depth}
-                            onChange={e => setDepth(e.target.value)}
-                            step="0.01"
-                            min="0.01"
-                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                            placeholder="Depth (Optional)"
-                        />
-                        {errors.depth && <p className="text-red-500 text-sm mt-1">{errors.depth}</p>}
-                    </div>
-                </div>
 
-                {/* Year and Price */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label htmlFor="year" className="block text-sm font-medium text-gray-300 mb-1">
-                            Year
-                        </label>
-                        <input
-                            type="number"
-                            id="year"
-                            value={year}
-                            onChange={e => setYear(e.target.value)}
-                            min={1900}
-                            max={2100}
-                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                            placeholder="Year created (Optional)"
-                        />
-                        {errors.year && <p className="text-red-500 text-sm mt-1">{errors.year}</p>}
+                    {/* Year and Price */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label htmlFor="year" className="block text-sm font-medium text-gray-300 mb-1">
+                                Year
+                            </label>
+                            <input
+                                type="number"
+                                id="year"
+                                value={year}
+                                onChange={e => setYear(e.target.value)}
+                                min={1900}
+                                max={2100}
+                                className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                                placeholder="Year created (Optional)"
+                            />
+                            {errors.year && <p className="text-red-500 text-sm mt-1">{errors.year}</p>}
+                        </div>
+                        <div>
+                            <label htmlFor="price" className="block text-sm font-medium text-gray-300 mb-1">
+                                Price ($)
+                            </label>
+                            <input
+                                type="number"
+                                id="price"
+                                value={price}
+                                onChange={e => setPrice(e.target.value)}
+                                step="0.01"
+                                min="0"
+                                className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                                placeholder="Price (Suggested for available paintings)"
+                            />
+                            {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
+                        </div>
                     </div>
-                    <div>
-                        <label htmlFor="price" className="block text-sm font-medium text-gray-300 mb-1">
-                            Price ($)
-                        </label>
+
+                    {/* Is Available */}
+                    <div className="flex items-center">
                         <input
-                            type="number"
-                            id="price"
-                            value={price}
-                            onChange={e => setPrice(e.target.value)}
-                            step="0.01"
-                            min="0"
-                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                            placeholder="Price (Suggested for available paintings)"
+                            type="checkbox"
+                            id="isAvailable"
+                            checked={isAvailable}
+                            onChange={e => setIsAvailable(e.target.checked)}
+                            className="w-4 h-4 text-blue-600 bg-[var(--background)] border-gray-600 rounded focus:ring-blue-500"
                         />
-                        {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
+                        <label htmlFor="isAvailable" className="ml-2 block text-sm font-medium text-gray-300">
+                            Painting is available
+                        </label>
                     </div>
-                </div>
 
-                {/* Is Available */}
-                <div className="flex items-center">
-                    <input
-                        type="checkbox"
-                        id="isAvailable"
-                        checked={isAvailable}
-                        onChange={e => setIsAvailable(e.target.checked)}
-                        className="w-4 h-4 text-blue-600 bg-[var(--background)] border-gray-600 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor="isAvailable" className="ml-2 block text-sm font-medium text-gray-300">
-                        Painting is available
-                    </label>
-                </div>
+                    {/* Add to New Paintings */}
+                    <div className="flex items-center">
+                        <input
+                            type="checkbox"
+                            id="isNew"
+                            checked={isNew}
+                            onChange={e => setIsNew(e.target.checked)}
+                            className="w-4 h-4 text-blue-600 bg-[var(--background)] border-gray-600 rounded focus:ring-blue-500"
+                        />
+                        <label htmlFor="isNew" className="ml-2 block text-sm font-medium text-gray-300">
+                            Add to New Paintings
+                        </label>
+                    </div>
 
-                {/* Add to New Paintings */}
-                <div className="flex items-center">
-                    <input
-                        type="checkbox"
-                        id="isNew"
-                        checked={isNew}
-                        onChange={e => setIsNew(e.target.checked)}
-                        className="w-4 h-4 text-blue-600 bg-[var(--background)] border-gray-600 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor="isNew" className="ml-2 block text-sm font-medium text-gray-300">
-                        Add to New Paintings
-                    </label>
-                </div>
+                    {/* Submit */}
+                    <div className="flex gap-4 pt-4">
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+                        >
+                            {isSubmitting ? 'Adding...' : 'Add Painting'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => { window.scrollTo(0, 0); window.location.href = '/admin/paintings/add'; }}
+                            className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-center"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </form>
 
-                {/* Submit */}
-                <div className="flex gap-4 pt-4">
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
-                    >
-                        {isSubmitting ? 'Adding...' : 'Add Painting'}
-                    </button>
-                    <Link
-                        href="/admin/paintings/add"
-                        className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-center"
-                    >
-                        Cancel
+                <div className="mt-4">
+                    <Link href="/admin/paintings/add" className="text-[var(--title-color)] hover:underline">
+                        &larr; Back to Categories
                     </Link>
                 </div>
-            </form>
-
-            <div className="mt-4">
-                <Link href="/admin/paintings/add" className="text-[var(--title-color)] hover:underline">
-                    &larr; Back to Categories
-                </Link>
             </div>
-        </div>
+            <UploadSpinnerModal isVisible={isUploading} />
+        </Fragment>
     );
 }

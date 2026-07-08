@@ -1,5 +1,6 @@
 'use server';
 
+import { cookies } from 'next/headers';
 import { revalidateTag } from 'next/cache';
 import { pageContentMutationTags } from '@/lib/cache-tags';
 import {
@@ -25,7 +26,9 @@ import type {
 export async function addPageContentAction(
     data: AddPageContentRequest
 ): Promise<PageContentCreatedResult> {
-    const result = await addPageContent(data);
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get('admin_token')?.value;
+    const result = await addPageContent(data, authToken);
 
     // Invalidate all page content caches
     for (const tag of pageContentMutationTags) {
@@ -44,7 +47,9 @@ export async function updatePageContentAction(
     data: UpdatePageContentRequest,
     idempotencyKey?: string
 ): Promise<CommandCompletionResponse> {
-    const result = await updatePageContent(id, data, idempotencyKey);
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get('admin_token')?.value;
+    const result = await updatePageContent(id, data, idempotencyKey, authToken);
 
     // Invalidate all page content caches
     for (const tag of pageContentMutationTags) {
@@ -59,7 +64,9 @@ export async function updatePageContentAction(
  * Invalidates all page content cache tags after successful mutation.
  */
 export async function deletePageContentAction(address: string): Promise<void> {
-    await deletePageContent(address);
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get('admin_token')?.value;
+    await deletePageContent(address, authToken);
 
     // Invalidate all page content caches
     for (const tag of pageContentMutationTags) {

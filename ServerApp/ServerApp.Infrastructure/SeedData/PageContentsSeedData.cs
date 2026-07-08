@@ -20,9 +20,7 @@ public static class PageContentsSeedData
         {
             Address = "home",
             Title = null,
-            Content = @"From the sun-drenched sidewalks of New York City to the luminous waters of South Florida, my world-wide travels for work and pleasure led me to the canvas. As a child of immigrants, I haunted grand art museums and Central Park, and carried a gift for color and light long before science claimed me. For decades, I channeled my visual insight into the world of science, becoming an Emeritus Professor at the University of Connecticut and illustrating a book on personalized medicine with my own drawings. Following the passion I carried my whole life, I returned to the canvas with a lifetime of seeing, studying, and loving the natural world around me.
-
-My oil paintings are acts of devotion — to nature, to memory, and to the fleeting moments that define life on our planet. Rooted in a deep commitment to environmental conservation and an abiding love for the remarkable ecosystems of South Florida, my work seeks to tell a story. Each painting visualizes the light and color of what came before and the quiet anticipation of what comes next, inviting the viewer to step inside a living, breathing world. My goal is to show that art and conservation become one and the same.",
+            Content = @"<p class='pb-4'>From the sun-drenched sidewalks of New York City to the luminous waters of South Florida, my world-wide travels for work and pleasure led me to the canvas. As a child of immigrants, I haunted grand art museums and Central Park, and carried a gift for color and light long before science claimed me. For decades, I channeled my visual insight into the world of science, becoming an Emeritus Professor at the University of Connecticut and illustrating a book on personalized medicine with my own drawings. Following the passion I carried my whole life, I returned to the canvas with a lifetime of seeing, studying, and loving the natural world around me.</p><p class='pb-4'>My oil paintings are acts of devotion — to nature, to memory, and to the fleeting moments that define life on our planet. Rooted in a deep commitment to environmental conservation and an abiding love for the remarkable ecosystems of South Florida, my work seeks to tell a story. Each painting visualizes the light and color of what came before and the quiet anticipation of what comes next, inviting the viewer to step inside a living, breathing world. My goal is to show that art and conservation become one and the same.</p>",
             PhotoUrls = new[]
             {
                 "/Seascapes-Thumbnail/Wind_and_Water_.jpg",
@@ -38,58 +36,20 @@ My oil paintings are acts of devotion — to nature, to memory, and to the fleet
         {
             Address = "about",
             Title = "About Gloria Gronowicz",
-            Content = @"As my early life was filled with city streets and art museums in which I played, observed and admired, I demonstrated a strong aptitude for drawing and painting. I received annual recognition for my artwork and earned the only Art Award upon graduating high school. Growing up as the child of immigrants in New York City, my father encouraged me to pursue a career that would provide more financial stability instead of the competitive world of art in a big city. I went on to earn a Ph.D. in biology from Columbia University and built a career as a scientist, educator, and ultimately an Emeritus Professor at the University of Connecticut.
-
-Visual analysis played a central role in my scientific work. I produced my own images for scientific publications, and authored a book on personalized medicine, for which I created nearly all the illustrations. I published many scientific, peer-reviewed articles on my research. Following my retirement from science, I have been able to fully dedicate myself to my lifelong passion for art that tells a story of life on our planet.
-
-My paintings are inspired by a deep love of nature and a strong commitment to environmental conservation. I am actively involved in conservation efforts in South Florida. I consider it a privilege to live in such a beautiful and unique natural setting. These values strongly influence my artistic subject matter. My oil paintings emphasize color and light to capture the beauty of the natural world. Most of my paintings tell a story of the events leading to that captured moment, and what will happen next.",
+            Content = @"<p class='pb-4'>As my early life was filled with city streets and art museums in which I played, observed and admired, I demonstrated a strong aptitude for drawing and painting. I received annual recognition for my artwork and earned the only Art Award upon graduating high school. Growing up as the child of immigrants in New York City, my father encouraged me to pursue a career that would provide more financial stability instead of the competitive world of art in a big city. I went on to earn a Ph.D. in biology from Columbia University and built a career as a scientist, educator, and ultimately an Emeritus Professor at the University of Connecticut.</p><p class='pb-4'>Visual analysis played a central role in my scientific work. I produced my own images for scientific publications, and authored a book on personalized medicine, for which I created nearly all the illustrations. I published many scientific, peer-reviewed articles on my research. Following my retirement from science, I have been able to fully dedicate myself to my lifelong passion for art that tells a story of life on our planet.</p><p class='pb-4'>My paintings are inspired by a deep love of nature and a strong commitment to environmental conservation. I am actively involved in conservation efforts in South Florida. I consider it a privilege to live in such a beautiful and unique natural setting. These values strongly influence my artistic subject matter. My oil paintings emphasize color and light to capture the beauty of the natural world. Most of my paintings tell a story of the events leading to that captured moment, and what will happen next.</p>",
             PhotoUrls = new[] { "/Other/AboutPagePhoto.JPG" }
         },
         new PageContentSeed
         {
             Address = "galleries",
             Title = "Galleries",
-            Content = @"[align:center]
-
-<strong>Emerging Artist at Stuart Artfest 2024</strong>
-
-<strong>Lighthouse Art Center</strong>
-Annual Art Show
-373 Tequesta Drive
-Tequesta, FL 3349
-
-<strong>Palm City Art Association</strong>
-Annual Art Show at Cumming Library
-2551 SW Matheson Avenue
-Palm City FL. 34990
-
-<strong>Cleveland Clinic Health and Wellness Center</strong>
-3066 SW Martin Downs Blvd.
-Palm City, FL 34990
-
-<strong>Martin Arts</strong>
-Annual Art Show
-80 SE Ocean Blvd
-Stuart, FL 34994
-
-<strong>Hammock Creek Golf Club</strong>
-2400 SW Golden Bear Way
-Palm City, FL 34990"
+            Content = @"<p class='pb-4' style='text-align: center'><strong>Emerging Artist at Stuart Artfest 2024</strong></p><p class='pb-4' style='text-align: center'><strong>Lighthouse Art Center</strong><br>Annual Art Show<br>373 Tequesta Drive<br>Tequesta, FL 3349</p><p class='pb-4' style='text-align: center'><strong>Palm City Art Association</strong><br>Annual Art Show at Cumming Library<br>2551 SW Matheson Avenue<br>Palm City FL. 34990</p><p class='pb-4' style='text-align: center'><strong>Cleveland Clinic Health and Wellness Center</strong><br>3066 SW Martin Downs Blvd.<br>Palm City, FL 34990</p><p class='pb-4' style='text-align: center'><strong>Martin Arts</strong><br>Annual Art Show<br>80 SE Ocean Blvd<br>Stuart, FL 34994</p><p class='pb-4' style='text-align: center'><strong>Hammock Creek Golf Club</strong><br>2400 SW Golden Bear Way<br>Palm City, FL 34990</p>"
         },
         new PageContentSeed
         {
             Address = "contact",
             Title = "Contact",
-            Content = @"[align:center]
-To inquire about purchasing a painting or ordering prints, please contact Gloria Gronowicz.
-
-Email inquiries are preferred for detailed questions about specific artworks.
-
-<strong>Email:</strong> gloriagronowicz@gmail.com
-
-<strong>Phone:</strong> (860) 670-0799
-
-I look forward to hearing from you and discussing how my art can bring beauty to your home or office."
+            Content = @"<p class='pb-4' style='text-align: center'>To inquire about purchasing a painting or ordering prints, please contact Gloria Gronowicz.</p><p class='pb-4' style='text-align: center'>Email inquiries are preferred for detailed questions about specific artworks.</p><p class='pb-4' style='text-align: center'><strong>Email:</strong> gloriagronowicz@gmail.com</p><p class='pb-4' style='text-align: center'><strong>Phone:</strong> (860) 670-0799</p><p class='pb-4' style='text-align: center'>I look forward to hearing from you and discussing how my art can bring beauty to your home or office.</p>"
         }
     };
 }

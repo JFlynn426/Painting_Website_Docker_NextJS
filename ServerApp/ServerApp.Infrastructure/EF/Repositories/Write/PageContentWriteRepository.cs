@@ -6,16 +6,21 @@ using ServerApp.Domain.Repositories.Write;
 using ServerApp.Infrastructure.EF.Contexts;
 
 /// <summary>
-/// SQL Server implementation of IPageContentWriteRepository.
+/// EF Core implementation of IPageContentWriteRepository.
 /// Handles only write operations using WriteDbContext.
 /// </summary>
-internal class SQLServerPageContentWriteRepository : IPageContentWriteRepository
+internal class PageContentWriteRepository : IPageContentWriteRepository
 {
     private readonly WriteDbContext _writeContext;
 
-    public SQLServerPageContentWriteRepository(WriteDbContext writeContext)
+    public PageContentWriteRepository(WriteDbContext writeContext)
     {
         _writeContext = writeContext;
+    }
+
+    public async Task<PageContent?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _writeContext.PageContents.FindAsync(new object[] { id }, cancellationToken);
     }
 
     public async Task AddAsync(PageContent pageContent, CancellationToken cancellationToken = default)

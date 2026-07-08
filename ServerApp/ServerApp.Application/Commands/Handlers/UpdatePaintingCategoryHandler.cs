@@ -47,7 +47,7 @@ public class UpdatePaintingCategoryHandler : CommandHandlerBase, IRequestHandler
 
             try
             {
-                var category = await _readRepository.GetByIdAsync(command.Id, ct);
+                var category = await _writeRepository.GetByIdAsync(command.Id, ct);
                 if (category == null)
                 {
                     throw new PaintingCategoryNotFoundException(command.Id.ToString());
@@ -68,7 +68,7 @@ public class UpdatePaintingCategoryHandler : CommandHandlerBase, IRequestHandler
                 int affectedCount = 1;
                 if (category.Slug.Value != oldSlug)
                 {
-                    var paintings = await _paintingReadRepository.GetByCategoryAsync(new PaintingCategorySlug(oldSlug), ct);
+                    var paintings = await _paintingWriteRepository.GetByCategoryAsync(new PaintingCategorySlug(oldSlug), ct);
                     foreach (var painting in paintings)
                     {
                         painting.UpdateCategorySlug(category.Slug);

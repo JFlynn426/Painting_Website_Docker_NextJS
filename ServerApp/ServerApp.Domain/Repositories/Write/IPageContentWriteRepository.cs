@@ -8,6 +8,7 @@ using ServerApp.Domain.Entities;
 /// </summary>
 public interface IPageContentWriteRepository
 {
+    Task<PageContent?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task AddAsync(PageContent pageContent, CancellationToken cancellationToken = default);
     Task UpdateAsync(PageContent pageContent, CancellationToken cancellationToken = default);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);

@@ -23,8 +23,8 @@ export default function ReassignPaintingsPage() {
             try {
                 setLoading(true);
                 const [paintings, cats] = await Promise.all([
-                    getAllPaintings(),
-                    getAllPaintingCategories()
+                    getAllPaintings({ noCache: true }),
+                    getAllPaintingCategories({ noCache: true })
                 ]);
                 // Filter out "new-paintings" category since it's special
                 const filteredCategories = cats.filter(c => c.slug !== 'new-paintings');
@@ -214,9 +214,9 @@ export default function ReassignPaintingsPage() {
 
             {/* Paintings organized by category */}
             <div className="space-y-8">
-                {Object.entries(paintingsByCategory).map(([categorySlug, paintings]) => {
-                    const category = categories.find(c => c.slug === categorySlug);
-                    const categoryName = category?.name || categorySlug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                {categories.map((category) => {
+                    const categorySlug = category.slug;
+                    const paintings = paintingsByCategory[categorySlug] || [];
 
                     const projectedCount = projectedCounts[categorySlug] || 0;
                     const hasChanges = incomingPaintingsByCategory[categorySlug]?.length > 0 || outgoingPaintingsByCategory[categorySlug] > 0;
@@ -224,7 +224,7 @@ export default function ReassignPaintingsPage() {
                     return (
                         <div key={categorySlug}>
                             <h2 className="text-xl font-semibold mb-3 text-[var(--title-color)]">
-                                {categoryName} ({paintings.length})
+                                {category.name} ({paintings.length})
                             </h2>
                             {hasChanges && (
                                 <p className="text-sm mb-2">
@@ -247,43 +247,51 @@ export default function ReassignPaintingsPage() {
                                     </p>
                                 </div>
                             )}
-                            <div className="grid lg:grid-cols-6 gap-4">
-                                {paintings.map((painting) => {
-                                    const hasChanged = selectedCategories[painting.id] && selectedCategories[painting.id] !== painting.categorySlug;
-                                    return (
-                                        <div
-                                            key={painting.id}
-                                            className={`bg-[var(--navbar-footer-bg)] rounded-lg p-2 ${hasChanged ? 'ring-2 ring-red-500' : ''
-                                                }`}
-                                        >
-                                            <div className="aspect-square mb-1 overflow-hidden rounded relative">
-                                                <Image
-                                                    src={painting.thumbnailUrl || painting.imageUrl}
-                                                    alt={painting.title}
-                                                    fill
-                                                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                                                    className="object-cover"
-                                                    unoptimized={(painting.thumbnailUrl || painting.imageUrl).startsWith('/images/')}
-                                                />
-                                            </div>
-                                            <p className="text-xs text-white truncate mb-2">
-                                                {painting.title}
-                                            </p>
-                                            <select
-                                                value={selectedCategories[painting.id] || painting.categorySlug}
-                                                onChange={(e) => handleCategoryChange(painting.id, e.target.value)}
-                                                className="w-full text-xs bg-gray-700 rounded px-2 py-1 border border-gray-600 focus:border-blue-500 focus:outline-none"
+                            {paintings.length === 0 ? (
+                                <div className="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-4">
+                                    <p className="text-yellow-200 text-sm">
+                                        <strong>No paintings assigned to this category.</strong> Assign paintings from other categories above to add them here.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="grid lg:grid-cols-6 gap-4">
+                                    {paintings.map((painting) => {
+                                        const hasChanged = selectedCategories[painting.id] && selectedCategories[painting.id] !== painting.categorySlug;
+                                        return (
+                                            <div
+                                                key={painting.id}
+                                                className={`bg-[var(--navbar-footer-bg)] rounded-lg p-2 ${hasChanged ? 'ring-2 ring-red-500' : ''
+                                                    }`}
                                             >
-                                                {categories.map((cat) => (
-                                                    <option key={cat.slug} value={cat.slug}>
-                                                        {cat.name}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                                                <div className="aspect-square mb-1 overflow-hidden rounded relative">
+                                                    <Image
+                                                        src={painting.thumbnailUrl || painting.imageUrl}
+                                                        alt={painting.title}
+                                                        fill
+                                                        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                                        className="object-cover"
+                                                        unoptimized={(painting.thumbnailUrl || painting.imageUrl).startsWith('/images/')}
+                                                    />
+                                                </div>
+                                                <p className="text-xs text-white truncate mb-2">
+                                                    {painting.title}
+                                                </p>
+                                                <select
+                                                    value={selectedCategories[painting.id] || painting.categorySlug}
+                                                    onChange={(e) => handleCategoryChange(painting.id, e.target.value)}
+                                                    className="w-full text-xs bg-gray-700 rounded px-2 py-1 border border-gray-600 focus:border-blue-500 focus:outline-none"
+                                                >
+                                                    {categories.map((cat) => (
+                                                        <option key={cat.slug} value={cat.slug}>
+                                                            {cat.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
 
                             {/* Incoming paintings from other categories */}
                             {incomingPaintingsByCategory[categorySlug] && incomingPaintingsByCategory[categorySlug].length > 0 && (

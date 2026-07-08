@@ -29,17 +29,13 @@ public class DeletePaintingHandler : IRequestHandler<DeletePainting>
 
         try
         {
-            // Get all paintings and find by ID
-            var allPaintings = await _readRepository.GetAllAsync(cancellationToken);
-            var painting = allPaintings.FirstOrDefault(p => p.Id == command.Id);
-
+            var painting = await _readRepository.GetByIdAsync(command.Id, cancellationToken);
             if (painting == null)
             {
                 throw new PaintingNotFoundException(command.Id.ToString());
             }
 
-            painting.MarkAsDeleted();
-            await _writeRepository.UpdateAsync(painting, cancellationToken);
+            await _writeRepository.DeleteAsync(command.Id, cancellationToken);
             await _unitOfWork.CommitAsync(cancellationToken);
         }
         catch

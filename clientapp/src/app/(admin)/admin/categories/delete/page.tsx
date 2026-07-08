@@ -25,13 +25,13 @@ export default function DeleteCategoryPage() {
         try {
             setLoading(true);
             setError(null);
-            const allCategories = await getAllPaintingCategories();
+            const allCategories = await getAllPaintingCategories({ noCache: true });
             const filteredCategories = allCategories.filter(c => c.slug !== 'new-paintings');
 
             const categoryData = await Promise.all(
                 filteredCategories.map(async (category) => {
                     try {
-                        const data = await getCategoryData(category.slug);
+                        const data = await getCategoryData(category.slug, { noCache: true });
                         return {
                             ...category,
                             paintingCount: data ? data.paintings.length : 0

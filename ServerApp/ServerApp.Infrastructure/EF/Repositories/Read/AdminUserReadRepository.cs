@@ -6,14 +6,14 @@ using ServerApp.Domain.Repositories.Read;
 using ServerApp.Infrastructure.EF.Contexts;
 
 /// <summary>
-/// SQL Server implementation of IAdminUserReadRepository.
+/// EF Core implementation of IAdminUserReadRepository.
 /// Handles only read operations using ReadDbContext.
 /// </summary>
-internal class SQLServerAdminUserReadRepository : IAdminUserReadRepository
+internal class AdminUserReadRepository : IAdminUserReadRepository
 {
     private readonly ReadDbContext _readContext;
 
-    public SQLServerAdminUserReadRepository(ReadDbContext readContext)
+    public AdminUserReadRepository(ReadDbContext readContext)
     {
         _readContext = readContext;
     }

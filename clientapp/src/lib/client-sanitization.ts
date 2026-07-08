@@ -38,13 +38,14 @@ function buildParagraphs(content: string): string {
 }
 
 /**
- * Renders plain text content as HTML paragraphs (CLIENT-SAFE).
+ * Renders content as HTML paragraphs (CLIENT-SAFE).
+ * If content is already HTML (contains <p> tags), sanitizes it directly.
+ * If content is plain text, splits by double newlines to create paragraphs.
  * Uses DOMPurify with browser's native DOM for proper sanitization.
- * Splits content by double newlines to create paragraphs.
  * Preserves <strong>, <em>, <u>, and <br/> tags within paragraphs.
  * Supports [align:center], [align:left], [align:right] markers.
  *
- * @param content - Plain text content with optional formatting tags
+ * @param content - HTML or plain text content with optional formatting tags
  * @returns Sanitized HTML string with paragraphs wrapped in <p> tags
  */
 export function renderParagraphsClient(content: string): string {
@@ -53,6 +54,16 @@ export function renderParagraphsClient(content: string): string {
     }
 
     const purify = getClientDOMPurify();
+
+    // If content already contains <p> tags, it's HTML - sanitize directly
+    if (content.includes('<p ')) {
+        return purify.sanitize(content, {
+            ALLOWED_TAGS: ['p', 'strong', 'em', 'u', 'br'],
+            ALLOWED_ATTR: ['class', 'style']
+        });
+    }
+
+    // Otherwise, treat as plain text and build paragraphs
     const html = buildParagraphs(content);
 
     return purify.sanitize(html, {
@@ -98,12 +109,15 @@ export function htmlToPlainText(html: string): string {
     temp.querySelectorAll('p').forEach(p => {
         // Get innerHTML to preserve <strong>, <em>, <u> tags
         let inner = p.innerHTML.trim();
-        // Convert <br> tags back to newlines
+        // Convert <br> tags back to newlines FIRST (before whitespace cleanup)
+        inner = inner.replace(/<br\s*\/?>/gi, '\n');
+        // Convert <br> non-self-closing tags as well
         inner = inner.replace(/<br>/gi, '\n');
-        // Clean up any extra whitespace
-        inner = inner.replace(/\s+/g, ' ').trim();
-        // Trim each line but preserve the newline structure
-        inner = inner.split('\n').map(l => l.trim()).filter(l => l.length > 0).join('\n');
+        // Clean up extra whitespace on each line individually to preserve newline structure
+        inner = inner.split('\n')
+            .map(line => line.replace(/\s+/g, ' ').trim())
+            .filter(line => line.length > 0)
+            .join('\n');
         if (inner) {
             paragraphs.push(inner);
         }
@@ -116,4 +130,24 @@ export function htmlToPlainText(html: string): string {
     }
 
     return alignMarker + paragraphs.join('\n\n');
+}
+
+/**
+ * Sanitizes HTML from contentEditable for safe storage.
+ * Uses DOMPurify with a strict whitelist of allowed tags and attributes.
+ * Preserves <p>, <strong>, <em>, <u>, <br>, and style/class attributes.
+ *
+ * @param html - HTML string from contentEditable div
+ * @returns Sanitized HTML string safe for storage and rendering
+ */
+export function sanitizeHtmlForStorage(html: string): string {
+    if (!html || typeof html !== 'string') {
+        return '';
+    }
+
+    const purify = getClientDOMPurify();
+    return purify.sanitize(html, {
+        ALLOWED_TAGS: ['p', 'strong', 'em', 'u', 'br', 'b', 'i', 's'],
+        ALLOWED_ATTR: ['class', 'style']
+    });
 }
