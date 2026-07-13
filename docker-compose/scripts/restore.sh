@@ -26,6 +26,10 @@ log() {
 
 usage() {
     echo "Usage: $0 [backup_file.dump]"
+    echo "       $0 --list <backup_file.dump>"
+    echo ""
+    echo "Options:"
+    echo "  --list   List contents of a backup file (without restoring)"
     echo ""
     echo "Available backups:"
     ls -lh "$BACKUP_DIR"/*.dump 2>/dev/null || echo "  No backups found in $BACKUP_DIR"
@@ -37,7 +41,43 @@ usage() {
 mkdir -p "$BACKUP_DIR"
 
 # Check arguments
-BACKUP_FILE="${1:-}"
+ACTION="${1:-}"
+BACKUP_FILE="${2:-}"
+
+# Handle --list flag to show backup contents
+if [ "$ACTION" = "--list" ]; then
+    if [ -z "$BACKUP_FILE" ]; then
+        log "ERROR: --list requires a backup file path"
+        usage
+    fi
+    
+    # Resolve full path
+    if [ -f "$BACKUP_FILE" ]; then
+        BACKUP_PATH="$BACKUP_FILE"
+    elif [ -f "$BACKUP_DIR/$BACKUP_FILE" ]; then
+        BACKUP_PATH="$BACKUP_DIR/$BACKUP_FILE"
+    else
+        log "ERROR: Backup file not found: $BACKUP_FILE"
+        exit 1
+    fi
+    
+    if [ ! -s "$BACKUP_PATH" ]; then
+        log "ERROR: Backup file is empty or missing: $BACKUP_PATH"
+        exit 1
+    fi
+    
+    log "Listing contents of: $BACKUP_PATH"
+    docker exec -i "$CONTAINER_NAME" pg_restore --list -U postgres "$BACKUP_PATH" 2>&1 || {
+        # If file is not in container, copy it first
+        docker cp "$BACKUP_PATH" "$CONTAINER_NAME:/tmp/$(basename "$BACKUP_PATH")" 2>&1
+        docker exec -i "$CONTAINER_NAME" pg_restore --list -U postgres "/tmp/$(basename "$BACKUP_PATH")" 2>&1
+        docker exec "$CONTAINER_NAME" rm -f "/tmp/$(basename "$BACKUP_PATH")" 2>/dev/null || true
+    }
+    exit 0
+fi
+
+# If action is not --list, treat first arg as backup file
+BACKUP_FILE="$ACTION"
 
 if [ -z "$BACKUP_FILE" ]; then
     # No file specified - list available backups
