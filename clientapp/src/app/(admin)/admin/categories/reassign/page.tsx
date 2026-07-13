@@ -17,6 +17,7 @@ export default function ReassignPaintingsPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [savedCount, setSavedCount] = useState(0);
 
     useEffect(() => {
         async function loadData() {
@@ -144,7 +145,9 @@ export default function ReassignPaintingsPage() {
             };
 
             await reassignPaintingsAction(request);
+            setSavedCount(changedPaintings.length);
             setSaveSuccess(true);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
 
             // Update local state to reflect saved changes
             setAllPaintings(prev =>
@@ -202,7 +205,7 @@ export default function ReassignPaintingsPage() {
 
             {saveSuccess && (
                 <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-4 mb-6">
-                    <p className="text-green-200">Changes saved successfully! ({changedPaintings.length} painting{changedPaintings.length !== 1 ? 's' : ''} reassigned)</p>
+                    <p className="text-green-200">Changes saved successfully! ({savedCount} painting{savedCount !== 1 ? 's' : ''} reassigned)</p>
                 </div>
             )}
 

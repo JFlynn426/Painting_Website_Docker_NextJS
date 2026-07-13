@@ -26,7 +26,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${font.variable} bg-[var(--background)] text-[var(--foreground)]`}>
         <style>{`
-          strong {
+          strong, b {
             -webkit-text-stroke: 0.25px var(--foreground);
           }
         `}</style>

@@ -5,12 +5,13 @@ using ServerApp.Shared.Domain;
 public record PaintingCategoryName : StringValueObject
 {
     public const int MaxLength = 50;
+    public const int MinLength = 3;
 
     public PaintingCategoryName() : base()
     {
     }
 
-    public PaintingCategoryName(string value) : base(value, MaxLength)
+    public PaintingCategoryName(string value) : base(value, MaxLength, minLength: MinLength)
     {
     }
 

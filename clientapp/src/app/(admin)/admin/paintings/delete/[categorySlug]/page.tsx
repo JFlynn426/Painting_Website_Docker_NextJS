@@ -30,6 +30,7 @@ export default function DeleteCategoryPaintingsPage({ params }: DeleteCategoryPa
             setDeletingId(paintingId);
             await deletePaintingAction(paintingId);
             setDeletedCount(prev => prev + 1);
+            window.scrollTo(0, 0);
             // Remove from local list
             setCategory(prev => {
                 if (!prev) return prev;

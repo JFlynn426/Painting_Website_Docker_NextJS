@@ -106,7 +106,7 @@ function buildParagraphs(content: string): string {
 function sanitizeParagraphs(html: string): string {
     const purify = getDOMPurify();
     return purify.sanitize(html, {
-        ALLOWED_TAGS: ['p', 'strong', 'em', 'u', 'br'],
+        ALLOWED_TAGS: ['p', 'strong', 'em', 'u', 'br', 'b', 'i', 's'],
         ALLOWED_ATTR: ['class', 'style']
     });
 }
@@ -126,7 +126,7 @@ export function renderParagraphs(content: string): string {
     }
 
     // If content already contains <p> tags, it's HTML - sanitize directly
-    if (content.includes('<p ')) {
+    if (content.includes('<p ') || content.includes('<p>')) {
         return sanitizeParagraphs(content);
     }
 

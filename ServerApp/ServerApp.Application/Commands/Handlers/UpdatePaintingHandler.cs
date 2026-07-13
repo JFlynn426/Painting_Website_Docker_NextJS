@@ -1,4 +1,4 @@
-namespace ServerApp.Application.Commands.Handlers;
+gnamespace ServerApp.Application.Commands.Handlers;
 
 using MediatR;
 using ServerApp.Application.DTOs;
@@ -8,6 +8,7 @@ using ServerApp.Shared.Persistence;
 using ServerApp.Domain.Repositories.Write;
 using ServerApp.Domain.Repositories.Read;
 using ServerApp.Domain.ValueObjects.Painting;
+using ServerApp.Domain.Services;
 using ServerApp.Application.Exceptions;
 
 public class UpdatePaintingHandler : CommandHandlerBase, IRequestHandler<UpdatePainting, CommandCompletionResponse>
@@ -15,18 +16,21 @@ public class UpdatePaintingHandler : CommandHandlerBase, IRequestHandler<UpdateP
     private readonly IPaintingWriteRepository _writeRepository;
     private readonly IPaintingReadRepository _readRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IImageProcessingService _imageProcessingService;
 
     public UpdatePaintingHandler(
         IPaintingWriteRepository writeRepository,
         IPaintingReadRepository readRepository,
         IUnitOfWork unitOfWork,
         IConcurrencyLockService concurrencyLock,
-        IIdempotencyKeyService idempotencyKey)
+        IIdempotencyKeyService idempotencyKey,
+        IImageProcessingService imageProcessingService)
         : base(concurrencyLock, idempotencyKey)
     {
         _writeRepository = writeRepository;
         _readRepository = readRepository;
         _unitOfWork = unitOfWork;
+        _imageProcessingService = imageProcessingService;
     }
 
     public async Task<CommandCompletionResponse> Handle(UpdatePainting command, CancellationToken cancellationToken = default)
@@ -58,6 +62,22 @@ public class UpdatePaintingHandler : CommandHandlerBase, IRequestHandler<UpdateP
                     }
                 }
 
+                // Determine isLandscape: explicitly provided > auto-calculated from new image > no change
+                PaintingIsLandscape? newIsLandscape = null;
+                if (command.IsLandscape != null)
+                {
+                    newIsLandscape = new PaintingIsLandscape(command.IsLandscape.Value);
+                }
+                else if (command.ImageUrl != null && command.ImageUrl != painting.ImageUrl.Value)
+                {
+                    // Image URL is changing - recalculate isLandscape from the new image
+                    var calculatedIsLandscape = _imageProcessingService.GetImageIsLandscapeFromUrl(command.ImageUrl);
+                    if (calculatedIsLandscape != null)
+                    {
+                        newIsLandscape = new PaintingIsLandscape(calculatedIsLandscape.Value);
+                    }
+                }
+
                 painting.Update(
                     command.Name != null && command.Name.Trim() != painting.Title.Value ? new PaintingName(command.Name.Trim()) : null,
                     PaintingDescription.FromNullable(command.Description),
@@ -70,7 +90,7 @@ public class UpdatePaintingHandler : CommandHandlerBase, IRequestHandler<UpdateP
                     command.Year != null ? new PaintingYear(command.Year.Value) : null,
                     command.IsAvailable != null ? new PaintingIsAvailable(command.IsAvailable.Value) : null,
                     command.IsNew != null ? new PaintingIsNew(command.IsNew.Value) : null,
-                    command.IsLandscape != null ? new PaintingIsLandscape(command.IsLandscape.Value) : null);
+                    newIsLandscape);
 
                 await _writeRepository.UpdateAsync(painting, ct);
                 await _unitOfWork.CommitAsync(ct);

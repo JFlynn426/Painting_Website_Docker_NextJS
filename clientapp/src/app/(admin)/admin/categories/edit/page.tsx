@@ -12,7 +12,7 @@ export default async function EditCategoriesPage() {
 
     try {
         const allCategories = await getAllPaintingCategories({ noCache: true });
-        categories = allCategories;
+        categories = allCategories.filter(c => c.slug !== 'new-paintings');
     } catch (err) {
         error = err instanceof Error ? err.message : 'Failed to fetch categories';
     }

@@ -59,6 +59,18 @@ export default function SelectNewPaintingsPage() {
         setSaveError(null);
         setSaveSuccess(false);
 
+        // Validate: check minimum (8) and maximum (30) paintings
+        if (selectedIds.size < 8) {
+            setSaveError('Cannot save: At least 8 paintings must be selected. Please select more paintings.');
+            setIsSaving(false);
+            return;
+        }
+        if (selectedIds.size > 30) {
+            setSaveError('Cannot save: Maximum of 30 paintings allowed. Please deselect some paintings.');
+            setIsSaving(false);
+            return;
+        }
+
         try {
             const promises = allPaintings.map(async (painting) => {
                 const shouldBeNew = selectedIds.has(painting.id);
@@ -109,8 +121,13 @@ export default function SelectNewPaintingsPage() {
             <h1 className="text-3xl font-bold mb-2 text-[var(--title-color)]">Select New Paintings</h1>
             <p className="text-gray-400 mb-6">
                 This page allows you to select the paintings which are displayed in the New Paintings page.
-                It should contain 10-20 of the newest and/or best paintings that will be featured in this section.
             </p>
+
+            <div className="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-4 mb-6">
+                <p className="text-yellow-200 text-sm">
+                    <strong>Note:</strong> The New Paintings section can have no more than 30 paintings. It is suggested that this section should contain 8 or more paintings.
+                </p>
+            </div>
 
             {saveSuccess && (
                 <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-4 mb-6">
@@ -199,14 +216,14 @@ export default function SelectNewPaintingsPage() {
                 >
                     {isSaving ? 'Saving...' : 'Save Selection'}
                 </button>
-                {updatedNewPaintings.length > 0 && updatedNewPaintings.length < 10 && (
+                {updatedNewPaintings.length > 0 && updatedNewPaintings.length < 8 && (
                     <p className="text-yellow-400 text-sm mt-2">
-                        Warning: You have selected only {updatedNewPaintings.length} painting{updatedNewPaintings.length !== 1 ? 's' : ''}. Consider selecting 10-20 paintings.
+                        ⚠ Warning: Fewer than 8 paintings selected. It is suggested that this section should contain 8 or more paintings.
                     </p>
                 )}
-                {updatedNewPaintings.length > 20 && (
-                    <p className="text-yellow-400 text-sm mt-2">
-                        Warning: You have selected {updatedNewPaintings.length} paintings. Consider limiting to 10-20.
+                {updatedNewPaintings.length > 30 && (
+                    <p className="text-red-400 text-sm mt-2">
+                        ⚠ Error: Exceeds maximum of 30 paintings.
                     </p>
                 )}
             </div>

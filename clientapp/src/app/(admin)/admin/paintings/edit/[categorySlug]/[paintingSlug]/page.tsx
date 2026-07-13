@@ -307,6 +307,12 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                     </div>
                 )}
 
+                {errors.file && (
+                    <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-4 mb-6">
+                        <p className="text-red-200">{errors.file}</p>
+                    </div>
+                )}
+
                 {/* Original Image Display */}
                 <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 mb-6">
                     <h2 className="text-xl font-semibold text-[var(--title-color)] mb-4">Current Image</h2>

@@ -120,6 +120,32 @@ public class ImageProcessingService : IImageProcessingService
         }
     }
 
+    public bool? GetImageIsLandscapeFromUrl(string imageUrl)
+    {
+        // URL format: /images/{size}/{filename} where size is "original", "high-res", or "thumbnail"
+        // Extract the filename from the URL
+        var uri = imageUrl.TrimStart('/');
+        var parts = uri.Split('/');
+        if (parts.Length < 3)
+        {
+            return null;
+        }
+
+        // parts[0] = "images", parts[1] = size, parts[2+] = filename
+        var size = parts[1];
+        var fileName = string.Join("/", parts.Skip(2));
+        var fullPath = Path.Combine(_storagePath, size, fileName);
+
+        if (!File.Exists(fullPath))
+        {
+            // If file doesn't exist, return null so isLandscape is not changed
+            return null;
+        }
+
+        using var image = Image.Load(fullPath);
+        return image.Width > image.Height;
+    }
+
     /// <summary>
     /// Sanitizes a filename to be URL-safe by replacing spaces with hyphens
     /// and removing characters that are unsafe in URLs.

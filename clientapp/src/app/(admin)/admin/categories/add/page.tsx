@@ -18,6 +18,8 @@ export default function AddCategoryPage() {
 
         if (!name.trim()) {
             newErrors.name = 'Category name is required';
+        } else if (name.trim().length < 3) {
+            newErrors.name = 'Category name must be at least 3 characters';
         } else if (name.trim().length > 50) {
             newErrors.name = 'Category name must be 50 characters or less';
         }

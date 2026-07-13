@@ -18,4 +18,9 @@ public class StringValueObjectException : ServerAppException
     {
         return new StringValueObjectException(valueObjectName, $"{valueObjectName} cannot exceed {maxLength} characters.");
     }
+
+    public static StringValueObjectException CreateTooShortException(string valueObjectName, int minLength)
+    {
+        return new StringValueObjectException(valueObjectName, $"{valueObjectName} must be at least {minLength} characters.");
+    }
 }

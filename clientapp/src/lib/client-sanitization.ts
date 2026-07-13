@@ -56,9 +56,9 @@ export function renderParagraphsClient(content: string): string {
     const purify = getClientDOMPurify();
 
     // If content already contains <p> tags, it's HTML - sanitize directly
-    if (content.includes('<p ')) {
+    if (content.includes('<p ') || content.includes('<p>')) {
         return purify.sanitize(content, {
-            ALLOWED_TAGS: ['p', 'strong', 'em', 'u', 'br'],
+            ALLOWED_TAGS: ['p', 'strong', 'em', 'u', 'br', 'b', 'i', 's'],
             ALLOWED_ATTR: ['class', 'style']
         });
     }
@@ -67,7 +67,7 @@ export function renderParagraphsClient(content: string): string {
     const html = buildParagraphs(content);
 
     return purify.sanitize(html, {
-        ALLOWED_TAGS: ['p', 'strong', 'em', 'u', 'br'],
+        ALLOWED_TAGS: ['p', 'strong', 'em', 'u', 'br', 'b', 'i', 's'],
         ALLOWED_ATTR: ['class', 'style']
     });
 }
