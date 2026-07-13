@@ -1,31 +1,31 @@
 <#
 .SYNOPSIS
-    Restores the latest backup file to the local SQL Server container.
+    Restores the latest backup file to the local PostgreSQL container.
 
 .DESCRIPTION
     This script:
-    1. Finds the latest .bak file in docker-compose/backups/
+    1. Finds the latest .dump file in docker-compose/backups/
     2. Stops the API container (if running)
-    3. Copies the backup into the SQL Server container
-    4. Restores the database with REPLACE
+    3. Copies the backup into the PostgreSQL container
+    4. Restores the database using pg_restore with clean flag
     5. Restarts the API container
 
     This simulates the production deployment flow where backup restore
     happens before the API container starts.
 
 .PARAMETER BackupFile
-    Optional. Specify a specific .bak file to restore. If omitted, uses the latest.
+    Optional. Specify a specific .dump file to restore. If omitted, uses the latest.
 
 .EXAMPLE
     .\docker-compose\scripts\restore-local-backup.ps1
-    .\docker-compose\scripts\restore-local-backup.ps1 -BackupFile "artgallery_db_20260520_135236.bak"
+    .\docker-compose\scripts\restore-local-backup.ps1 -BackupFile "artgallery_db_20260520_135236.dump"
 #>
 
 param(
     [string]$BackupFile = "",
-    [string]$ContainerName = "artgallery-sql-prod",
+    [string]$ContainerName = "artgallery-postgres-prod",
     [string]$ApiContainerName = "artgallery-api-prod",
-    [string]$DatabaseName = "ArtGallery"
+    [string]$DatabaseName = "artgallery"
 )
 
 $ErrorActionPreference = "Stop"
@@ -42,17 +42,17 @@ if (-not (Test-Path $envFile)) {
     exit 1
 }
 
-# Parse SQLSERVER_SA_PASSWORD from .env
-$saPassword = $null
+# Parse POSTGRES_PASSWORD from .env
+$postgresPassword = $null
 foreach ($line in Get-Content $envFile) {
-    if ($line -match '^SQLSERVER_SA_PASSWORD=(.+)$') {
-        $saPassword = $Matches[1]
+    if ($line -match '^POSTGRES_PASSWORD=(.+)$') {
+        $postgresPassword = $Matches[1]
         break
     }
 }
 
-if (-not $saPassword) {
-    Write-Error "SQLSERVER_SA_PASSWORD not found in .env file"
+if (-not $postgresPassword) {
+    Write-Error "POSTGRES_PASSWORD not found in .env file"
     exit 1
 }
 
@@ -70,13 +70,13 @@ if ($BackupFile) {
     }
 }
 else {
-    $bakFiles = Get-ChildItem -Path $backupDir -Filter "*.bak" | Sort-Object LastWriteTime -Descending
-    if (-not $bakFiles) {
+    $dumpFiles = Get-ChildItem -Path $backupDir -Filter "*.dump" | Sort-Object LastWriteTime -Descending
+    if (-not $dumpFiles) {
         Write-Error "No backup files found in $backupDir"
         Write-Host "Create one first with: .\docker-compose\scripts\create-local-backup.ps1" -ForegroundColor Yellow
         exit 1
     }
-    $bakPath = $bakFiles[0].FullName
+    $bakPath = $dumpFiles[0].FullName
 }
 
 $backupFileName = [System.IO.Path]::GetFileName($bakPath)
@@ -115,12 +115,12 @@ Write-Host "Starting restore..." -ForegroundColor Cyan
 Write-Host ""
 
 # Step 1: Stop API container
-Write-Host "[1/5] Stopping API container..."
+Write-Host "[1/4] Stopping API container..."
 docker stop $ApiContainerName 2>$null | Out-Null
 Write-Host "  API container stopped" -ForegroundColor Green
 
 # Step 2: Copy backup into container (use /tmp/ since backup volume is read-only)
-Write-Host "[2/5] Copying backup to container..."
+Write-Host "[2/4] Copying backup to container..."
 docker cp $bakPath "${ContainerName}:/tmp/$backupFileName"
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Failed to copy backup to container"
@@ -129,36 +129,27 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host "  Backup copied" -ForegroundColor Green
 
-# Step 3: Set SINGLE_USER mode
-Write-Host "[3/5] Setting database to SINGLE_USER mode..."
-docker exec $ContainerName /opt/mssql-tools18/bin/sqlcmd `
-    -S localhost -U sa -P $saPassword -C `
-    -Q "ALTER DATABASE [$DatabaseName] SET SINGLE_USER WITH ROLLBACK IMMEDIATE" 2>&1 | Out-Null
-Write-Host "  Database in SINGLE_USER mode" -ForegroundColor Green
-
-# Step 4: Restore database
-Write-Host "[4/5] Restoring database..."
-$restoreResult = docker exec $ContainerName /opt/mssql-tools18/bin/sqlcmd `
-    -S localhost -U sa -P $saPassword -C `
-    -Q "RESTORE DATABASE [$DatabaseName] FROM DISK = N'/tmp/$backupFileName' WITH REPLACE, RECOVERY" `
+# Step 3: Restore database using pg_restore
+Write-Host "[3/4] Restoring database..."
+$env:PGPASSWORD = $postgresPassword
+$restoreResult = docker exec -i $ContainerName pg_restore `
+    -U postgres `
+    -c `
+    -d $DatabaseName `
+    "/tmp/$backupFileName" `
     2>&1
 
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Restore failed:`n$restoreResult"
-    # Set back to multi-user and restart API
-    docker exec $ContainerName /opt/mssql-tools18/bin/sqlcmd `
-        -S localhost -U sa -P $saPassword -C `
-        -Q "ALTER DATABASE [$DatabaseName] SET MULTI_USER" 2>$null | Out-Null
+    # Clean up and restart API
+    docker exec $ContainerName rm -f "/tmp/$backupFileName" 2>$null | Out-Null
     docker start $ApiContainerName 2>$null | Out-Null
     exit 1
 }
 Write-Host "  Database restored!" -ForegroundColor Green
 
-# Step 5: Set MULTI_USER mode and cleanup
-Write-Host "[5/5] Setting MULTI_USER mode and cleaning up..."
-docker exec $ContainerName /opt/mssql-tools18/bin/sqlcmd `
-    -S localhost -U sa -P $saPassword -C `
-    -Q "ALTER DATABASE [$DatabaseName] SET MULTI_USER" 2>&1 | Out-Null
+# Step 4: Cleanup temp file and restart API
+Write-Host "[4/4] Cleaning up and restarting API..."
 docker exec $ContainerName rm -f "/tmp/$backupFileName" 2>$null | Out-Null
 
 # Restart API container

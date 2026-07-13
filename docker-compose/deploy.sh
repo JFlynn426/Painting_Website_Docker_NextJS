@@ -65,17 +65,18 @@ echo "[2/6] Stopping existing containers..."
 $COMPOSE -f docker-compose.prod.yml down || true
 
 echo ""
-echo "[3/6] Starting SQL Server..."
-$COMPOSE -f docker-compose.prod.yml up -d sqlserver
+echo "[3/6] Starting PostgreSQL..."
+$COMPOSE -f docker-compose.prod.yml up -d postgres
 
-# Wait for SQL Server to be healthy
-echo "  Waiting for SQL Server to be healthy..."
+# Wait for PostgreSQL to be healthy
+echo "  Waiting for PostgreSQL to be healthy..."
 MAX_WAIT=180
 ELAPSED=0
+CONTAINER_NAME="artgallery-postgres-prod"
 while [ $ELAPSED -lt $MAX_WAIT ]; do
-    HEALTH=$(docker inspect -f '{{.State.Health.Status}}' artgallery-sql-prod 2>/dev/null || echo "starting")
+    HEALTH=$(docker inspect -f '{{.State.Health.Status}}' "$CONTAINER_NAME" 2>/dev/null || echo "starting")
     if [ "$HEALTH" = "healthy" ]; then
-        echo "  SQL Server is healthy!"
+        echo "  PostgreSQL is healthy!"
         break
     fi
     sleep 5
@@ -85,39 +86,42 @@ done
 echo ""
 
 if [ "$HEALTH" != "healthy" ]; then
-    echo "ERROR: SQL Server did not become healthy in time"
+    echo "ERROR: PostgreSQL did not become healthy in time"
     exit 1
 fi
 
 # Restore latest backup if available
 # Uses BACKUP_DIR from .env (sourced via docker-compose) with Linux production fallback
 BACKUP_DIR="${BACKUP_DIR:-/opt/artgallery/backups}"
+DATABASE_NAME="artgallery"
 if [ -d "$BACKUP_DIR" ]; then
-    LATEST_BACKUP=$(ls -1t "$BACKUP_DIR"/*.bak 2>/dev/null | head -1)
+    LATEST_BACKUP=$(ls -1t "$BACKUP_DIR"/*.dump 2>/dev/null | head -1)
     if [ -n "$LATEST_BACKUP" ]; then
         BACKUP_NAME=$(basename "$LATEST_BACKUP")
         echo "[4/6] Restoring database from backup: $BACKUP_NAME"
         
-        # Read password from secrets file
-        SECRET_FILE="./secrets/sqlserver_sa_password"
-        if [ -f "$SECRET_FILE" ]; then
-            SA_PASSWORD=$(cat "$SECRET_FILE")
-        else
-            SA_PASSWORD="${SQLSERVER_SA_PASSWORD}"
-        fi
-        
-        docker exec artgallery-sql-prod /opt/mssql-tools18/bin/sqlcmd \
-            -S localhost \
-            -U sa \
-            -P "$SA_PASSWORD" \
-            -C \
-            -Q "RESTORE DATABASE [ArtGallery] FROM DISK = N'/var/opt/mssql/backup/$BACKUP_NAME' WITH REPLACE, RECOVERY" \
-            2>&1
+        # Copy backup file into container
+        docker cp "$LATEST_BACKUP" "$CONTAINER_NAME:/tmp/$BACKUP_NAME" 2>&1
         
         if [ $? -eq 0 ]; then
-            echo "  Database restored successfully!"
+            # Restore using pg_restore
+            docker exec -i "$CONTAINER_NAME" pg_restore \
+                -U postgres \
+                -c \
+                -d "$DATABASE_NAME" \
+                "/tmp/$BACKUP_NAME" \
+                2>&1
+            
+            # Clean up temp file in container
+            docker exec "$CONTAINER_NAME" rm -f "/tmp/$BACKUP_NAME" 2>/dev/null || true
+            
+            if [ ${PIPESTATUS[0]:-$?} -eq 0 ]; then
+                echo "  Database restored successfully!"
+            else
+                echo "  WARNING: Database restore failed. Seeder will populate data."
+            fi
         else
-            echo "  WARNING: Database restore failed. Seeder will populate data."
+            echo "  WARNING: Failed to copy backup to container. Seeder will populate data."
         fi
     else
         echo "[4/6] No backup files found in $BACKUP_DIR. Database will be seeded."
@@ -142,12 +146,12 @@ echo "------------------------------------------"
 echo "✓ Checking container users (should all be non-root)..."
 API_USER=$(docker exec artgallery-api-prod whoami 2>/dev/null || echo "FAILED")
 FRONTEND_USER=$(docker exec artgallery-frontend-prod whoami 2>/dev/null || echo "FAILED")
-SQL_USER=$(docker exec artgallery-sql-prod whoami 2>/dev/null || echo "FAILED")
+POSTGRES_USER=$(docker exec artgallery-postgres-prod whoami 2>/dev/null || echo "FAILED")
 NGINX_USER=$(docker exec artgallery-nginx whoami 2>/dev/null || echo "FAILED")
 
 echo "  API Container:    $API_USER (expected: appuser)"
 echo "  Frontend:         $FRONTEND_USER (expected: nextjs)"
-echo "  SQL Server:       $SQL_USER (expected: mssql)"
+echo "  PostgreSQL:       $POSTGRES_USER (expected: postgres)"
 echo "  NGINX:            $NGINX_USER (expected: nginx)"
 
 # Validate users are non-root
@@ -160,8 +164,8 @@ if [ "$FRONTEND_USER" = "root" ] || [ "$FRONTEND_USER" = "FAILED" ]; then
     echo "  ⚠️  WARNING: Frontend container may be running as root!"
     SECURITY_PASSED=false
 fi
-if [ "$SQL_USER" = "root" ] || [ "$SQL_USER" = "FAILED" ]; then
-    echo "  ⚠️  WARNING: SQL Server container may be running as root!"
+if [ "$POSTGRES_USER" = "root" ] || [ "$POSTGRES_USER" = "FAILED" ]; then
+    echo "  ⚠️  WARNING: PostgreSQL container may be running as root!"
     SECURITY_PASSED=false
 fi
 if [ "$NGINX_USER" = "root" ] || [ "$NGINX_USER" = "FAILED" ]; then
@@ -212,6 +216,6 @@ echo ""
 echo "To run security checks manually:"
 echo "  docker exec artgallery-api-prod whoami"
 echo "  docker exec artgallery-frontend-prod whoami"
-echo "  docker exec artgallery-sql-prod whoami"
+echo "  docker exec artgallery-postgres-prod whoami"
 echo "  docker exec artgallery-nginx whoami"
 echo ""

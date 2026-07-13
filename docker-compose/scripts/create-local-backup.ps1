@@ -1,18 +1,18 @@
 <#
 .SYNOPSIS
-    Creates a SQL Server backup file locally for testing backup-based deployment.
+    Creates a PostgreSQL backup file locally for testing backup-based deployment.
 
 .DESCRIPTION
     This script:
-    1. Ensures SQL Server container is running and healthy
+    1. Ensures PostgreSQL container is running and healthy
     2. Creates a backup directory at docker-compose/backups/
-    3. Runs BACKUP DATABASE inside the SQL Server container
-    4. Copies the .bak file out of the container to the local backups directory
+    3. Runs pg_dump inside the PostgreSQL container
+    4. Copies the .dump file out of the container to the local backups directory
     5. Generates a SHA256 checksum for verification
 
 .PREREQUISITES
     - Docker Desktop running
-    - artgallery-sql-prod container running and healthy
+    - artgallery-postgres-prod container running and healthy
     - Run from the project root directory
 
 .EXAMPLE
@@ -20,8 +20,8 @@
 #>
 
 param(
-    [string]$ContainerName = "artgallery-sql-prod",
-    [string]$DatabaseName = "ArtGallery"
+    [string]$ContainerName = "artgallery-postgres-prod",
+    [string]$DatabaseName = "artgallery"
 )
 
 $ErrorActionPreference = "Stop"
@@ -38,17 +38,17 @@ if (-not (Test-Path $envFile)) {
     exit 1
 }
 
-# Parse SQLSERVER_SA_PASSWORD from .env
-$saPassword = $null
+# Parse POSTGRES_PASSWORD from .env
+$postgresPassword = $null
 foreach ($line in Get-Content $envFile) {
-    if ($line -match '^SQLSERVER_SA_PASSWORD=(.+)$') {
-        $saPassword = $Matches[1]
+    if ($line -match '^POSTGRES_PASSWORD=(.+)$') {
+        $postgresPassword = $Matches[1]
         break
     }
 }
 
-if (-not $saPassword) {
-    Write-Error "SQLSERVER_SA_PASSWORD not found in .env file"
+if (-not $postgresPassword) {
+    Write-Error "POSTGRES_PASSWORD not found in .env file"
     exit 1
 }
 
@@ -69,11 +69,11 @@ $containerStatus = docker inspect -f '{{.State.Status}}' $ContainerName 2>$null
 if ($containerStatus -ne "running") {
     Write-Host "Container is not running. Starting it..." -ForegroundColor Yellow
     Set-Location $composeDir
-    docker-compose -f docker-compose.prod.yml up -d sqlserver
+    docker-compose -f docker-compose.prod.yml up -d postgres
     Set-Location $PSScriptRoot
 
     # Wait for healthy
-    Write-Host "Waiting for SQL Server to be healthy..." -ForegroundColor Yellow
+    Write-Host "Waiting for PostgreSQL to be healthy..." -ForegroundColor Yellow
     $maxWait = 120
     $elapsed = 0
     do {
@@ -82,33 +82,33 @@ if ($containerStatus -ne "running") {
         $health = docker inspect -f '{{.State.Health.Status}}' $ContainerName 2>$null
         if ($health -eq "healthy") { break }
         if ($elapsed -ge $maxWait) {
-            Write-Error "Timeout waiting for SQL Server to become healthy"
+            Write-Error "Timeout waiting for PostgreSQL to become healthy"
             exit 1
         }
         Write-Host "  Waiting... ($elapsed seconds)" -NoNewline
         Write-Host "`r" -NoNewline
     } while ($true)
     Write-Host ""
-    Write-Host "SQL Server is healthy!" -ForegroundColor Green
+    Write-Host "PostgreSQL is healthy!" -ForegroundColor Green
 }
 
 # Generate timestamp and backup filename
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-$backupFile = "artgallery_db_$timestamp.bak"
+$backupFile = "artgallery_db_$timestamp.dump"
 $backupPath = Join-Path $backupDir $backupFile
 
 Write-Host ""
 Write-Host "Creating backup: $backupFile" -ForegroundColor Cyan
 Write-Host ""
 
-# Step 1: Create backup inside container
+# Step 1: Create backup inside container using pg_dump (custom format)
 Write-Host "[1/3] Creating database backup inside container..."
-$backupResult = docker exec $ContainerName /opt/mssql-tools18/bin/sqlcmd `
-    -S localhost `
-    -U sa `
-    -P $saPassword `
-    -C `
-    -Q "BACKUP DATABASE [$DatabaseName] TO DISK = N'/tmp/$backupFile' WITH INIT, STATS = 10" `
+$env:PGPASSWORD = $postgresPassword
+$backupResult = docker exec $ContainerName pg_dump `
+    -U postgres `
+    -Fc `
+    -f "/tmp/$backupFile" `
+    $DatabaseName `
     2>&1
 
 if ($LASTEXITCODE -ne 0) {

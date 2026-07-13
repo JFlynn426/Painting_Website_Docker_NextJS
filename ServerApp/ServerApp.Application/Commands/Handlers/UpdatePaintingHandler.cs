@@ -1,4 +1,4 @@
-gnamespace ServerApp.Application.Commands.Handlers;
+namespace ServerApp.Application.Commands.Handlers;
 
 using MediatR;
 using ServerApp.Application.DTOs;
