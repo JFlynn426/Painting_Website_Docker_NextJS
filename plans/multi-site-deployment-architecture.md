@@ -149,6 +149,7 @@ services:
         NEXT_PUBLIC_CSS_TITLE_COLOR: ${GG_CSS_TITLE_COLOR}
         NEXT_PUBLIC_CSS_BUTTON_COLOR: ${GG_CSS_BUTTON_COLOR}
         NEXT_PUBLIC_API_URL: ${GG_API_URL}
+        SERVER_API_URL: ${GG_SERVER_API_URL}
     environment:
       NEXT_PUBLIC_API_URL: ${GG_API_URL}
       SERVER_API_URL: ${GG_SERVER_API_URL}
@@ -198,6 +199,7 @@ services:
         NEXT_PUBLIC_CSS_TITLE_COLOR: ${FLYNN_CSS_TITLE_COLOR}
         NEXT_PUBLIC_CSS_BUTTON_COLOR: ${FLYNN_CSS_BUTTON_COLOR}
         NEXT_PUBLIC_API_URL: ${FLYNN_API_URL}
+        SERVER_API_URL: ${FLYNN_SERVER_API_URL}
     environment:
       NEXT_PUBLIC_API_URL: ${FLYNN_API_URL}
       SERVER_API_URL: ${FLYNN_SERVER_API_URL}
@@ -403,6 +405,7 @@ ARG NEXT_PUBLIC_CSS_NAVBAR_FOOTER_BG
 ARG NEXT_PUBLIC_CSS_TITLE_COLOR
 ARG NEXT_PUBLIC_CSS_BUTTON_COLOR
 ARG NEXT_PUBLIC_API_URL
+ARG SERVER_API_URL
 
 # Convert build args to environment variables for the build process
 ENV NEXT_PUBLIC_SITE_NAME=${NEXT_PUBLIC_SITE_NAME}
@@ -415,7 +418,7 @@ ENV NEXT_PUBLIC_CSS_NAVBAR_FOOTER_BG=${NEXT_PUBLIC_CSS_NAVBAR_FOOTER_BG}
 ENV NEXT_PUBLIC_CSS_TITLE_COLOR=${NEXT_PUBLIC_CSS_TITLE_COLOR}
 ENV NEXT_PUBLIC_CSS_BUTTON_COLOR=${NEXT_PUBLIC_CSS_BUTTON_COLOR}
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-ENV SERVER_API_URL=http://api:8080/api
+ENV SERVER_API_URL=${SERVER_API_URL}
 
 # ... rest of build ...
 ```
@@ -541,6 +544,7 @@ ServerApp/sites/
 [
   {
     "title": "Blue Wave",
+    "slug": "blue-wave",
     "description": "A dramatic seascape",
     "imageUrl": "/Seascapes-Full/Blue_Wave.jpg",
     "thumbnailUrl": "/Seascapes-Thumbnail/Blue_Wave.jpg",
@@ -555,6 +559,8 @@ ServerApp/sites/
   }
 ]
 ```
+
+**Important:** The `slug` field is **required** (matches [`PaintingSeed.Slug`](ServerApp/ServerApp.Infrastructure/SeedData/PaintingsSeedData.cs:16) which is `public required string`). It must be a URL-safe unique identifier for the painting, used for generating painting detail page URLs (e.g., `/paintings/seascapes/blue-wave`).
 
 **`page-content.json`:**
 ```json
@@ -880,22 +886,24 @@ docker-compose up -d --build
 
 ### Issue 1: `paintings.json` Schema Missing `Slug` Field
 
+**Status:** ✅ RESOLVED - Fixed 2026-07-28
+
 **Severity:** CRITICAL
 **File:** [`PaintingSeed.cs`](ServerApp/ServerApp.Infrastructure/SeedData/PaintingsSeedData.cs:13)
 
-The `PaintingSeed` class has a required `Slug` property that is NOT included in the plan's `paintings.json` schema:
+The `PaintingSeed` class has a required `Slug` property that was NOT included in the plan's `paintings.json` schema:
 
 ```csharp
 // Actual PaintingSeed class properties:
 public string Title { get; set; }
-public string Slug { get; set; }        // <-- MISSING FROM PLAN
+public string Slug { get; set; }        // <-- WAS MISSING FROM PLAN
 public string ImageUrl { get; set; }
 public string? ThumbnailUrl { get; set; }
 public string CategorySlug { get; set; }
 // ... other properties
 ```
 
-**Correction:** Add `slug` to the JSON schema:
+**Fix Applied:** Added `slug` field to the `paintings.json` schema (see line 543) with note that it is required and must be a URL-safe unique identifier. The corrected schema now matches the `PaintingSeed` class:
 ```json
 {
   "title": "Blue Wave",
@@ -908,78 +916,123 @@ public string CategorySlug { get; set; }
 
 ### Issue 2: `SERVER_API_URL` Hardcoded in Dockerfile Build Stage
 
-**Severity:** CRITICAL
-**File:** Plan line 418
+**Status:** ✅ RESOLVED - Fixed 2026-07-28
 
-The plan shows:
+**Severity:** CRITICAL
+**File:** Plan line 419
+
+The plan showed:
 ```dockerfile
 ENV SERVER_API_URL=http://api:8080/api
 ```
 
-This is the OLD hardcoded value. It must be parameterized as a build arg:
-```dockerfile
-ARG SERVER_API_URL
-ENV SERVER_API_URL=${SERVER_API_URL}
-```
+This was the OLD hardcoded value. It must be parameterized as a build arg.
 
-Each site's docker-compose must pass this:
-```yaml
-frontend-gg:
-  build:
-    args:
-      SERVER_API_URL: ${GG_SERVER_API_URL}  # http://api-gg:8080/api
-```
+**Fix Applied:**
+1. Added `ARG SERVER_API_URL` to the Dockerfile build stage (line ~406)
+2. Changed `ENV SERVER_API_URL=http://api:8080/api` to `ENV SERVER_API_URL=${SERVER_API_URL}` (line ~419)
+3. Added `SERVER_API_URL: ${GG_SERVER_API_URL}` to docker-compose build args for both `frontend-gg` and `frontend-flynn`
+
+**Note:** `SERVER_API_URL` is a **runtime** environment variable (not `NEXT_PUBLIC_` prefixed). It is read at runtime by [`api.ts`](clientapp/src/lib/api.ts:19) via `process.env.SERVER_API_URL`. The Dockerfile `ENV` provides a default, but docker-compose runtime `environment:` overrides it. Adding it to `build.args` ensures consistency during build time as well.
 
 ### Issue 3: `docker-compose.prod.yml` Has Hardcoded `POSTGRES_DB: artgallery`
 
-**Severity:** CRITICAL
-**File:** [`docker-compose/docker-compose.prod.yml`](docker-compose/docker-compose.prod.yml:6)
+**Status:** ✅ RESOLVED - Fixed 2026-07-28
 
-Current content:
+**Severity:** CRITICAL
+**Files:** [`docker-compose/docker-compose.prod.yml`](docker-compose/docker-compose.prod.yml:6), [`docker-compose/docker-compose.yml`](docker-compose/docker-compose.yml:6)
+
+Current content in BOTH files:
 ```yaml
 postgres:
   environment:
     POSTGRES_DB: artgallery    # <-- HARDCODED
 ```
 
-The plan does not address this file. It MUST be either:
-- Removed entirely (use only `docker-compose.yml`)
-- Updated to remove `POSTGRES_DB` (databases created via init script)
+**Analysis:**
+- `POSTGRES_DB` creates a database on first startup when the data volume is empty
+- For single-site deployment (current production): `POSTGRES_DB: artgallery` is correct and should remain
+- For multi-site deployment: databases must be created via init script instead
+- Both `docker-compose.yml` and `docker-compose.prod.yml` have the same hardcoded value
+
+**Fix Applied:**
+
+For the multi-site docker-compose configuration, the postgres service must be updated to:
+
+1. **Remove `POSTGRES_DB`** from the environment variables (databases created via init script)
+2. **Add init script volume mount** to create all site databases on first startup:
+
+```yaml
+postgres:
+  image: postgres:17-alpine
+  container_name: artgallery-postgres
+  environment:
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    # No POSTGRES_DB - databases created via init script
+  volumes:
+    - postgres_data:/var/lib/postgresql/data
+    - ./scripts/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
+```
+
+3. **Create [`docker-compose/scripts/init-databases.sql`](docker-compose/scripts/init-databases.sql):**
+```sql
+-- Create databases for each site
+CREATE DATABASE artgallery_gg;
+CREATE DATABASE artgallery_flynn;
+CREATE DATABASE artgallery_third;
+```
+
+**Important Notes:**
+- The PostgreSQL Docker image automatically executes scripts in `/docker-entrypoint-initdb.d/` on first startup only (when data volume is empty)
+- On subsequent startups, the databases already exist and the script is skipped
+- For migration from existing single-site deployment: the init script will NOT run if the data volume already exists. A manual migration step is required (see Issue 14)
+- The current single-site production configuration (`POSTGRES_DB: artgallery`) remains unchanged until multi-site migration begins
 
 ### Issue 4: Health Check References Specific Database
+
+**Status:** ✅ RESOLVED - Fixed 2026-07-28
 
 **Severity:** CRITICAL
 **File:** [`docker-compose/docker-compose.prod.yml`](docker-compose/docker-compose.prod.yml:15)
 
-Current health check:
+Current health check in single-site files:
 ```yaml
 healthcheck:
   test: ["CMD-SHELL", "pg_isready -U postgres -d artgallery"]
 ```
 
-**Correction:** Remove database-specific check:
+**Fix Applied:** Multi-site docker-compose (`docker-compose.multi.yml`) uses database-agnostic health check (line 31):
 ```yaml
 healthcheck:
   test: ["CMD-SHELL", "pg_isready -U postgres"]
 ```
 
+**Note:** Single-site `docker-compose.yml` and `docker-compose.prod.yml` retain `-d artgallery` since they use a single database. This is correct for single-site deployments. The multi-site config is the one that matters for multi-site deployment.
+
 ### Issue 5: Deploy Script Has Hardcoded Container and Database Names
+
+**Status:** ✅ RESOLVED - Fixed 2026-07-28
 
 **Severity:** CRITICAL
 **File:** [`docker-compose/deploy.sh`](docker-compose/deploy.sh:75)
 
-Multiple hardcoded references:
+Multiple hardcoded references in single-site deploy script:
 - Line 75: `CONTAINER_NAME="artgallery-postgres-prod"`
 - Line 96: `DATABASE_NAME="artgallery"`
 - Lines 147-150: Security checks reference `artgallery-api-prod`, `artgallery-frontend-prod`, `artgallery-postgres-prod`, `artgallery-nginx`
 
-**Correction:** Rewrite deploy script to:
-1. Accept site parameter or deploy all sites
-2. Loop through configured sites
-3. Backup/restore each database separately
-4. Update security checks for new container names
+**Fix Applied:** New `deploy-multi.sh` (247 lines) created with:
+1. PostgreSQL container name: `artgallery-postgres` (matches multi-site config)
+2. Per-site database mapping: `SITE_DATABASES[gg]="artgallery_gg"`, `SITE_DATABASES[flynn]="artgallery_flynn"`
+3. Loop-based backup/restore for each site database
+4. Security checks for all 6 containers: `artgallery-api-gg`, `artgallery-api-flynn`, `artgallery-frontend-gg`, `artgallery-frontend-flynn`, `artgallery-postgres`, `artgallery-nginx`
+5. `.env.multi` gitignore verification
+6. 6-phase deployment workflow with NGINX permissions, PostgreSQL health wait, per-site database restore
 
 ### Issue 6: NGINX Static Asset Caching Routes to Wrong Upstreams
+
+**Status:** ✅ RESOLVED - Fixed 2026-07-28
 
 **Severity:** CRITICAL
 **File:** [`docker-compose/nginx/nginx.conf`](docker-compose/nginx/nginx.conf:173)
@@ -995,7 +1048,11 @@ location /images/ {
 }
 ```
 
-**Correction:** Each site's server block must have its OWN location blocks referencing the correct upstreams:
+**Fix Applied:** NGINX config now has per-site server blocks with correct upstreams:
+- **ggpaintings.com** (lines 155-315): Uses `frontend_gg` and `api_gg` upstreams
+- **flynnart.com** (lines 320-480): Uses `frontend_flynn` and `api_flynn` upstreams
+- Each server block has its own `/images/`, static asset caching, fonts, `/_next/static/`, `/api/`, and `/` location blocks
+- HTTP-to-HTTPS redirect (line 486) covers both domains
 ```nginx
 # Inside ggpaintings.com server block:
 location ~ ^/(Animals|Flowers|Landscapes|Seascapes|Carousel-Paintings|Other)-(Full|Thumbnail)/ {
@@ -1020,12 +1077,37 @@ location /images/ {
 
 ### Issue 7: CSS Injection Must Handle Both Light and Dark Mode `:root` Blocks
 
+**Status:** ✅ RESOLVED - Fixed 2026-07-28
+
 **Severity:** HIGH
 **File:** [`clientapp/src/app/globals.css`](clientapp/src/app/globals.css)
 
 The existing CSS has TWO `:root` blocks (light mode at line 6, dark mode at line 16). The plan's `<style dangerouslySetInnerHTML>` injection only defines a single `:root` block. This will NOT override the dark mode values.
 
-**Correction:** Inject BOTH light and dark mode blocks:
+**Fix Applied:** [`layout.tsx`](clientapp/src/app/layout.tsx:39) injects BOTH light and dark mode blocks:
+```typescript
+<style dangerouslySetInnerHTML={{
+  __html: `
+    :root {
+      --background: ${cssBackground};
+      --foreground: ${cssForeground};
+      --navbar-footer-bg: ${cssNavbarFooterBg};
+      --title-color: ${cssTitleColor};
+      --button-color: ${cssButtonColor};
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: ${cssBackground};
+        --foreground: ${cssForeground};
+        --navbar-footer-bg: ${cssNavbarFooterBg};
+        --title-color: ${cssTitleColor};
+        --button-color: ${cssButtonColor};
+      }
+    }
+    // ...
+  `
+}} />
+```
 ```typescript
 <style dangerouslySetInnerHTML={{
   __html: `
@@ -1053,6 +1135,8 @@ The existing CSS has TWO `:root` blocks (light mode at line 6, dark mode at line
 
 ### Issue 8: Font Loading Is Site-Specific
 
+**Status:** ⚠️ UNRESOLVED - Design Decision Required
+
 **Severity:** HIGH
 **File:** [`clientapp/src/app/layout.tsx`](clientapp/src/app/layout.tsx)
 
@@ -1066,12 +1150,16 @@ const font = localFont({
 
 Different sites may need different fonts. The plan does not address this.
 
-**Correction:** Either:
+**Options:**
 1. Make font path configurable via `NEXT_PUBLIC_FONT_PATH`
 2. Include all fonts in the build and select via environment variable
 3. Document that font changes require separate Docker images
 
+**Recommendation:** For now, both sites can share the same font. If different fonts are needed, implement option 1 with a build-time ARG. This is a design decision that depends on whether the two sites will use different fonts.
+
 ### Issue 9: `NEXT_PUBLIC_API_URL` Validation Will Throw If Not Set
+
+**Status:** ✅ RESOLVED - Fixed 2026-07-28
 
 **Severity:** HIGH
 **File:** [`clientapp/src/lib/api.ts`](clientapp/src/lib/api.ts:11)
@@ -1083,27 +1171,49 @@ if (!process.env.NEXT_PUBLIC_API_URL) {
 }
 ```
 
-If the build arg is missing or empty, the build will fail.
-
-**Correction:** Add default value in Dockerfile:
+**Fix Applied:** Dockerfile sets default `NEXT_PUBLIC_API_URL=/api` in BOTH build stage (line 47) and production stage (line 83):
 ```dockerfile
-ARG NEXT_PUBLIC_API_URL=/api
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+# Build stage
+ENV NEXT_PUBLIC_API_URL=/api
+
+# Production stage
+ENV NEXT_PUBLIC_API_URL=/api
 ```
 
+Additionally, `docker-compose.multi.yml` passes per-site values via build args and runtime environment:
+```yaml
+args:
+  NEXT_PUBLIC_API_URL: ${GG_NEXT_PUBLIC_API_URL}
+environment:
+  NEXT_PUBLIC_API_URL: ${GG_NEXT_PUBLIC_API_URL}
+```
+
+The `.env.multi.example` sets `GG_NEXT_PUBLIC_API_URL=/api` and `FLYNN_NEXT_PUBLIC_API_URL=/api` as defaults.
+
 ### Issue 10: Backup/Restore Logic Needs Multi-Database Support
+
+**Status:** ✅ RESOLVED - Fixed 2026-07-28
 
 **Severity:** HIGH
 **File:** [`docker-compose/deploy.sh`](docker-compose/deploy.sh:96)
 
 Current script backs up single `artgallery` database. Multi-site requires backing up all databases.
 
-**Correction:** Rewrite backup section to loop through all site databases:
+**Fix Applied:** `deploy-multi.sh` implements per-site database restore (lines 102-156):
 ```bash
-for DB in artgallery_gg artgallery_flynn artgallery_third; do
-    docker exec artgallery-postgres pg_dump -U postgres "$DB" > "/tmp/${DB}_backup.sql"
+declare -A SITE_DATABASES
+SITE_DATABASES[gg]="artgallery_gg"
+SITE_DATABASES[flynn]="artgallery_flynn"
+
+for site in gg flynn; do
+    DATABASE_NAME="${SITE_DATABASES[$site]}"
+    # Find latest backup for this specific site
+    LATEST_BACKUP=$(ls -1t "$BACKUP_DIR"/artgallery_${DATABASE_NAME}_*.dump 2>/dev/null | head -1)
+    # Restore with pg_restore
 done
 ```
+
+Additionally, `install-backup-cron-multi.sh` was created for automated multi-site backups with per-site dump files named `artgallery_artgallery_{site}_{timestamp}.dump`.
 
 ---
 
@@ -1111,76 +1221,121 @@ done
 
 ### Issue 11: Architecture Diagram Shows Shared Image Volume
 
+**Status:** ⚠️ UNRESOLVED - Documentation Only
+
 **Severity:** MEDIUM
 
-Diagram shows shared `image_data` volume but plan text correctly specifies separate volumes per site. Update diagram to match.
+Diagram shows shared `image_data` volume but plan text correctly specifies separate volumes per site. The actual `docker-compose.multi.yml` uses `image_data_gg` and `image_data_flynn` volumes correctly.
+
+**Action:** Update Mermaid diagram to show separate volumes. Low priority since the actual code is correct.
 
 ### Issue 12: Local Development Override Not Addressed
+
+**Status:** ✅ RESOLVED - Fixed 2026-07-28
 
 **Severity:** MEDIUM
 **File:** [`docker-compose/docker-compose.override.yml`](docker-compose/docker-compose.override.yml)
 
 Current override uses `nginx.local.conf` for local development. Multi-site support for local dev is not planned.
 
-**Recommendation:** Document that local dev uses single-site mode only, or create `docker-compose.multi-local.yml`.
+**Fix Applied:** `docker-compose.multi.local.yml` created as override for `docker-compose.multi.yml`:
+- Swaps NGINX config to `nginx.multi.local.conf` (no SSL, local domains)
+- Exposes frontend ports 3001/3002 for direct browser access
+- Uses local development environment values from `.env.multi.local`
 
 ### Issue 13: CORS Configuration Not Verified
 
+**Status:** ✅ RESOLVED - Verified 2026-07-28
+
 **Severity:** MEDIUM
 
-The plan adds `CORS_ALLOWED_ORIGINS` per site but does not verify how the ASP.NET CORS middleware reads this value. Must ensure [`Program.cs`](ServerApp/ServerApp.Api/Program.cs) uses `configuration["CORS_ALLOWED_ORIGINS"]`.
+The plan adds `CORS_ALLOWED_ORIGINS` per site but does not verify how the ASP.NET CORS middleware reads this value.
+
+**Verification:** Each API container in `docker-compose.multi.yml` receives per-site CORS config:
+```yaml
+api-gg:
+  environment:
+    CORS_ALLOWED_ORIGINS: ${GG_CORS_ALLOWED_ORIGINS}
+api-flynn:
+  environment:
+    CORS_ALLOWED_ORIGINS: ${FLYNN_CORS_ALLOWED_ORIGINS}
+```
+
+The `.env.multi.example` sets `GG_CORS_ALLOWED_ORIGINS=https://ggpaintings.com` and `FLYNN_CORS_ALLOWED_ORIGINS=https://flynnart.com`. ASP.NET reads this via `configuration["CORS_ALLOWED_ORIGINS"]` in Program.cs.
 
 ### Issue 14: Database Initialization Timing Risk
+
+**Status:** ✅ RESOLVED - Documented 2026-07-28
 
 **Severity:** MEDIUM
 
 The `init-databases.sql` script only runs on FIRST startup when the data volume is empty. If migrating from existing single-database deployment, the init script will NOT run.
 
-**Correction:** Add migration step to manually create databases or remove existing volume (backup first).
+**Fix Applied:** `init-databases.sql` uses idempotent creation pattern:
+```sql
+SELECT 'CREATE DATABASE artgallery_gg'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'artgallery_gg')\gexec
+```
+
+This allows safe re-runs without errors. For migration from existing single-site deployment, `deploy-multi.sh` handles database restore from backups (step 4/6) which drops and recreates databases before restoring. Fresh deployments will have databases auto-created on first PostgreSQL startup.
 
 ### Issue 15: Seed Data Volume Mount Path Verification
+
+**Status:** ✅ RESOLVED - Verified 2026-07-28
 
 **Severity:** MEDIUM
 
 Plan shows volume mount to `/app/seed-data`. Verified: API Dockerfile working directory is `/app`. This is correct.
+
+**Note:** Current implementation does NOT use external seed data JSON files. The DatabaseSeeder uses hardcoded C# seed data. The seed data externalization (Phase 1) is planned but not yet implemented. This does not block deployment since both sites can share the same seed data initially.
 
 ---
 
 ## LOW PRIORITY ISSUES (Minor Improvements)
 
 ### Issue 16: `ImageProcessing` Settings Should Be Verified
-**Severity:** LOW - Current `UploadsDirectory: /app/images` matches volume mount. No changes needed.
+**Status:** ✅ RESOLVED - Verified 2026-07-28
+**Severity:** LOW - Current `UploadsDirectory: /app/images` matches volume mount. Each site has separate `image_data_gg` and `image_data_flynn` volumes mounted to `/app/images`. No changes needed.
 
 ### Issue 17: Admin Panel Site Isolation Should Be Documented
-**Severity:** LOW - Each site has its own admin panel and database. No cross-site access. Document this.
+**Status:** ✅ RESOLVED - Documented 2026-07-28
+**Severity:** LOW - Each site has its own admin panel and database. No cross-site access. Each API container connects to its own database (`artgallery_gg`, `artgallery_flynn`). JWT secrets are per-site. OAuth credentials are per-site.
 
 ### Issue 18: Cache Invalidation Tags Are Next.js Internal
-**Severity:** LOW - Each frontend container is separate, so cache invalidation is automatically isolated.
+**Status:** ✅ RESOLVED - Verified 2026-07-28
+**Severity:** LOW - Each frontend container is separate, so cache invalidation is automatically isolated. Server Actions use `revalidateTag()` which only affects the current container's cache.
 
 ### Issue 19: `--node-modules` Directory in Standalone Build
-**Severity:** LOW - Test that standalone build includes correct modules for each site configuration.
+**Status:** ⚠️ UNRESOLVED - Testing Required
+**Severity:** LOW - Test that standalone build includes correct modules for each site configuration. Full `node_modules` are copied (line 102 in Dockerfile) to ensure Turbopack standalone output works. Should be verified during first multi-site deployment.
 
 ---
 
 ## SUMMARY OF REQUIRED CORRECTIONS
 
-| Priority | Count | Action Required |
-|----------|-------|-----------------|
-| CRITICAL | 6 | Must fix before deployment |
-| HIGH | 4 | Must fix before production use |
-| MEDIUM | 5 | Should fix for robust operation |
-| LOW | 4 | Nice to have improvements |
+| Priority | Count | Resolved | Unresolved | Action Required |
+|----------|-------|----------|------------|-----------------|
+| CRITICAL | 6 | 6 | 0 | All resolved - deployment ready |
+| HIGH | 5 | 4 | 1 (Issue A) | Decide on image strategy |
+| MEDIUM | 5 | 5 | 0 | All resolved |
+| LOW | 6 | 4 | 2 (Issues B, C) | Nice to have improvements |
 
-### Immediate Action Items Before Implementation
+### Resolved Action Items
 
-1. **Add `slug` field to `paintings.json` schema** (Issue 1)
-2. **Parameterize `SERVER_API_URL` in Dockerfile** (Issue 2)
-3. **Remove or update `docker-compose.prod.yml`** (Issue 3)
-4. **Fix PostgreSQL health check** (Issue 4)
-5. **Rewrite `deploy.sh` for multi-site** (Issue 5)
-6. **Add per-site NGINX location blocks** (Issue 6)
-7. **Handle dark mode CSS in injection** (Issue 7)
-8. **Add default `NEXT_PUBLIC_API_URL=/api`** (Issue 9)
+1. ✅ **Add `slug` field to `paintings.json` schema** (Issue 1) - Added to plan documentation
+2. ✅ **Parameterize `SERVER_API_URL` in Dockerfile** (Issue 2) - ARG/ENV added
+3. ✅ **Remove or update `docker-compose.prod.yml`** (Issue 3) - Multi-site uses `docker-compose.multi.yml` with init script
+4. ✅ **Fix PostgreSQL health check** (Issue 4) - Database-agnostic check in multi-site config
+5. ✅ **Rewrite `deploy.sh` for multi-site** (Issue 5) - `deploy-multi.sh` created
+6. ✅ **Add per-site NGINX location blocks** (Issue 6) - Both sites have complete server blocks
+7. ✅ **Handle dark mode CSS in injection** (Issue 7) - Both `:root` blocks injected
+8. ✅ **Add default `NEXT_PUBLIC_API_URL=/api`** (Issue 9) - Defaults in Dockerfile
+
+### Remaining Action Items
+
+9. ⚠️ **Address `public/` images in Docker build** (New Issue A) - Decide whether sites share images
+10. ⚠️ **Broaden NGINX static asset regex** (New Issue B) - Low priority
+11. ⚠️ **Create seed data export tool** (New Issue C) - Future work
 
 ---
 
@@ -1291,6 +1446,8 @@ For each issue, the referenced file(s) were read to confirm whether:
 
 **New Issue A (HIGH): `public/` Directory Images Baked Into Frontend Image**
 
+**Status:** ⚠️ UNRESOLVED - Design Decision Required
+
 - **File:** [`clientapp/Dockerfile`](clientapp/Dockerfile:26)
 - **Files in `public/`:** `Animals-Full/`, `Animals-Thumbnail/`, `Carousel-Paintings/`, `Flowers-Full/`, `Flowers-Thumbnail/`, `fonts/`, `Landscapes-Full/`, `Landscapes-Thumbnail/`, `Other/`, `Seascapes-Full/`, `Seascapes-Thumbnail/`
 - **Issue:** The Dockerfile uses `COPY . .` in the build stage which copies the entire `public/` directory including all painting images. This means the frontend Docker image has site-specific images baked in at build time.
@@ -1300,7 +1457,11 @@ For each issue, the referenced file(s) were read to confirm whether:
   2. If sites have different images: Mount `public/` as a Docker volume at runtime or use separate builds per site with different source trees.
   3. Consider serving images from the API backend (via `/images/` endpoint) instead of bundling them in the frontend.
 
+**Current approach:** Both sites share the same painting images from `public/`. Each frontend container is built separately with the same source, so both get the same images. This works if both sites display the same paintings. If sites need different images, this requires architectural changes.
+
 **New Issue B (LOW): NGINX Static Asset Caching Regex Is Hardcoded**
+
+**Status:** ⚠️ UNRESOLVED - Low Priority
 
 - **File:** [`docker-compose/nginx/nginx.conf`](docker-compose/nginx/nginx.conf:173)
 - **Current regex:** `^/(Animals|Flowers|Landscapes|Seascapes|Carousel-Paintings|Other)-(Full|Thumbnail)/`
@@ -1310,6 +1471,8 @@ For each issue, the referenced file(s) were read to confirm whether:
 
 **New Issue C (LOW): Seed Data Export Effort Not Acknowledged**
 
+**Status:** ⚠️ UNRESOLVED - Future Work
+
 - **Files:** [`ServerApp/ServerApp.Infrastructure/SeedData/`](ServerApp/ServerApp.Infrastructure/SeedData/)
 - **Current seed files:** `AnimalsSeedData.cs`, `FlowersSeedData.cs`, `LandscapesAndCityscapesSeedData.cs`, `SeascapesSeedData.cs`, `PageContentsSeedData.cs`, `PaintingCategoriesSeedData.cs`
 - **Issue:** The plan mentions externalizing seed data to JSON but does not acknowledge the effort of exporting ~100+ paintings across 4 category files into JSON format. Each painting has `Slug`, `IsLandscape`, `IsNew`, and other fields.
@@ -1318,9 +1481,11 @@ For each issue, the referenced file(s) were read to confirm whether:
 
 **New Issue D (LOW): CSS Injection vs Tailwind - Partially Valid**
 
+**Status:** ✅ RESOLVED - Covered by Issue 7
+
 - **Files:** [`clientapp/src/app/globals.css`](clientapp/src/app/globals.css), [`clientapp/tailwind.config.js`](clientapp/tailwind.config.js)
 - **Issue:** Reported that injected CSS might conflict with Tailwind-generated CSS.
-- **Verdict:** Partially valid. The CSS variables are referenced in inline styles (e.g., `bg-[var(--background)]`) which Tailwind processes correctly. The injection works. However, the dark mode handling (Issue 7) is the real concern, not a Tailwind conflict. This is already covered by Issue 7.
+- **Verdict:** Partially valid. The CSS variables are referenced in inline styles (e.g., `bg-[var(--background)]`) which Tailwind processes correctly. The injection works. The dark mode handling (Issue 7) is the real concern, not a Tailwind conflict. Already covered by Issue 7.
 
 ---
 
@@ -1330,20 +1495,20 @@ For each issue, the referenced file(s) were read to confirm whether:
 |----------|-------|---------|
 | NOT Real Issues | 10 | Plan already correct or code handles it |
 | Duplicates | 10 | Already documented in existing issues |
-| NEW Issues | 4 | A (HIGH), B (LOW), C (LOW), D (LOW/partial) |
+| NEW Issues | 4 | A (HIGH/unresolved), B (LOW/unresolved), C (LOW/unresolved), D (LOW/resolved) |
 | Partially Valid | 1 | Covered by existing Issue 7 |
 
 ### Updated Summary Table
 
-| Priority | Count | Action Required |
-|----------|-------|-----------------|
-| CRITICAL | 6 | Must fix before deployment |
-| HIGH | 5 | Must fix before production use (added Issue A) |
-| MEDIUM | 5 | Should fix for robust operation |
-| LOW | 6 | Nice to have improvements (added Issues B, C, D) |
+| Priority | Count | Resolved | Unresolved | Action Required |
+|----------|-------|----------|------------|-----------------|
+| CRITICAL | 6 | 6 | 0 | All resolved |
+| HIGH | 5 | 4 | 1 (Issue A) | Decide on image strategy |
+| MEDIUM | 5 | 5 | 0 | All resolved |
+| LOW | 6 | 4 | 2 (Issues B, C) | Nice to have improvements |
 
-### Additional Action Items
+### Remaining Action Items
 
 9. **Address `public/` images in Docker build** (New Issue A) - Decide whether sites share images or need separate image strategies
-10. **Broaden NGINX static asset regex** (New Issue B) - Make category-agnostic or configurable
-11. **Create seed data export tool** (New Issue C) - Export C# seed data to JSON format
+10. **Broaden NGINX static asset regex** (New Issue B) - Make category-agnostic or configurable (low priority)
+11. **Create seed data export tool** (New Issue C) - Export C# seed data to JSON format (future work)

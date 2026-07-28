@@ -21,7 +21,6 @@ This file provides guidance to agents when working with code in this repository.
 - Client components must use 'use client' directive
 - Images are stored in `/public/` directory and referenced with relative paths
 - ArtCarousel component uses react-bootstrap Carousel with specific styling
-- Painting categories are defined in `/src/app/models/paintingCategories.ts`
 - Uses Next.js Image component for optimized image loading with priority prop
 
 ## Architecture
@@ -45,9 +44,10 @@ This file provides guidance to agents when working with code in this repository.
 - **Layout components** (NavBar, Footer) should be in `/src/components/` directory
 - **Page-specific components** should be in their respective page directories
 - **Shared UI components** (PaintingGrid, PaintingImage, ArtCarousel) should be in `/src/components/`
-- **Data models and types** should be in `/src/types/` or `/src/app/models/`
+- **Data models and types** should be in `/src/types/` with central exports from `/src/types/index.ts`
 - **API service functions** should be in `/src/lib/api.ts`
 - **Server Actions** should be in `/src/actions/` directory
+- **Sanitization utilities** in `/src/lib/sanitization.ts` (server) and `/src/lib/client-sanitization.ts` (client)
 
 ### Server-Side Rendering & Caching
 - **Prefer server components** over client components when possible for better performance
@@ -64,44 +64,79 @@ This file provides guidance to agents when working with code in this repository.
 - **All API fetches use 24-hour cache duration** with tag-based invalidation
 - **Cache tags are defined** in `/clientapp/src/lib/cache-tags.ts`
 - **Cache invalidation** is handled by Server Actions in `/clientapp/src/actions/`:
-  - `painting-actions.ts` - Invalidates `paintings`, `newPaintings`, `carousel`, `allContent` tags
-  - `category-actions.ts` - Invalidates `paintingCategories`, `allContent` tags
-  - `page-content-actions.ts` - Invalidates `pageContents`, `allContent` tags
+  - `painting-actions.ts` - Uses `paintingMutationTags` (paintings, newPaintings, carousel, allContent) and `categoryAssignmentTags`
+  - `category-actions.ts` - Uses `categoryMutationTags` (paintingCategories, allContent)
+  - `page-content-actions.ts` - Uses `pageContentMutationTags` (pageContents, allContent)
 - **Admin panel mutations MUST use Server Actions** (not direct API calls) to ensure cache is invalidated
 - **Convert client components to server components** when they don't require interactivity
 - **Use `await params`** in server components instead of `use(params)`
 
 ### API Integration
-- **API base URL** should be configured via environment variable: `NEXT_PUBLIC_API_URL`
+- **API base URL** uses TWO environment variables:
+  - `NEXT_PUBLIC_API_URL` - Client-side URL (browser-accessible, required)
+  - `SERVER_API_URL` - Server-side URL (Docker internal URL, required for server components)
+- **No default/fallback URLs** - Both variables throw errors if not set
 - **All data fetching** should go through `/src/lib/api.ts` service layer
 - **Error handling** should be implemented for all API calls
-- **TypeScript interfaces** for API responses should be defined in `/src/types/paintings.ts`
-- **Default API URL** for development: `http://localhost:5000/api`
+- **TypeScript interfaces** for API responses should be defined in `/src/types/`
 
 ### Data Models
-- Use the following interfaces for painting-related data:
+- Types are exported centrally from `@/types`:
+  ```typescript
+  import { Painting, PaintingCategory, PageContent, CarouselImage } from '@/types';
+  ```
+
+- **Painting** interface (matches `ServerApp.Application.DTOs.PaintingDto`):
   ```typescript
   interface Painting {
       id: string;
+      slug: string;
       title: string;
       description?: string;
       imageUrl: string;
       thumbnailUrl?: string;
-      category: string;
-      dimensions?: string;
+      categorySlug: string;
+      width?: number;
+      height?: number;
+      depth?: number;
       year?: number;
       price?: number;
-      isAvailable?: boolean;
+      isAvailable: boolean;
+      isNew: boolean;
+      isLandscape: boolean;
   }
-  
+  ```
+
+- **PaintingCategory** interface (matches `ServerApp.Application.DTOs.PaintingCategoryDto`):
+  ```typescript
   interface PaintingCategory {
       id: string;
-      name: string;
       slug: string;
+      name: string;
       description?: string;
-      paintingCount?: number;
   }
-  
+  ```
+
+- **PaintingCategoryWithPaintings** extends PaintingCategory:
+  ```typescript
+  interface PaintingCategoryWithPaintings extends PaintingCategory {
+      paintings: Painting[];
+  }
+  ```
+
+- **PageContent** interface (matches `ServerApp.Application.DTOs.PageContentDto`):
+  ```typescript
+  interface PageContent {
+      id: string;
+      slug: string;
+      title?: string;
+      content: string;
+      photoUrls?: string[];
+  }
+  ```
+
+- **CarouselImage** interface:
+  ```typescript
   interface CarouselImage {
       id: string;
       imageUrl: string;

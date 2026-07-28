@@ -29,10 +29,34 @@ WORKDIR /app
 # Update Alpine packages to fix CVEs
 RUN apk update && apk upgrade --no-cache
 
+# Build arguments for site configuration
+# These allow multi-site deployments with different branding per site
+# Defaults match current hardcoded values for backward compatibility
+ARG NEXT_PUBLIC_SITE_NAME="Gloria Gronowicz Fine Art"
+ARG NEXT_PUBLIC_SITE_DESCRIPTION="Gloria Gronowicz is an oil painter who creates works inspired by nature"
+ARG NEXT_PUBLIC_CONTACT_EMAIL=""
+ARG NEXT_PUBLIC_CONTACT_PHONE=""
+ARG NEXT_PUBLIC_CSS_BACKGROUND="#3d3d3d"
+ARG NEXT_PUBLIC_CSS_FOREGROUND="#ffffff"
+ARG NEXT_PUBLIC_CSS_NAVBAR_FOOTER_BG="#2d2d2d"
+ARG NEXT_PUBLIC_CSS_TITLE_COLOR="#66b3ff"
+ARG NEXT_PUBLIC_CSS_BUTTON_COLOR="#1e3a8a"
+
 # Set environment variables for build time
 # These are needed for Next.js to properly compile the application
 ENV NEXT_PUBLIC_API_URL=/api
 ENV SERVER_API_URL=http://api:8080/api
+
+# Site configuration environment variables (from build args)
+ENV NEXT_PUBLIC_SITE_NAME=$NEXT_PUBLIC_SITE_NAME
+ENV NEXT_PUBLIC_SITE_DESCRIPTION=$NEXT_PUBLIC_SITE_DESCRIPTION
+ENV NEXT_PUBLIC_CONTACT_EMAIL=$NEXT_PUBLIC_CONTACT_EMAIL
+ENV NEXT_PUBLIC_CONTACT_PHONE=$NEXT_PUBLIC_CONTACT_PHONE
+ENV NEXT_PUBLIC_CSS_BACKGROUND=$NEXT_PUBLIC_CSS_BACKGROUND
+ENV NEXT_PUBLIC_CSS_FOREGROUND=$NEXT_PUBLIC_CSS_FOREGROUND
+ENV NEXT_PUBLIC_CSS_NAVBAR_FOOTER_BG=$NEXT_PUBLIC_CSS_NAVBAR_FOOTER_BG
+ENV NEXT_PUBLIC_CSS_TITLE_COLOR=$NEXT_PUBLIC_CSS_TITLE_COLOR
+ENV NEXT_PUBLIC_CSS_BUTTON_COLOR=$NEXT_PUBLIC_CSS_BUTTON_COLOR
 
 # Disable telemetry
 ENV NEXT_TELEMETRY_DISABLED=1

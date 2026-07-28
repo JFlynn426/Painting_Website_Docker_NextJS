@@ -2,6 +2,7 @@
 .env
 .env.local
 .env.*.local
+.env.multi
 
 # Secrets directory (except .gitkeep)
 secrets/*

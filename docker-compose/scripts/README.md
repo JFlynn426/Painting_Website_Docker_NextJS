@@ -223,3 +223,138 @@ rclone copy /opt/artgallery/backups/ remote:artgallery-backups/ --checksum
 6. [ ] Verify API health: `curl http://localhost:8080/api/health/health`
 7. [ ] Test site functionality
 8. [ ] Check logs: `tail -f /opt/artgallery/backups/restore.log`
+
+---
+
+## Multi-Site Backup and Restore
+
+For multi-site deployments (ggpaintings.com + flynnart.com), use the multi-site backup scripts.
+
+### Install on Production Server
+
+```bash
+# Run multi-site installation script (requires sudo)
+sudo ./install-backup-cron-multi.sh
+```
+
+This will:
+1. Create `/opt/artgallery/` directory structure
+2. Copy multi-site backup scripts to `/opt/artgallery/scripts/`
+3. Install cron job for weekly backup (Sunday 2:00 AM)
+4. Run a test backup for both sites
+
+### Multi-Site Manual Backup
+
+```bash
+# Backup both sites
+/opt/artgallery/scripts/backup-multi.sh
+
+# Backup only ggpaintings.com (artgallery_gg database)
+/opt/artgallery/scripts/backup-multi.sh gg
+
+# Backup only flynnart.com (artgallery_flynn database)
+/opt/artgallery/scripts/backup-multi.sh flynn
+```
+
+### Multi-Site Restore
+
+```bash
+# Restore ggpaintings.com from specific backup
+/opt/artgallery/scripts/restore-multi.sh gg artgallery_artgallery_gg_20260101_120000.dump
+
+# Restore flynnart.com (interactive - lists available backups)
+/opt/artgallery/scripts/restore-multi.sh flynn
+```
+
+The multi-site restore script will:
+1. Verify backup checksum
+2. Prompt for confirmation
+3. Stop the site-specific API container briefly
+4. Drop and recreate the site database
+5. Restore database from backup
+6. Restart the site-specific API container
+
+**Downtime per site:** ~10-30 seconds (one API container stop/start)
+
+### Multi-Site File Structure
+
+```
+/opt/artgallery/
+├── scripts/
+│   ├── backup-multi.sh              # Multi-site backup script
+│   ├── restore-multi.sh             # Multi-site restore script
+│   ├── install-backup-cron-multi.sh # Multi-site installation script
+│   ├── backup.sh                    # Single-site backup (compatibility)
+│   ├── restore.sh                   # Single-site restore (compatibility)
+│   └── backup.config                # Shared configuration (password, retention)
+└── backups/
+    ├── artgallery_artgallery_gg_20260101_020000.dump      # GG site backup
+    ├── artgallery_artgallery_gg_20260101_020000.sha256    # GG checksum
+    ├── artgallery_artgallery_flynn_20260101_020000.dump   # Flynn site backup
+    ├── artgallery_artgallery_flynn_20260101_020000.sha256 # Flynn checksum
+    └── backup.log                                         # Execution log
+```
+
+### Multi-Site Database Architecture
+
+| Site | Container | Database | Backup Pattern |
+|------|-----------|----------|----------------|
+| ggpaintings.com | artgallery-api-gg | artgallery_gg | artgallery_artgallery_gg_*.dump |
+| flynnart.com | artgallery-api-flynn | artgallery_flynn | artgallery_artgallery_flynn_*.dump |
+| Shared | artgallery-postgres | (both databases) | - |
+
+### Multi-Site Deployment with Backup Restore
+
+The `deploy-multi.sh` script automatically restores the latest backup for each site during deployment:
+
+```bash
+# Deploy with automatic backup restore
+./deploy-multi.sh
+```
+
+The deployment process:
+1. Sets up NGINX permissions for SSL certificates
+2. Stops existing containers
+3. Starts PostgreSQL and waits for health
+4. **Restores latest backup for each site** (if backups exist in `/opt/artgallery/backups/`)
+5. Builds and starts remaining containers
+6. Runs security checks
+
+If no backups exist, the database seeder will populate initial data.
+
+### Multi-Site Troubleshooting
+
+#### Backup Fails: "Container not running"
+
+```bash
+# Check container status
+docker ps | grep artgallery
+
+# Start containers if stopped
+cd docker-compose
+docker compose -f docker-compose.multi.yml up -d
+```
+
+#### Verify Multi-Site Cron
+
+```bash
+# List cron jobs (should show backup-multi.sh)
+crontab -l
+
+# Check cron service
+systemctl status cron
+
+# View cron execution logs
+grep CRON /var/log/syslog | grep artgallery
+```
+
+### Multi-Site Disaster Recovery Checklist
+
+1. [ ] Access server via SSH
+2. [ ] List available backups: `ls -lh /opt/artgallery/backups/*.dump`
+3. [ ] For GG site: `/opt/artgallery/scripts/restore-multi.sh gg <backup_file>`
+4. [ ] For Flynn site: `/opt/artgallery/scripts/restore-multi.sh flynn <backup_file>`
+5. [ ] Confirm "RESTORE" when prompted for each site
+6. [ ] Verify API health: `curl http://localhost:8080/health`
+7. [ ] Test both site functionalities
+8. [ ] Check logs: `tail -f /opt/artgallery/backups/restore.log`

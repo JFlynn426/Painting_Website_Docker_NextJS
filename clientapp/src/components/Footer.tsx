@@ -1,6 +1,9 @@
 import Link from "next/link";
 
 export default function Footer() {
+    const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "";
+    const contactPhone = process.env.NEXT_PUBLIC_CONTACT_PHONE || "";
+
     return (
         <footer className="bg-[var(--navbar-footer-bg)] text-white relative">
             <div className="h-px bg-white w-full"></div>
@@ -8,11 +11,11 @@ export default function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="flex flex-col items-center text-center">
                         <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--title-color)' }}>Email</h3>
-                        <p className="text-lg">gloriagronowicz@gmail.com</p>
+                        <p className="text-lg">{contactEmail}</p>
                     </div>
                     <div className="flex flex-col items-center text-center">
                         <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--title-color)' }}>Phone</h3>
-                        <p className="text-lg">860.670.0799</p>
+                        <p className="text-lg">{contactPhone}</p>
                     </div>
                 </div>
             </div>

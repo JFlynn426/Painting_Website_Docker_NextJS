@@ -708,6 +708,296 @@ curl -I https://ggpaintings.com
 docker-compose -f docker-compose.cloudflare.yml down
 ```
 
+## Multi-Site Production Deployment
+
+### Overview
+
+The multi-site architecture runs two independent painting gallery sites on a single server:
+
+| Site | Domain | API Container | Frontend Container | Database |
+|------|--------|--------------|-------------------|----------|
+| gg | ggpaintings.com | artgallery-api-gg | artgallery-frontend-gg | artgallery_gg |
+| flynn | flynnart.com | artgallery-api-flynn | artgallery-frontend-flynn | artgallery_flynn |
+
+**Shared resources:**
+- Single PostgreSQL container (separate databases)
+- Single NGINX container (per-site server blocks)
+
+### Architecture
+
+```
+User Browser → HTTPS → Cloudflare (Edge SSL) → HTTPS → NGINX → HTTP → Per-Site Containers
+```
+
+### Prerequisites
+
+- Docker and Docker Compose installed on Linux server (Ubuntu 22.04+ recommended)
+- Two domain names configured with Cloudflare as DNS provider
+- Cloudflare account with both sites added
+- Port 443 open on your server (port 80 optional)
+- At least 8GB RAM recommended (two sites + shared PostgreSQL)
+
+### Step 1: Prepare Server
+
+```bash
+# On your Linux server
+git clone <repository-url>
+cd Painting_Website_Docker_NextJS/docker-compose
+```
+
+### Step 2: Configure Environment
+
+**2.1. Copy and Edit Multi-Site Environment File**
+
+```bash
+cp .env.multi.example .env.multi
+nano .env.multi
+```
+
+Update these values in `.env.multi`:
+
+```env
+# PostgreSQL password (must match secrets/postgres_password)
+POSTGRES_PASSWORD=YourSecurePassword123!
+
+# NGINX Ports (production uses standard ports)
+NGINX_HTTP_PORT=80
+NGINX_HTTPS_PORT=443
+NGINX_HEALTH_PORT=9090
+
+# === Site: gg (ggpaintings.com) ===
+GG_SITE_NAME="Gloria Gronowicz Fine Art"
+GG_SITE_DESCRIPTION="Gloria Gronowicz is an oil painter who creates works inspired by nature"
+GG_CONTACT_EMAIL="gloriagronowicz@gmail.com"
+GG_CONTACT_PHONE="860.670.0799"
+
+# CSS Theme Variables
+GG_CSS_BACKGROUND="#3d3d3d"
+GG_CSS_FOREGROUND="#ffffff"
+GG_CSS_NAVBAR_FOOTER_BG="#2d2d2d"
+GG_CSS_TITLE_COLOR="#66b3ff"
+GG_CSS_BUTTON_COLOR="#1e3a8a"
+
+# API URLs (relative for NGINX routing)
+GG_NEXT_PUBLIC_API_URL=/api
+GG_SERVER_API_URL=http://api-gg:8080/api
+
+# CORS
+GG_CORS_ALLOWED_ORIGINS=https://ggpaintings.com
+
+# Google OAuth (site gg)
+GG_GOOGLE_AUTH_CLIENT_ID=YOUR_GG_CLIENT_ID.apps.googleusercontent.com
+GG_GOOGLE_AUTH_CLIENT_SECRET=YOUR_GG_CLIENT_SECRET
+GG_GOOGLE_AUTH_REDIRECT_URI=https://ggpaintings.com/api/auth/google/callback
+
+# Admin JWT (site gg)
+GG_ADMIN_JWT_SECRET_KEY=CHANGE_THIS_TO_A_RANDOM_SECRET_KEY_GG
+GG_ADMIN_JWT_EXPIRY_MINUTES=60
+GG_ADMIN_AUTHORIZED_EMAILS=gloriagronowicz@gmail.com
+
+# === Site: flynn (flynnart.com) ===
+FLYNN_SITE_NAME="Flynn Art Gallery"
+FLYNN_SITE_DESCRIPTION="Fine art paintings by Flynn"
+FLYNN_CONTACT_EMAIL="flynn@example.com"
+FLYNN_CONTACT_PHONE="555.123.4567"
+
+# CSS Theme Variables
+FLYNN_CSS_BACKGROUND="#1a1a2e"
+FLYNN_CSS_FOREGROUND="#e0e0e0"
+FLYNN_CSS_NAVBAR_FOOTER_BG="#16213e"
+FLYNN_CSS_TITLE_COLOR="#e94560"
+FLYNN_CSS_BUTTON_COLOR="#0f3460"
+
+# API URLs (relative for NGINX routing)
+FLYNN_NEXT_PUBLIC_API_URL=/api
+FLYNN_SERVER_API_URL=http://api-flynn:8080/api
+
+# CORS
+FLYNN_CORS_ALLOWED_ORIGINS=https://flynnart.com
+
+# Google OAuth (site flynn)
+FLYNN_GOOGLE_AUTH_CLIENT_ID=YOUR_FLYNN_CLIENT_ID.apps.googleusercontent.com
+FLYNN_GOOGLE_AUTH_CLIENT_SECRET=YOUR_FLYNN_CLIENT_SECRET
+FLYNN_GOOGLE_AUTH_REDIRECT_URI=https://flynnart.com/api/auth/google/callback
+
+# Admin JWT (site flynn)
+FLYNN_ADMIN_JWT_SECRET_KEY=CHANGE_THIS_TO_A_RANDOM_SECRET_KEY_FLYNN
+FLYNN_ADMIN_JWT_EXPIRY_MINUTES=60
+FLYNN_ADMIN_AUTHORIZED_EMAILS=flynn@example.com
+```
+
+**2.2. Generate JWT Secrets**
+
+```bash
+# Generate random JWT secrets
+openssl rand -base64 32  # Use output for GG_ADMIN_JWT_SECRET_KEY
+openssl rand -base64 32  # Use output for FLYNN_ADMIN_JWT_SECRET_KEY
+```
+
+**2.3. Create Docker Secret for PostgreSQL Password**
+
+```bash
+mkdir -p secrets
+echo -n 'YourSecurePassword123!' > secrets/postgres_password
+chmod 600 secrets/postgres_password
+```
+
+### Step 3: Generate Self-Signed SSL Certificates (Per-Site)
+
+Each site needs its own self-signed certificate for Cloudflare Full mode:
+
+```bash
+# Site: gg
+mkdir -p nginx/ssl/gg
+cd nginx/ssl/gg
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout server.key \
+  -out server.crt \
+  -subj "/C=US/ST=YourState/L=YourCity/O=YourOrganization/CN=ggpaintings.com"
+chmod 600 server.key
+chmod 644 server.crt
+
+# Site: flynn
+cd ../
+mkdir -p flynn
+cd flynn
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout server.key \
+  -out server.crt \
+  -subj "/C=US/ST=YourState/L=YourCity/O=YourOrganization/CN=flynnart.com"
+chmod 600 server.key
+chmod 644 server.crt
+
+cd ../..
+```
+
+### Step 4: Configure Cloudflare (Both Sites)
+
+For **each** domain (ggpaintings.com and flynnart.com):
+
+1. **Add site to Cloudflare** (if not already done)
+2. **Change DNS nameservers** at your registrar to Cloudflare's
+3. **Set SSL/TLS mode to "Full"**:
+   - Go to SSL/TLS → Overview
+   - Select "Full" (not "Flexible" or "Full (Strict)")
+4. **Enable "Always Use HTTPS"**:
+   - Go to SSL/TLS → Edge Certificates
+5. **Ensure DNS records are proxied** (orange cloud icon):
+   - Go to DNS
+   - Make sure A record for your domain has orange cloud
+
+### Step 5: Deploy
+
+```bash
+# Load environment and deploy
+docker compose -f docker-compose.multi.yml up -d --build
+```
+
+### Step 6: Verify Deployment
+
+**6.1. Check Container Status**
+
+```bash
+docker compose -f docker-compose.multi.yml ps
+```
+
+All 6 containers should show `healthy` status:
+- artgallery-postgres
+- artgallery-api-gg
+- artgallery-frontend-gg
+- artgallery-api-flynn
+- artgallery-frontend-flynn
+- artgallery-nginx
+
+**6.2. Verify Non-Root Users**
+
+```bash
+docker exec artgallery-api-gg whoami        # Should return: app
+docker exec artgallery-frontend-gg whoami   # Should return: node
+docker exec artgallery-api-flynn whoami     # Should return: app
+docker exec artgallery-frontend-flynn whoami # Should return: node
+docker exec artgallery-nginx whoami         # Should return: nginx
+```
+
+**6.3. Test Health Endpoints**
+
+```bash
+# NGINX health check
+curl http://localhost:9090/health
+
+# Site gg API health
+curl http://localhost:80/api/health/health
+
+# Site flynn API health (via NGINX on port 443)
+curl -k https://localhost/api/health/health
+```
+
+**6.4. Test Sites via Cloudflare**
+
+```bash
+# Site gg
+curl -I https://ggpaintings.com
+curl -I https://ggpaintings.com/api/paintings
+
+# Site flynn
+curl -I https://flynnart.com
+curl -I https://flynnart.com/api/paintings
+```
+
+### Access Points
+
+| Site | Frontend | API | Notes |
+|------|----------|-----|-------|
+| gg | https://ggpaintings.com | https://ggpaintings.com/api | Via Cloudflare |
+| flynn | https://flynnart.com | https://flynnart.com/api | Via Cloudflare |
+| Health | http://localhost:9090/health | - | Local only |
+
+### Stop Multi-Site Environment
+
+```bash
+docker compose -f docker-compose.multi.yml down
+```
+
+### Updating Multi-Site Deployment
+
+```bash
+# Pull latest code
+git pull
+
+# Rebuild and redeploy
+docker compose -f docker-compose.multi.yml up -d --build
+
+# Monitor logs
+docker compose -f docker-compose.multi.yml logs -f
+```
+
+### Multi-Site Local Testing
+
+For local development testing with both sites:
+
+```bash
+# Use the local override (requires .env.multi.local)
+docker compose -f docker-compose.multi.yml -f docker-compose.multi.local.yml up -d --build
+```
+
+**Local access points:**
+- Site gg: http://localhost:8181 (via NGINX) or http://localhost:3001 (direct)
+- Site flynn: http://localhost:8182 (via NGINX) or http://localhost:3002 (direct)
+- Health: http://localhost:9090/health
+
+### Multi-Site Security Checklist
+
+- [ ] PostgreSQL password set in `secrets/postgres_password`
+- [ ] Self-signed SSL certificates generated for both sites (`nginx/ssl/gg/` and `nginx/ssl/flynn/`)
+- [ ] `.env.multi` file configured with production values
+- [ ] JWT secrets are unique random strings for each site
+- [ ] Google OAuth client IDs configured separately for each site
+- [ ] CORS origins set to production domains
+- [ ] `.env.multi` file not committed to git
+- [ ] Firewall configured (ports 80, 443 only)
+- [ ] Cloudflare SSL/TLS mode set to "Full" for both domains
+- [ ] Cloudflare DNS records proxied (orange cloud enabled) for both domains
+
 ## Switching Between Modes
 
 ### From Development to Production

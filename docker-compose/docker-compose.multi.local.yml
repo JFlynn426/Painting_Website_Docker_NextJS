@@ -1,0 +1,34 @@
+# Local Development Override for Multi-Site
+# Applies local-specific settings for testing on localhost
+#
+# Usage: docker compose -f docker-compose.multi.yml -f docker-compose.multi.local.yml up -d --build
+#
+# Access sites at:
+#   - Site gg:     http://localhost:8181
+#   - Site flynn:  http://localhost:8182
+#   - Health:      http://localhost:9090/health
+#   - Frontend gg (direct):  http://localhost:3001
+#   - Frontend flynn (direct): http://localhost:3002
+#
+# IMPORTANT: Docker Compose MERGES ports from base and override files.
+# The NGINX config must listen on ports 80/443/8080 to match base file mappings.
+
+services:
+  # Override NGINX to use local config
+  # Ports are inherited from docker-compose.multi.yml (merged, not replaced):
+  #   - NGINX_HTTP_PORT:80   -> Site gg
+  #   - NGINX_HTTPS_PORT:443 -> Site flynn (HTTPS not used locally)
+  #   - NGINX_HEALTH_PORT:8080 -> Health endpoint
+  nginx:
+    volumes:
+      - ./nginx/nginx.multi.local.conf:/etc/nginx/nginx.conf:ro
+
+  # Override frontend-gg to expose directly for debugging
+  frontend-gg:
+    ports:
+      - "3001:3000"
+
+  # Override frontend-flynn to expose directly for debugging
+  frontend-flynn:
+    ports:
+      - "3002:3000"

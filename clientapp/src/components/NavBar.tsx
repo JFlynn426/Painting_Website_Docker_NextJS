@@ -12,6 +12,7 @@ export default function NavBar() {
     const [categories, setCategories] = useState<PaintingCategory[]>([]);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
+    const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Gloria Gronowicz Fine Art";
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -46,7 +47,7 @@ export default function NavBar() {
                 <div className="container mx-auto px-4 py-3">
                     <div className="flex items-center justify-center mb-3">
                         <Link href="/" className="text-4xl md:text-5xl font-bold" style={{ color: 'var(--title-color)' }}>
-                            Gloria Gronowicz Fine Art
+                            {siteName}
                         </Link>
                     </div>
                 </div>
@@ -61,7 +62,7 @@ export default function NavBar() {
                 {/* Header Row - Centered Logo with Hamburger Button on Right */}
                 <div className="relative flex items-center justify-center mb-3">
                     <Link href="/" className="text-4xl md:text-5xl font-bold" style={{ color: 'var(--title-color)' }}>
-                        Gloria Gronowicz Fine Art
+                        {siteName}
                     </Link>
 
                     {/* Hamburger Menu Button - Visible only on screens smaller than 770px, positioned on right */}
