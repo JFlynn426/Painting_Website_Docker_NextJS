@@ -1,10 +1,19 @@
 # First-Time Deployment Guide - Ubuntu Server 26.04 LTS
 
-**Domain:** ggpaintings.com  
-**Target OS:** Ubuntu Server 26.04 LTS  
-**Last Updated:** 2026-07-28  
+**Domains:** ggpaintings.com, flynnart.com
+**Target OS:** Ubuntu Server 26.04 LTS
+**Last Updated:** 2026-07-29
 
 This guide provides the commands needed for first-time deployment on a fresh Ubuntu Server 26.04 LTS instance. Assumes the file structure is pulled from git.
+
+## Deployment Modes
+
+| Mode | Script | Compose File | Use Case |
+|------|--------|-------------|----------|
+| **Multi-Site** (Recommended) | `deploy-multi.sh` | `docker-compose.multi.yml` | Host ggpaintings.com + flynnart.com on same server |
+| **Single-Site** | `deploy.sh` | `docker-compose.prod.yml` | Host a single site |
+
+> **This guide focuses on multi-site deployment.** For single-site, use `deploy.sh` and `docker-compose.prod.yml` instead.
 
 ## Architecture Overview
 
@@ -44,14 +53,18 @@ This guide provides the commands needed for first-time deployment on a fresh Ubu
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Container Names (Hardcoded in Scripts)
+## Container Names (Multi-Site Deployment)
 
 | Service | Container Name | User | Port |
 |---------|---------------|------|------|
-| PostgreSQL | `artgallery-postgres-prod` | postgres | 5432 (internal) |
-| API | `artgallery-api-prod` | app (UID 1) | 8080 (internal) |
-| Frontend | `artgallery-frontend-prod` | nextjs (UID 1001) | 3000 (internal) |
+| PostgreSQL | `artgallery-postgres` | postgres | 5432 (internal) |
+| API (GG) | `artgallery-api-gg` | appuser | 8080 (internal) |
+| API (Flynn) | `artgallery-api-flynn` | appuser | 8080 (internal) |
+| Frontend (GG) | `artgallery-frontend-gg` | nextjs (UID 1001) | 3000 (internal) |
+| Frontend (Flynn) | `artgallery-frontend-flynn` | nextjs (UID 1001) | 3000 (internal) |
 | NGINX | `artgallery-nginx` | nginx (UID 101) | 80, 443, 9090 (health) |
+
+> **Single-site deployment** uses `artgallery-postgres-prod`, `artgallery-api-prod`, `artgallery-frontend-prod` instead.
 
 ## Prerequisites
 
@@ -158,64 +171,69 @@ sudo mkdir -p /opt/artgallery/volumes/images
 # Navigate to docker-compose directory
 cd ~/Painting_Website_Docker_NextJS/docker-compose
 
-# Copy environment template
-cp .env.example .env
+# For multi-site deployment, copy the multi-site template:
+cp .env.multi.example .env.multi
 
-# Edit the environment file
-nano .env
+# Edit the multi-site environment file
+nano .env.multi
 ```
 
-**Required `.env` configuration for production:**
+**Required `.env.multi` configuration for production:**
 
+The `.env.multi.example` template contains placeholder values for both sites. Update these sections:
+
+### Site: gg (ggpaintings.com)
 ```env
-# =============================================================================
-# CORS Configuration
-# =============================================================================
-CORS_ALLOWED_ORIGINS=https://ggpaintings.com
+GG_SITE_NAME="Gloria Gronowicz Fine Art"
+GG_SITE_DESCRIPTION="Gloria Gronowicz is an oil painter who creates works inspired by nature"
+GG_CONTACT_EMAIL="gloriagronowicz@gmail.com"
+GG_CONTACT_PHONE="860.670.0799"
 
-# =============================================================================
-# API URLs
-# =============================================================================
-# Browser-facing API URL (used by client-side code)
-NEXT_PUBLIC_API_URL=https://ggpaintings.com/api
+# Google OAuth - Get from Google Cloud Console
+GG_GOOGLE_AUTH_CLIENT_ID=YOUR_GG_CLIENT_ID.apps.googleusercontent.com
+GG_GOOGLE_AUTH_CLIENT_SECRET=YOUR_GG_CLIENT_SECRET
+GG_GOOGLE_AUTH_REDIRECT_URI=https://ggpaintings.com/api/auth/google/callback
 
-# Internal API URL (used by server components and Next.js Image optimization)
-SERVER_API_URL=http://api:8080/api
+# Admin JWT - Generate unique secret per site
+GG_ADMIN_JWT_SECRET_KEY=$(openssl rand -base64 32)
+GG_ADMIN_AUTHORIZED_EMAILS=gloriagronowicz@gmail.com
 
-# =============================================================================
-# Google OAuth Configuration
-# =============================================================================
-# Get these from Google Cloud Console
-GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your-google-client-secret
+# CORS and API URLs
+GG_CORS_ALLOWED_ORIGINS=https://ggpaintings.com
+GG_NEXT_PUBLIC_API_URL=/api
+GG_SERVER_API_URL=http://api-gg:8080/api
+```
 
-# =============================================================================
-# Admin JWT Configuration
-# =============================================================================
-# Generate a strong random key: openssl rand -base64 64
-ADMIN_JWT_SECRET=your-strong-jwt-secret-key-here-min-32-characters
-ADMIN_JWT_EXPIRY_HOURS=8
+### Site: flynn (flynnart.com)
+```env
+FLYNN_SITE_NAME="Flynn Art Gallery"
+FLYNN_SITE_DESCRIPTION="Fine art paintings by Flynn"
+FLYNN_CONTACT_EMAIL="flynn@example.com"
+FLYNN_CONTACT_PHONE="555.123.4567"
 
-# =============================================================================
-# Admin User Configuration
-# =============================================================================
-# The Google email address that will be the first admin user
-ADMIN_EMAIL=your-email@gmail.com
-ADMIN_DISPLAY_NAME=Your Display Name
+# Google OAuth - Separate client ID from Google Cloud Console
+FLYNN_GOOGLE_AUTH_CLIENT_ID=YOUR_FLYNN_CLIENT_ID.apps.googleusercontent.com
+FLYNN_GOOGLE_AUTH_CLIENT_SECRET=YOUR_FLYNN_CLIENT_SECRET
+FLYNN_GOOGLE_AUTH_REDIRECT_URI=https://flynnart.com/api/auth/google/callback
 
-# =============================================================================
-# NGINX Ports
-# =============================================================================
+# Admin JWT - Generate unique secret per site
+FLYNN_ADMIN_JWT_SECRET_KEY=$(openssl rand -base64 32)
+FLYNN_ADMIN_AUTHORIZED_EMAILS=flynn@example.com
+
+# CORS and API URLs
+FLYNN_CORS_ALLOWED_ORIGINS=https://flynnart.com
+FLYNN_NEXT_PUBLIC_API_URL=/api
+FLYNN_SERVER_API_URL=http://api-flynn:8080/api
+```
+
+### NGINX Ports (Production)
+```env
 NGINX_HTTP_PORT=80
 NGINX_HTTPS_PORT=443
 NGINX_HEALTH_PORT=9090
-
-# =============================================================================
-# PostgreSQL Configuration
-# =============================================================================
-# Password is stored in Docker secret file (see Step 5)
-# Do NOT set POSTGRES_PASSWORD here
 ```
+
+> **Single-site deployment:** Use `.env.example` → `.env` instead with `CORS_ALLOWED_ORIGINS`, `GOOGLE_CLIENT_ID`, `ADMIN_JWT_SECRET_KEY`, etc.
 
 **Save and exit nano:** `Ctrl+X`, then `Y`, then `Enter`
 
@@ -254,59 +272,78 @@ echo ""
 
 ---
 
-# STEP 6: Generate Self-Signed SSL Certificate
+# STEP 6: Generate Self-Signed SSL Certificates
 
 ```bash
 # Navigate to nginx directory
 cd ~/Painting_Website_Docker_NextJS/docker-compose/nginx
 
-# Create SSL directory
-mkdir -p ssl
+# Create SSL directories for both sites
+mkdir -p ssl/gg
+mkdir -p ssl/flynn
 
-# Generate self-signed certificate (for Cloudflare Full mode)
+# Generate self-signed certificate for ggpaintings.com
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout ssl/server.key \
-  -out ssl/server.crt \
+  -keyout ssl/gg/server.key \
+  -out ssl/gg/server.crt \
   -subj "/C=US/ST=New York/L=New York/O=GG Paintings/CN=ggpaintings.com"
 
+# Generate self-signed certificate for flynnart.com
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout ssl/flynn/server.key \
+  -out ssl/flynn/server.crt \
+  -subj "/C=US/ST=New York/L=New York/O=Flynn Art/CN=flynnart.com"
+
 # Set secure permissions
-chmod 600 ssl/server.key
-chmod 644 ssl/server.crt
+chmod 600 ssl/gg/server.key
+chmod 644 ssl/gg/server.crt
+chmod 600 ssl/flynn/server.key
+chmod 644 ssl/flynn/server.crt
 
 # Verify certificates
-ls -la ssl/
+ls -la ssl/gg/
+ls -la ssl/flynn/
 ```
 
-**Note:** Self-signed certificate is used because Cloudflare handles edge SSL. The connection between Cloudflare and your server uses this self-signed cert in "Full" SSL mode.
+**Note:** Self-signed certificates are used because Cloudflare handles edge SSL. The connection between Cloudflare and your server uses these self-signed certs in "Full" SSL mode. Each site needs its own certificate matching its domain.
 
 ---
 
-# STEP 7: Deploy with deploy.sh
+# STEP 7: Deploy with deploy-multi.sh
 
 ```bash
 # Navigate to docker-compose directory
 cd ~/Painting_Website_Docker_NextJS/docker-compose
 
 # Make deploy script executable
-chmod +x deploy.sh
+chmod +x deploy-multi.sh
 
 # Run the deployment script
-bash deploy.sh
+bash deploy-multi.sh
 ```
 
-The `deploy.sh` script will:
-1. Detect Docker Compose v2 (`docker compose`) or v1 (`docker-compose`)
-2. Build all images using `docker-compose.prod.yml`
-3. Wait for PostgreSQL to be healthy
-4. Start all containers
-5. Run security checks (non-root users, read-only filesystems)
-6. Check for existing backups and restore if available
+The `deploy-multi.sh` script will:
+1. Load environment variables from `.env.multi`
+2. Run pre-flight checks (secrets, SSL certs, nginx config)
+3. Detect Docker Compose v2 (`docker compose`) or v1 (`docker-compose`)
+4. Build all images using `docker-compose.multi.yml`
+5. Wait for PostgreSQL to be healthy
+6. Start all containers (API-GG, API-Flynn, Frontend-GG, Frontend-Flynn, NGINX)
+7. Run security checks (non-root users, read-only filesystems)
+8. Check for existing backups and restore if available
 
 **Expected output:**
 ```
 ========================================
-Art Gallery Production Deployment
+Art Gallery Multi-Site Production Deployment
 ========================================
+
+Loading environment from .env.multi...
+Running pre-flight checks...
+  ✓ secrets/postgres_password found
+  ✓ SSL certificates found for gg
+  ✓ SSL certificates found for flynn
+  ✓ nginx/nginx.multi.conf found
 
 Docker Compose version: docker compose (v2)
 Building images...
@@ -319,8 +356,10 @@ Waiting for PostgreSQL to be ready...
 PostgreSQL is ready!
 
 Running security checks...
-✓ API container running as non-root user
-✓ Frontend container running as non-root user
+✓ API-GG container running as non-root user
+✓ API-Flynn container running as non-root user
+✓ Frontend-GG container running as non-root user
+✓ Frontend-Flynn container running as non-root user
 ✓ NGINX container running as non-root user
 ✓ Read-only filesystems enabled
 
@@ -330,7 +369,7 @@ Deployment complete!
 **Alternative: Manual deployment**
 ```bash
 # If you prefer manual control:
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.multi.yml up -d --build
 ```
 
 ---
@@ -342,25 +381,35 @@ docker compose -f docker-compose.prod.yml up -d --build
 cd ~/Painting_Website_Docker_NextJS/docker-compose
 
 # Check container status
-docker compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.multi.yml ps
 
 # Expected output:
-# NAME                        STATUS
-# artgallery-postgres-prod    Up X minutes, healthy
-# artgallery-api-prod         Up X minutes, healthy
-# artgallery-frontend-prod    Up X minutes, healthy
-# artgallery-nginx            Up X minutes, healthy
+# NAME                             STATUS
+# artgallery-postgres              Up X minutes, healthy
+# artgallery-api-gg                Up X minutes, healthy
+# artgallery-api-flynn             Up X minutes, healthy
+# artgallery-frontend-gg           Up X minutes, healthy
+# artgallery-frontend-flynn        Up X minutes, healthy
+# artgallery-nginx                 Up X minutes, healthy
 ```
 
 ## Verify Non-Root Users
 
 ```bash
-# API container
-docker exec artgallery-api-prod whoami
-# Expected: app
+# API-GG container
+docker exec artgallery-api-gg whoami
+# Expected: appuser
 
-# Frontend container
-docker exec artgallery-frontend-prod whoami
+# API-Flynn container
+docker exec artgallery-api-flynn whoami
+# Expected: appuser
+
+# Frontend-GG container
+docker exec artgallery-frontend-gg whoami
+# Expected: nextjs
+
+# Frontend-Flynn container
+docker exec artgallery-frontend-flynn whoami
 # Expected: nextjs
 
 # NGINX container
@@ -371,8 +420,10 @@ docker exec artgallery-nginx whoami
 ## Verify Read-Only Filesystems
 
 ```bash
-docker inspect artgallery-api-prod --format '{{.HostConfig.ReadonlyRootfs}}'
-docker inspect artgallery-frontend-prod --format '{{.HostConfig.ReadonlyRootfs}}'
+docker inspect artgallery-api-gg --format '{{.HostConfig.ReadonlyRootfs}}'
+docker inspect artgallery-api-flynn --format '{{.HostConfig.ReadonlyRootfs}}'
+docker inspect artgallery-frontend-gg --format '{{.HostConfig.ReadonlyRootfs}}'
+docker inspect artgallery-frontend-flynn --format '{{.HostConfig.ReadonlyRootfs}}'
 docker inspect artgallery-nginx --format '{{.HostConfig.ReadonlyRootfs}}'
 # All should return: true
 ```
@@ -381,11 +432,11 @@ docker inspect artgallery-nginx --format '{{.HostConfig.ReadonlyRootfs}}'
 
 ```bash
 # Password should NOT be in environment variables
-docker inspect artgallery-postgres-prod --format '{{.Config.Env}}' | grep -i password
+docker inspect artgallery-postgres --format '{{.Config.Env}}' | grep -i password
 # Should return: (empty)
 
 # Secret file should exist in container
-docker exec artgallery-postgres-prod cat /run/secrets/postgres_password
+docker exec artgallery-postgres cat /run/secrets/postgres_password
 # Should return: your postgres password
 ```
 
@@ -395,7 +446,7 @@ docker exec artgallery-postgres-prod cat /run/secrets/postgres_password
 # Test NGINX health endpoint
 curl -I http://localhost:9090/health
 
-# Test API health endpoint (internal)
+# Test API health endpoint for GG (internal)
 curl -I http://localhost/api/health/health
 
 # Test frontend (internal)
@@ -406,13 +457,15 @@ curl -I http://localhost/
 
 ```bash
 # View all logs
-docker compose -f docker-compose.prod.yml logs -f
+docker compose -f docker-compose.multi.yml logs -f
 
 # View specific service logs
-docker compose -f docker-compose.prod.yml logs -f api
-docker compose -f docker-compose.prod.yml logs -f frontend
-docker compose -f docker-compose.prod.yml logs -f nginx
-docker compose -f docker-compose.prod.yml logs -f postgres
+docker compose -f docker-compose.multi.yml logs -f api-gg
+docker compose -f docker-compose.multi.yml logs -f api-flynn
+docker compose -f docker-compose.multi.yml logs -f frontend-gg
+docker compose -f docker-compose.multi.yml logs -f frontend-flynn
+docker compose -f docker-compose.multi.yml logs -f nginx
+docker compose -f docker-compose.multi.yml logs -f postgres
 ```
 
 ---
@@ -466,136 +519,7 @@ dig ggpaintings.com
 
 ---
 
-# STEP 10: Setup Automated Backups
-
-```bash
-# Navigate to scripts directory
-cd ~/Painting_Website_Docker_NextJS/docker-compose/scripts
-
-# Install backup cron job (requires sudo)
-sudo bash install-backup-cron.sh
-```
-
-The installation script will:
-1. Copy backup/restore scripts to `/opt/artgallery/scripts/`
-2. Create `/opt/artgallery/backups/` directory
-3. Install cron job for weekly backup (Sunday 2:00 AM)
-4. Run initial test backup
-
-## Configure Backup Settings
-
-```bash
-# Edit backup configuration
-sudo nano /opt/artgallery/scripts/backup.config
-```
-
-**Ensure these values are correct:**
-```
-POSTGRES_PASSWORD=your-postgres-password-here
-CONTAINER_NAME=artgallery-postgres-prod
-DATABASE_NAME=artgallery
-RETENTION_DAYS=120
-```
-
-```bash
-# Set secure permissions on config
-sudo chmod 600 /opt/artgallery/scripts/backup.config
-
-# Verify cron job is installed
-crontab -l
-# Should show: 0 2 * * 0 /opt/artgallery/scripts/backup.sh
-```
-
-## Manual Backup Test
-
-```bash
-# Run manual backup
-/opt/artgallery/scripts/backup.sh
-
-# Check backup was created
-ls -lh /opt/artgallery/backups/
-
-# Check backup log
-cat /opt/artgallery/backups/backup.log
-```
-
----
-
-# STEP 10a: Configure Multi-Site Environment File (Optional)
-
-> **Only needed if deploying multi-site architecture** (ggpaintings.com + flynnart.com on the same server).
-> Skip this step for single-site deployment.
-
-```bash
-# Navigate to docker-compose directory
-cd ~/Painting_Website_Docker_NextJS/docker-compose
-
-# Copy multi-site environment template
-cp .env.multi.example .env.multi
-
-# Edit the multi-site environment file
-nano .env.multi
-```
-
-**Required `.env.multi` configuration for production:**
-
-The template file (`.env.multi.example`) contains placeholder values for both sites. Update these sections:
-
-### PostgreSQL Password
-The password in `.env.multi` is NOT used directly — it reads from `secrets/postgres_password` (created in STEP 5). Ensure that file exists:
-```bash
-cat secrets/postgres_password
-echo ""
-```
-
-### Site: gg (ggpaintings.com)
-```env
-GG_SITE_NAME="Gloria Gronowicz Fine Art"
-GG_SITE_DESCRIPTION="Gloria Gronowicz is an oil painter who creates works inspired by nature"
-GG_CONTACT_EMAIL="gloriagronowicz@gmail.com"
-GG_CONTACT_PHONE="860.670.0799"
-
-# Google OAuth — Get from Google Cloud Console
-GG_GOOGLE_AUTH_CLIENT_ID=YOUR_GG_CLIENT_ID.apps.googleusercontent.com
-GG_GOOGLE_AUTH_CLIENT_SECRET=YOUR_GG_CLIENT_SECRET
-GG_GOOGLE_AUTH_REDIRECT_URI=https://ggpaintings.com/api/auth/google/callback
-
-# Admin JWT — Generate unique secret per site
-GG_ADMIN_JWT_SECRET_KEY=$(openssl rand -base64 32)
-GG_ADMIN_AUTHORIZED_EMAILS=gloriagronowicz@gmail.com
-```
-
-### Site: flynn (flynnart.com)
-```env
-FLYNN_SITE_NAME="Flynn Art Gallery"
-FLYNN_SITE_DESCRIPTION="Fine art paintings by Flynn"
-FLYNN_CONTACT_EMAIL="flynn@example.com"
-FLYNN_CONTACT_PHONE="555.123.4567"
-
-# Google OAuth — Separate client ID from Google Cloud Console
-FLYNN_GOOGLE_AUTH_CLIENT_ID=YOUR_FLYNN_CLIENT_ID.apps.googleusercontent.com
-FLYNN_GOOGLE_AUTH_CLIENT_SECRET=YOUR_FLYNN_CLIENT_SECRET
-FLYNN_GOOGLE_AUTH_REDIRECT_URI=https://flynnart.com/api/auth/google/callback
-
-# Admin JWT — Generate unique secret per site
-FLYNN_ADMIN_JWT_SECRET_KEY=$(openssl rand -base64 32)
-FLYNN_ADMIN_AUTHORIZED_EMAILS=flynn@example.com
-```
-
-**Save and exit nano:** `Ctrl+X`, then `Y`, then `Enter`
-
-**Set secure permissions:**
-```bash
-chmod 600 .env.multi
-```
-
-> **Important:** `.env.multi` is in `.gitignore` and will NOT be tracked by git. Each server must have its own copy.
-
----
-
-# STEP 10b: Multi-Site Backup Setup (Optional)
-
-> **Only needed if deploying multi-site architecture** (ggpaintings.com + flynnart.com on the same server).
+# STEP 10: Setup Automated Backups (Multi-Site)
 
 ```bash
 # Navigate to scripts directory
@@ -684,11 +608,14 @@ curl -I https://ggpaintings.com/paintings/landscapes
 
 ## Verify Database Seeding
 
-The API container should automatically seed the database on first start. Verify:
+The API containers should automatically seed their respective databases on first start. Verify:
 
 ```bash
-# Check API logs for seeding
-docker logs artgallery-api-prod | grep -i seed
+# Check API-GG logs for seeding
+docker logs artgallery-api-gg | grep -i seed
+
+# Check API-Flynn logs for seeding
+docker logs artgallery-api-flynn | grep -i seed
 
 # Should see: "Database seeding completed"
 ```
@@ -715,11 +642,11 @@ cd ~/Painting_Website_Docker_NextJS/docker-compose
 # Pull latest changes
 git pull
 
-# Backup database before update
-/opt/artgallery/scripts/backup.sh
+# Backup databases before update
+/opt/artgallery/scripts/backup-multi.sh
 
 # Redeploy
-bash deploy.sh
+bash deploy-multi.sh
 ```
 
 ## View Container Resources
@@ -757,11 +684,11 @@ docker restart artgallery-nginx
 # List available backups
 ls -lh /opt/artgallery/backups/*.dump
 
-# Restore from backup
-/opt/artgallery/scripts/restore.sh
+# Restore ggpaintings.com (interactive)
+/opt/artgallery/scripts/restore-multi.sh gg
 
-# Restore specific backup
-/opt/artgallery/scripts/restore.sh artgallery_db_20260728_020000.dump
+# Restore flynnart.com from specific backup
+/opt/artgallery/scripts/restore-multi.sh flynn artgallery_artgallery_flynn_20260728_020000.dump
 ```
 
 ---
@@ -772,13 +699,15 @@ ls -lh /opt/artgallery/backups/*.dump
 
 ```bash
 # Check logs
-docker logs artgallery-api-prod
-docker logs artgallery-frontend-prod
+docker logs artgallery-api-gg
+docker logs artgallery-api-flynn
+docker logs artgallery-frontend-gg
+docker logs artgallery-frontend-flynn
 docker logs artgallery-nginx
-docker logs artgallery-postgres-prod
+docker logs artgallery-postgres
 
 # Check container health
-docker inspect --format='{{.State.Health.Status}}' artgallery-postgres-prod
+docker inspect --format='{{.State.Health.Status}}' artgallery-postgres
 ```
 
 ## Database Connection Failed
@@ -788,7 +717,7 @@ docker inspect --format='{{.State.Health.Status}}' artgallery-postgres-prod
 docker ps | grep postgres
 
 # Check PostgreSQL logs
-docker logs artgallery-postgres-prod
+docker logs artgallery-postgres
 
 # Verify password secret
 cat secrets/postgres_password
@@ -797,9 +726,13 @@ cat secrets/postgres_password
 ## NGINX 502 Bad Gateway
 
 ```bash
-# Check upstream services
-docker exec artgallery-nginx curl -s http://api:8080/api/health/health
-docker exec artgallery-nginx curl -s http://frontend:3000/
+# Check upstream services for GG site
+docker exec artgallery-nginx curl -s http://api-gg:8080/api/health/health
+docker exec artgallery-nginx curl -s http://frontend-gg:3000/
+
+# Check upstream services for Flynn site
+docker exec artgallery-nginx curl -s http://api-flynn:8080/api/health/health
+docker exec artgallery-nginx curl -s http://frontend-flynn:3000/
 
 # Check NGINX logs
 docker logs artgallery-nginx
@@ -808,19 +741,25 @@ docker logs artgallery-nginx
 ## Cloudflare Connection Issues
 
 ```bash
-# Check if Cloudflare can reach your server
+# Check if Cloudflare can reach your server (GG site)
 curl -H "CF-Connecting-IP: 1.2.3.4" https://ggpaintings.com
 
-# Verify SSL certificate
+# Check if Cloudflare can reach your server (Flynn site)
+curl -H "CF-Connecting-IP: 1.2.3.4" https://flynnart.com
+
+# Verify SSL certificate for GG
 openssl s_client -connect ggpaintings.com:443 -servername ggpaintings.com
+
+# Verify SSL certificate for Flynn
+openssl s_client -connect flynnart.com:443 -servername flynnart.com
 ```
 
 ## Reset Database (Development Only)
 
 ```bash
 # WARNING: This will delete all data!
-docker compose -f docker-compose.prod.yml down -v
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.multi.yml down -v
+docker compose -f docker-compose.multi.yml up -d --build
 ```
 
 ---

@@ -1,0 +1,320 @@
+# ============================================================================
+# ARM64 Multi-Site Docker Compose Configuration
+# ============================================================================
+# Runs two independent painting gallery sites on ARM64 hardware (Snapdragon,
+# Apple Silicon, etc.) with shared PostgreSQL (separate databases).
+#
+# Key differences from docker-compose.multi.yml (x86_64 production):
+#   - Uses environment variable for PostgreSQL password (no Docker secrets)
+#   - Container names suffixed with -arm64 to avoid conflicts
+#   - read_only filesystems disabled for easier local development
+#   - API and Frontend ports exposed directly for debugging
+#   - Uses Dockerfile.local for NGINX (includes dos2unix for Windows CRLF)
+#   - Uses localhost SSL certificates instead of production certs
+#
+# Usage:
+#   docker compose -f docker-compose.multi.arm64.yml up -d --build
+#
+# Access sites at:
+#   - Site gg:     http://localhost:8181
+#   - Site flynn:  http://localhost:8182
+#   - Health:      http://localhost:9090/health
+#   - Frontend gg (direct):  http://localhost:3001
+#   - Frontend flynn (direct): http://localhost:3002
+#
+# Each site has:
+#   - Independent database (artgallery_gg, artgallery_flynn)
+#   - Independent API container
+#   - Independent frontend container (built with site-specific config)
+#   - Independent image storage volume
+#
+# Shared resources:
+#   - Single PostgreSQL container (multiple databases)
+#   - Single NGINX container (per-site server blocks)
+# ============================================================================
+
+services:
+  # === Shared PostgreSQL ===
+  postgres:
+    image: postgres:17-alpine
+    container_name: artgallery-postgres-arm64
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
+      - ${BACKUP_DIR:-./backups}:/backups:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks:
+      - artgallery-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # === Site: gg (ggpaintings.com) ===
+
+  api-gg:
+    container_name: artgallery-api-gg-arm64
+    build:
+      context: ../ServerApp
+      dockerfile: ./ServerApp.Api/Dockerfile
+      target: final
+    ports:
+      - "${API_PORT_GG:-8081}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=artgallery_gg;Username=postgres;Password=${POSTGRES_PASSWORD};
+      CORS_ALLOWED_ORIGINS: ${GG_CORS_ALLOWED_ORIGINS}
+      GoogleAuth__ClientId: ${GG_GOOGLE_AUTH_CLIENT_ID}
+      GoogleAuth__ClientSecret: ${GG_GOOGLE_AUTH_CLIENT_SECRET}
+      GoogleAuth__RedirectUri: ${GG_GOOGLE_AUTH_REDIRECT_URI}
+      Admin__JwtSecretKey: ${GG_ADMIN_JWT_SECRET_KEY}
+      Admin__JwtExpiryMinutes: ${GG_ADMIN_JWT_EXPIRY_MINUTES:-60}
+      Admin__AuthorizedEmails: ${GG_ADMIN_AUTHORIZED_EMAILS}
+      Database__ReadOnlyMode: ${GG_DATABASE_READ_ONLY_MODE:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - artgallery-network
+    restart: unless-stopped
+    volumes:
+      - image_data_gg:/app/images:rw
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  frontend-gg:
+    container_name: artgallery-frontend-gg-arm64
+    build:
+      context: ../clientapp
+      dockerfile: Dockerfile
+      target: production
+      args:
+        NEXT_PUBLIC_SITE_NAME: ${GG_SITE_NAME}
+        NEXT_PUBLIC_SITE_DESCRIPTION: ${GG_SITE_DESCRIPTION}
+        NEXT_PUBLIC_CONTACT_EMAIL: ${GG_CONTACT_EMAIL}
+        NEXT_PUBLIC_CONTACT_PHONE: ${GG_CONTACT_PHONE}
+        NEXT_PUBLIC_CSS_BACKGROUND: ${GG_CSS_BACKGROUND}
+        NEXT_PUBLIC_CSS_FOREGROUND: ${GG_CSS_FOREGROUND}
+        NEXT_PUBLIC_CSS_NAVBAR_FOOTER_BG: ${GG_CSS_NAVBAR_FOOTER_BG}
+        NEXT_PUBLIC_CSS_TITLE_COLOR: ${GG_CSS_TITLE_COLOR}
+        NEXT_PUBLIC_CSS_BUTTON_COLOR: ${GG_CSS_BUTTON_COLOR}
+        NEXT_PUBLIC_API_URL: ${GG_NEXT_PUBLIC_API_URL}
+        SERVER_API_URL: ${GG_SERVER_API_URL}
+    user: "1001:1001"
+    ports:
+      - "3001:3000"
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: ${GG_NEXT_PUBLIC_API_URL}
+      SERVER_API_URL: ${GG_SERVER_API_URL}
+    networks:
+      - artgallery-network
+    restart: unless-stopped
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+    command: node server.js
+    depends_on:
+      api-gg:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # === Site: flynn (flynnart.com) ===
+
+  api-flynn:
+    container_name: artgallery-api-flynn-arm64
+    build:
+      context: ../ServerApp
+      dockerfile: ./ServerApp.Api/Dockerfile
+      target: final
+    ports:
+      - "${API_PORT_FLYNN:-8082}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=artgallery_flynn;Username=postgres;Password=${POSTGRES_PASSWORD};
+      CORS_ALLOWED_ORIGINS: ${FLYNN_CORS_ALLOWED_ORIGINS}
+      GoogleAuth__ClientId: ${FLYNN_GOOGLE_AUTH_CLIENT_ID}
+      GoogleAuth__ClientSecret: ${FLYNN_GOOGLE_AUTH_CLIENT_SECRET}
+      GoogleAuth__RedirectUri: ${FLYNN_GOOGLE_AUTH_REDIRECT_URI}
+      Admin__JwtSecretKey: ${FLYNN_ADMIN_JWT_SECRET_KEY}
+      Admin__JwtExpiryMinutes: ${FLYNN_ADMIN_JWT_EXPIRY_MINUTES:-60}
+      Admin__AuthorizedEmails: ${FLYNN_ADMIN_AUTHORIZED_EMAILS}
+      Database__ReadOnlyMode: ${FLYNN_DATABASE_READ_ONLY_MODE:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - artgallery-network
+    restart: unless-stopped
+    volumes:
+      - image_data_flynn:/app/images:rw
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  frontend-flynn:
+    container_name: artgallery-frontend-flynn-arm64
+    build:
+      context: ../clientapp
+      dockerfile: Dockerfile
+      target: production
+      args:
+        NEXT_PUBLIC_SITE_NAME: ${FLYNN_SITE_NAME}
+        NEXT_PUBLIC_SITE_DESCRIPTION: ${FLYNN_SITE_DESCRIPTION}
+        NEXT_PUBLIC_CONTACT_EMAIL: ${FLYNN_CONTACT_EMAIL}
+        NEXT_PUBLIC_CONTACT_PHONE: ${FLYNN_CONTACT_PHONE}
+        NEXT_PUBLIC_CSS_BACKGROUND: ${FLYNN_CSS_BACKGROUND}
+        NEXT_PUBLIC_CSS_FOREGROUND: ${FLYNN_CSS_FOREGROUND}
+        NEXT_PUBLIC_CSS_NAVBAR_FOOTER_BG: ${FLYNN_CSS_NAVBAR_FOOTER_BG}
+        NEXT_PUBLIC_CSS_TITLE_COLOR: ${FLYNN_CSS_TITLE_COLOR}
+        NEXT_PUBLIC_CSS_BUTTON_COLOR: ${FLYNN_CSS_BUTTON_COLOR}
+        NEXT_PUBLIC_API_URL: ${FLYNN_NEXT_PUBLIC_API_URL}
+        SERVER_API_URL: ${FLYNN_SERVER_API_URL}
+    user: "1001:1001"
+    ports:
+      - "3002:3000"
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: ${FLYNN_NEXT_PUBLIC_API_URL}
+      SERVER_API_URL: ${FLYNN_SERVER_API_URL}
+    networks:
+      - artgallery-network
+    restart: unless-stopped
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+    command: node server.js
+    depends_on:
+      api-flynn:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # === Shared NGINX (per-site server blocks) ===
+  nginx:
+    container_name: artgallery-nginx-arm64
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.local
+    ports:
+      - "${NGINX_HTTP_PORT:-8181}:80"
+      - "${NGINX_HTTPS_PORT:-8182}:443"
+      - "${NGINX_HEALTH_PORT:-9090}:8080"
+    volumes:
+      - ./nginx/nginx.multi.local.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl/localhost/gg:/etc/nginx/ssl/gg:ro
+      - ./nginx/ssl/localhost/flynn:/etc/nginx/ssl/flynn:ro
+    tmpfs:
+      - /var/log/nginx
+      - /var/cache/nginx
+      - /var/cache/nginx/static
+      - /run
+      - /etc/nginx/conf.d
+      - /tmp
+    depends_on:
+      api-gg:
+        condition: service_healthy
+      frontend-gg:
+        condition: service_healthy
+      api-flynn:
+        condition: service_healthy
+      frontend-flynn:
+        condition: service_healthy
+    networks:
+      - artgallery-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+volumes:
+  postgres_data:
+  image_data_gg:
+    driver: local
+  image_data_flynn:
+    driver: local
+
+networks:
+  artgallery-network:
+    driver: bridge

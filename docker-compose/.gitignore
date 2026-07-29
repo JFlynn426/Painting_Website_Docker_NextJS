@@ -3,6 +3,7 @@
 .env.local
 .env.*.local
 .env.multi
+.env.multi.arm64
 
 # Secrets directory (except .gitkeep)
 secrets/*

@@ -41,6 +41,57 @@ else
     exit 1
 fi
 
+# Pre-flight checks
+echo ""
+echo "Running pre-flight checks..."
+echo "------------------------------------------"
+
+PREFLIGHT_PASSED=true
+
+# Check PostgreSQL password secret file
+if [ ! -f "secrets/postgres_password" ]; then
+    echo "  ERROR: secrets/postgres_password not found!"
+    echo "  Create it with: echo -n 'your_password' > secrets/postgres_password"
+    PREFLIGHT_PASSED=false
+else
+    echo "  PostgreSQL password secret file found"
+fi
+
+# Check SSL certificate directories and files
+for site_dir in nginx/ssl/gg nginx/ssl/flynn; do
+    if [ -d "$site_dir" ]; then
+        if [ ! -f "$site_dir/server.crt" ] || [ ! -f "$site_dir/server.key" ]; then
+            echo "  ERROR: SSL certificate files missing in $site_dir/"
+            echo "  Generate with: openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout $site_dir/server.key -out $site_dir/server.crt -subj '/CN=localhost'"
+            PREFLIGHT_PASSED=false
+        else
+            echo "  SSL certificates found in $site_dir/"
+        fi
+    else
+        echo "  ERROR: SSL directory $site_dir/ not found!"
+        echo "  Create it with: mkdir -p $site_dir"
+        PREFLIGHT_PASSED=false
+    fi
+done
+
+# Check NGINX config file
+if [ ! -f "nginx/nginx.conf" ]; then
+    echo "  ERROR: nginx/nginx.conf not found!"
+    PREFLIGHT_PASSED=false
+else
+    echo "  NGINX config file found"
+fi
+
+if [ "$PREFLIGHT_PASSED" = false ]; then
+    echo ""
+    echo "ERROR: Pre-flight checks failed. Fix the issues above before deploying."
+    exit 1
+fi
+
+echo "------------------------------------------"
+echo "All pre-flight checks passed!"
+echo ""
+
 echo "[1/6] Setting up NGINX file permissions for non-root user (UID 101)..."
 
 # Set ownership of SSL directories and files to UID 101 (nginx user)
@@ -234,7 +285,7 @@ echo "To view logs:"
 echo "  $COMPOSE -f docker-compose.multi.yml logs -f"
 echo ""
 echo "To check health:"
-echo "  curl http://localhost:8080/health"
+echo "  curl http://localhost:9090/health"
 echo ""
 echo "To run security checks manually:"
 echo "  docker exec artgallery-api-gg whoami"
