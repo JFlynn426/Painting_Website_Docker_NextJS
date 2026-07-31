@@ -13,7 +13,7 @@
 #   - Uses localhost SSL certificates instead of production certs
 #
 # Usage:
-#   docker compose -f docker-compose.multi.arm64.yml up -d --build
+#   docker compose --env-file .env.multi.arm64 -f docker-compose.multi.arm64.yml up -d --build
 #
 # Access sites at:
 #   - Site gg:     http://localhost:8181
@@ -46,7 +46,7 @@ services:
       - ./scripts/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
       - ${BACKUP_DIR:-./backups}:/backups:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -96,7 +96,7 @@ services:
     tmpfs:
       - /tmp
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/api/health/health" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -148,7 +148,7 @@ services:
       api-gg:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000"]
+      test: [ "CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -195,7 +195,7 @@ services:
     tmpfs:
       - /tmp
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/api/health/health" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -247,7 +247,7 @@ services:
       api-flynn:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000"]
+      test: [ "CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -295,7 +295,7 @@ services:
       - artgallery-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/health"]
+      test: [ "CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
