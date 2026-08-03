@@ -25,8 +25,11 @@ RUN chown -R 101:101 /var/cache/nginx && \
 RUN adduser -D -u 101 nginx || true
 
 # Create entrypoint script that sets up tmpfs permissions before starting nginx
+# Install dos2unix to convert CRLF line endings (from Windows) to LF (Unix)
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN apk add --no-cache dos2unix && \
+    dos2unix /entrypoint.sh && \
+    chmod +x /entrypoint.sh
 
 # Keep as root for entrypoint to fix tmpfs permissions, then switch to non-root
 # USER 101 removed - entrypoint will switch to non-root after fixing permissions
