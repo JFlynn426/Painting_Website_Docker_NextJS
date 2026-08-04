@@ -37,7 +37,7 @@ export default function PaintingsDropdown({ categories }: PaintingsDropdownProps
         >
             <button
                 onClick={() => setIsPaintingsOpen(!isPaintingsOpen)}
-                className="pl-3 py-2 rounded flex items-center hover:text-blue-400 justify-center transition duration-200 ease-in-out w-full"
+                className="pl-3 py-2 rounded flex items-center hover:text-[var(--link-hover)] justify-center transition duration-200 ease-in-out w-full"
             >
                 Paintings
                 <span style={{

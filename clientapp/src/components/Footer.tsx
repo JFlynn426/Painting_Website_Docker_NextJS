@@ -5,8 +5,8 @@ export default function Footer() {
     const contactPhone = process.env.NEXT_PUBLIC_CONTACT_PHONE || "";
 
     return (
-        <footer className="bg-[var(--navbar-footer-bg)] text-white relative">
-            <div className="h-px bg-white w-full"></div>
+        <footer className="bg-[var(--navbar-footer-bg)] text-[var(--foreground)] relative">
+            <div className="h-px bg-[var(--foreground)] w-full"></div>
             <div className="container mx-auto px-4 py-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="flex flex-col items-center text-center">

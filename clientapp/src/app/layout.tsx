@@ -1,16 +1,7 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import "./globals.css";
 
-const font = localFont({
-  src: [
-    {
-      path: "../../public/fonts/Manjari-Thin.ttf",
-    },
-  ],
-  variable: "--font-local",
-  display: "swap",
-});
+const cssFont = process.env.NEXT_PUBLIC_CSS_FONT || "Manjari-Thin.ttf";
 
 // Site configuration from environment variables (build-time)
 const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Gloria Gronowicz Fine Art";
@@ -22,6 +13,7 @@ const cssForeground = process.env.NEXT_PUBLIC_CSS_FOREGROUND || "#ffffff";
 const cssNavbarFooterBg = process.env.NEXT_PUBLIC_CSS_NAVBAR_FOOTER_BG || "#2d2d2d";
 const cssTitleColor = process.env.NEXT_PUBLIC_CSS_TITLE_COLOR || "#66b3ff";
 const cssButtonColor = process.env.NEXT_PUBLIC_CSS_BUTTON_COLOR || "#1e3a8a";
+const cssLinkHover = process.env.NEXT_PUBLIC_CSS_LINK_HOVER || "#60a5fa";
 
 export const metadata: Metadata = {
   title: siteName,
@@ -35,9 +27,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${font.variable} bg-[var(--background)] text-[var(--foreground)]`}>
+      <body className="bg-[var(--background)] text-[var(--foreground)]">
         <style dangerouslySetInnerHTML={{
           __html: `
+            @font-face {
+              font-family: 'SiteFont';
+              src: url('/fonts/${cssFont}') format('truetype');
+              font-display: swap;
+            }
             /* Override CSS variables from environment configuration */
             :root {
               --background: ${cssBackground};
@@ -45,6 +42,8 @@ export default function RootLayout({
               --navbar-footer-bg: ${cssNavbarFooterBg};
               --title-color: ${cssTitleColor};
               --button-color: ${cssButtonColor};
+              --link-hover: ${cssLinkHover};
+              --font-local: 'SiteFont', sans-serif;
             }
             @media (prefers-color-scheme: dark) {
               :root {
@@ -53,6 +52,7 @@ export default function RootLayout({
                 --navbar-footer-bg: ${cssNavbarFooterBg};
                 --title-color: ${cssTitleColor};
                 --button-color: ${cssButtonColor};
+                --link-hover: ${cssLinkHover};
               }
             }
             strong, b {

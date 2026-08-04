@@ -170,3 +170,12 @@
 - **Incorrect**: `public record MyValue : ServerApp.Shared.Domain.StringValueObject`
 - This improves code readability and maintainability
 - **Namespace structure**: `ServerApp.Shared.{Domain,Exceptions}` (NOT `ServerApp.Shared.Abstractions.{Domain,Exceptions}`)
+
+## Environment File Synchronization
+
+- **CRITICAL**: When modifying CSS theme variables or any site-specific configuration in `.env` files, ALL `.env` files must be updated simultaneously:
+  - `docker-compose/.env.multi`
+  - `docker-compose/.env.multi.example`
+  - `docker-compose/.env.multi.arm64.example`
+- This ensures consistency across local development, production, and ARM64 deployments
+- Variables to keep in sync include: `FLYNN_CSS_BACKGROUND`, `FLYNN_CSS_FOREGROUND`, `FLYNN_CSS_NAVBAR_FOOTER_BG`, `FLYNN_CSS_TITLE_COLOR`, `FLYNN_CSS_BUTTON_COLOR`, `FLYNN_CSS_FONT`, `FLYNN_CSS_LINK_HOVER`, and all corresponding `GG_` prefixed variables

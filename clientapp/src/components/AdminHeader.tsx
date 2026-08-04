@@ -46,7 +46,7 @@ export default function AdminHeader() {
                         Back to Home Page
                     </Link>
                 </div>
-                <div className="h-px bg-white w-full"></div>
+                <div className="h-px bg-[var(--foreground)] w-full"></div>
             </header>
         );
     }
@@ -107,7 +107,7 @@ export default function AdminHeader() {
                     </button>
                 </div>
             </div>
-            <div className="h-px bg-white w-full"></div>
+            <div className="h-px bg-[var(--foreground)] w-full"></div>
         </nav>
     );
 }

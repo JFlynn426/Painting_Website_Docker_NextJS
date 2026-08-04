@@ -43,7 +43,7 @@ export default function NavBar() {
 
     if (!isLoaded) {
         return (
-            <nav className="bg-[var(--navbar-footer-bg)] text-white sticky-top">
+            <nav className="bg-[var(--navbar-footer-bg)] text-[var(--foreground)] sticky-top">
                 <div className="container mx-auto px-4 py-3">
                     <div className="flex items-center justify-center mb-3">
                         <Link href="/" className="text-4xl md:text-5xl font-bold" style={{ color: 'var(--title-color)' }}>
@@ -51,13 +51,13 @@ export default function NavBar() {
                         </Link>
                     </div>
                 </div>
-                <div className="h-px bg-white w-full"></div>
+                <div className="h-px bg-[var(--foreground)] w-full"></div>
             </nav>
         );
     }
 
     return (
-        <nav className="bg-[var(--navbar-footer-bg)] text-white sticky-top">
+        <nav className="bg-[var(--navbar-footer-bg)] text-[var(--foreground)] sticky-top">
             <div className="container mx-auto px-4 py-3">
                 {/* Header Row - Centered Logo with Hamburger Button on Right */}
                 <div className="relative flex items-center justify-center mb-3">
@@ -78,38 +78,38 @@ export default function NavBar() {
                 <div className="hidden lg:flex lg:space-x-4 justify-center">
                     <Link
                         href="/"
-                        className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-blue-400"
+                        className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-[var(--link-hover)]"
                     >
                         Home
                     </Link>
                     <Link
                         href="/about"
-                        className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-blue-400"
+                        className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-[var(--link-hover)]"
                     >
                         About
                     </Link>
                     <PaintingsDropdown categories={categories} />
                     <Link
                         href="/paintings/new-paintings"
-                        className="pr-3 py-2 rounded transition duration-200 ease-in-out hover:text-blue-400"
+                        className="pr-3 py-2 rounded transition duration-200 ease-in-out hover:text-[var(--link-hover)]"
                     >
                         New Paintings
                     </Link>
                     <Link
                         href="/galleries"
-                        className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-blue-400"
+                        className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-[var(--link-hover)]"
                     >
                         Galleries
                     </Link>
                     <Link
                         href="/contact"
-                        className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-blue-400"
+                        className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-[var(--link-hover)]"
                     >
                         Contact
                     </Link>
                 </div>
             </div>
-            <div className="h-px bg-white w-full"></div>
+            <div className="h-px bg-[var(--foreground)] w-full"></div>
         </nav>
     );
 }

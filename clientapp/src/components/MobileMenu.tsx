@@ -17,14 +17,14 @@ export default function MobileMenu({ categories, isOpen, onClose }: MobileMenuPr
         <div className="flex flex-col space-y-2 w-full items-center">
             <Link
                 href="/"
-                className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-blue-400 text-center w-full"
+                className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-[var(--link-hover)] text-center w-full"
                 onClick={onClose}
             >
                 Home
             </Link>
             <Link
                 href="/about"
-                className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-blue-400 text-center w-full"
+                className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-[var(--link-hover)] text-center w-full"
                 onClick={onClose}
             >
                 About
@@ -32,21 +32,21 @@ export default function MobileMenu({ categories, isOpen, onClose }: MobileMenuPr
             <PaintingsDropdown categories={categories} />
             <Link
                 href="/paintings/new-paintings"
-                className="pr-3 py-2 rounded transition duration-200 ease-in-out hover:text-blue-400 text-center w-full"
+                className="pr-3 py-2 rounded transition duration-200 ease-in-out hover:text-[var(--link-hover)] text-center w-full"
                 onClick={onClose}
             >
                 New Paintings
             </Link>
             <Link
                 href="/galleries"
-                className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-blue-400 text-center w-full"
+                className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-[var(--link-hover)] text-center w-full"
                 onClick={onClose}
             >
                 Galleries
             </Link>
             <Link
                 href="/contact"
-                className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-blue-400 text-center w-full"
+                className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-[var(--link-hover)] text-center w-full"
                 onClick={onClose}
             >
                 Contact
