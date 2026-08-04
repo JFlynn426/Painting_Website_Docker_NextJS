@@ -13,7 +13,7 @@
 
 .description {
     text-align: center;
-    color: white;
+    color: var(--foreground);
     margin-bottom: 30px;
     font-size: 1.1rem;
 }

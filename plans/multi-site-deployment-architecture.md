@@ -22,9 +22,9 @@ This document defines a **shared-infrastructure, multi-site deployment architect
 | Site name (metadata) | [`layout.tsx`](clientapp/src/app/layout.tsx) | Build-time | `NEXT_PUBLIC_SITE_NAME` env var |
 | Site name (navbar) | [`NavBar.tsx`](clientapp/src/components/NavBar.tsx:48) | Build-time | `NEXT_PUBLIC_SITE_NAME` env var |
 | Contact info (footer) | [`Footer.tsx`](clientapp/src/components/Footer.tsx) | Build-time | `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_CONTACT_PHONE` env vars |
-| Painting categories | [`PaintingCategoriesSeedData.cs`](ServerApp/ServerApp.Infrastructure/SeedData/PaintingCategoriesSeedData.cs) | Compile-time | Externalize to JSON, load via `SITE_NAME` env var |
-| Painting data | `*SeedData.cs` files | Compile-time | Externalize to JSON, load via `SITE_NAME` env var |
-| Page content | [`PageContentsSeedData.cs`](ServerApp/ServerApp.Infrastructure/SeedData/PageContentsSeedData.cs) | Compile-time | Externalize to JSON, load via `SITE_NAME` env var |
+| Painting categories | [`PaintingCategoriesSeedData.cs`](ServerApp/ServerApp.Infrastructure/SeedData/PaintingCategoriesSeedData.cs) | Compile-time | Site-specific C# classes, selected via `SITE_NAME` env var |
+| Painting data | `*SeedData.cs` files | Compile-time | Site-specific C# classes, selected via `SITE_NAME` env var |
+| Page content | [`PageContentsSeedData.cs`](ServerApp/ServerApp.Infrastructure/SeedData/PageContentsSeedData.cs) | Compile-time | Site-specific C# classes, selected via `SITE_NAME` env var |
 | OAuth redirect URI | `.env` | Runtime | Per-site env var |
 | SSL certificates | `nginx/ssl/` | Runtime | Per-site certificate paths in NGINX |
 
@@ -129,7 +129,6 @@ services:
         condition: service_healthy
     volumes:
       - image_data_gg:/app/images:rw
-      - ../ServerApp/sites/gg/seed-data:/app/seed-data:ro  # Site-specific seed data
     # ... healthcheck, networks, deploy
 
   frontend-gg:
@@ -179,7 +178,6 @@ services:
         condition: service_healthy
     volumes:
       - image_data_flynn:/app/images:rw
-      - ../ServerApp/sites/flynn/seed-data:/app/seed-data:ro
     # ... healthcheck, networks, deploy
 
   frontend-flynn:
@@ -496,109 +494,209 @@ The API containers use ASP.NET Core environment variables for runtime configurat
 | `SITE_NAME` | Identifies the site for seed data loading | `gg`, `flynn`, `third` |
 | `SITE_DATABASE` | Database name (redundant with connection string but useful for logging) | `artgallery_gg` |
 
-### Seed Data Externalization
+### Site-Specific C# Seed Data
 
-The current seed data is hardcoded in C# classes. To support per-site seed data, externalize to JSON files mounted at runtime.
+The current seed data uses static C# classes ([`PaintingCategoriesSeedData.cs`](ServerApp/ServerApp.Infrastructure/SeedData/PaintingCategoriesSeedData.cs), [`PaintingsSeedData.cs`](ServerApp/ServerApp.Infrastructure/SeedData/PaintingsSeedData.cs), [`PageContentsSeedData.cs`](ServerApp/ServerApp.Infrastructure/SeedData/PageContentsSeedData.cs)). To support per-site seed data, implement a **site-specific seed data provider pattern** using C# classes selected via the `SITE_NAME` environment variable.
+
+#### Architecture Overview
+
+```mermaid
+classDiagram
+    class ISiteSeedDataProvider {
+        <<interface>>
+        +IEnumerable~PaintingCategorySeed~ Categories
+        +IEnumerable~PaintingSeed~ Paintings
+        +IEnumerable~PageContentSeed~ PageContents
+    }
+
+    class GgSeedDataProvider {
+        -static readonly List~PaintingCategorySeed~ _categories
+        -static readonly List~PaintingSeed~ _paintings
+        -static readonly List~PageContentSeed~ _pageContents
+        +IEnumerable~PaintingCategorySeed~ Categories
+        +IEnumerable~PaintingSeed~ Paintings
+        +IEnumerable~PageContentSeed~ PageContents
+    }
+
+    class FlynnSeedDataProvider {
+        -static readonly List~PaintingCategorySeed~ _categories
+        -static readonly List~PaintingSeed~ _paintings
+        -static readonly List~PageContentSeed~ _pageContents
+        +IEnumerable~PaintingCategorySeed~ Categories
+        +IEnumerable~PaintingSeed~ Paintings
+        +IEnumerable~PageContentSeed~ PageContents
+    }
+
+    class SiteSeedDataProviderFactory {
+        +static ISiteSeedDataProvider GetProvider(string siteName)
+    }
+
+    class DatabaseSeeder {
+        -ISiteSeedDataProvider _seedDataProvider
+    }
+
+    ISiteSeedDataProvider <|-- GgSeedDataProvider
+    ISiteSeedDataProvider <|-- FlynnSeedDataProvider
+    SiteSeedDataProviderFactory --> ISiteSeedDataProvider
+    DatabaseSeeder --> ISiteSeedDataProvider
+```
 
 #### Directory Structure
 
 ```
-ServerApp/sites/
-  gg/
-    seed-data/
-      categories.json
-      paintings.json
-      page-content.json
-  flynn/
-    seed-data/
-      categories.json
-      paintings.json
-      page-content.json
-  third/
-    seed-data/
-      categories.json
-      paintings.json
-      page-content.json
+ServerApp/ServerApp.Infrastructure/
+  SeedData/
+    PaintingsSeedData.cs          # Existing (kept for fallback)
+    PaintingCategoriesSeedData.cs # Existing (kept for fallback)
+    PageContentsSeedData.cs       # Existing (kept for fallback)
+    AnimalsSeedData.cs            # Existing category data
+    SeascapesSeedData.cs          # Existing category data
+    LandscapesAndCityscapesSeedData.cs # Existing category data
+    FlowersSeedData.cs            # Existing category data
+    SiteSpecific/
+      ISiteSeedDataProvider.cs    # Interface definition
+      Gg/
+        GgSeedDataProvider.cs     # GG site categories, paintings, page content
+        GgCategories.cs           # GG-specific painting categories
+        GgPaintings.cs            # GG-specific paintings aggregated by category
+        GgSeascapes.cs            # GG-specific seascape paintings
+        GgAnimals.cs              # GG-specific animal paintings
+        GgLandscapesAndCityscapes.cs # GG-specific landscape paintings
+        GgFlowers.cs              # GG-specific flower paintings
+        GgPageContents.cs         # GG-specific page content
+      Flynn/
+        FlynnSeedDataProvider.cs  # Flynn site categories, paintings, page content
+        FlynnCategories.cs        # Flynn-specific painting categories
+        FlynnPaintings.cs         # Flynn-specific paintings aggregated by category
+        FlynnSeascapes.cs         # Flynn-specific seascape paintings
+        FlynnAnimals.cs           # Flynn-specific animal paintings
+        FlynnLandscapesAndCityscapes.cs # Flynn-specific landscape paintings
+        FlynnFlowers.cs           # Flynn-specific flower paintings
+        FlynnPageContents.cs      # Flynn-specific page content
 ```
 
-#### JSON File Formats
+#### Interface Definition
 
-**`categories.json`:**
-```json
-[
-  {
-    "name": "Seascapes",
-    "slug": "seascapes",
-    "description": "Beautiful ocean and coastal scenes"
-  },
-  {
-    "name": "Animals",
-    "slug": "animals",
-    "description": "Wildlife and animal paintings"
-  }
-]
+**`ISiteSeedDataProvider.cs`:**
+```csharp
+namespace ServerApp.Infrastructure.SeedData.SiteSpecific;
+
+/// <summary>
+/// Provides site-specific seed data for database initialization.
+/// </summary>
+public interface ISiteSeedDataProvider
+{
+    /// <summary>
+    /// Gets the painting categories for this site.
+    /// </summary>
+    IEnumerable<PaintingCategorySeed> Categories { get; }
+
+    /// <summary>
+    /// Gets the paintings for this site.
+    /// </summary>
+    IEnumerable<PaintingSeed> Paintings { get; }
+
+    /// <summary>
+    /// Gets the page content for this site.
+    /// </summary>
+    IEnumerable<PageContentSeed> PageContents { get; }
+}
 ```
 
-**`paintings.json`:**
-```json
-[
-  {
-    "title": "Blue Wave",
-    "slug": "blue-wave",
-    "description": "A dramatic seascape",
-    "imageUrl": "/Seascapes-Full/Blue_Wave.jpg",
-    "thumbnailUrl": "/Seascapes-Thumbnail/Blue_Wave.jpg",
-    "categorySlug": "seascapes",
-    "price": 500.00,
-    "width": 24,
-    "height": 36,
-    "year": 2023,
-    "isAvailable": true,
-    "isNew": false,
-    "isLandscape": false
-  }
-]
+#### Site-Specific Provider Implementation
+
+**`GgSeedDataProvider.cs`:**
+```csharp
+namespace ServerApp.Infrastructure.SeedData.SiteSpecific.Gg;
+
+/// <summary>
+/// Provides seed data for the GG (ggpaintings.com) site.
+/// </summary>
+public sealed class GgSeedDataProvider : ISiteSeedDataProvider
+{
+    public IEnumerable<PaintingCategorySeed> Categories => GgCategories.Categories;
+    public IEnumerable<PaintingSeed> Paintings => GgPaintings.Paintings;
+    public IEnumerable<PageContentSeed> PageContents => GgPageContents.PageContents;
+}
 ```
 
-**Important:** The `slug` field is **required** (matches [`PaintingSeed.Slug`](ServerApp/ServerApp.Infrastructure/SeedData/PaintingsSeedData.cs:16) which is `public required string`). It must be a URL-safe unique identifier for the painting, used for generating painting detail page URLs (e.g., `/paintings/seascapes/blue-wave`).
+**`GgCategories.cs`:**
+```csharp
+namespace ServerApp.Infrastructure.SeedData.SiteSpecific.Gg;
 
-**`page-content.json`:**
-```json
-[
-  {
-    "address": "home",
-    "title": "Welcome",
-    "content": "Welcome to our gallery...",
-    "photoUrls": []
-  },
-  {
-    "address": "about",
-    "title": "About the Artist",
-    "content": "Artist biography...",
-    "photoUrls": ["/Other/AboutPagePhoto.JPG"]
-  }
-]
+/// <summary>
+/// GG site painting categories.
+/// </summary>
+public static class GgCategories
+{
+    public static readonly List<PaintingCategorySeed> Categories = new()
+    {
+        new() { Name = "Landscapes & Cityscapes", Slug = "landscapes-cityscapes", Description = "Beautiful landscape and cityscape paintings" },
+        new() { Name = "Seascapes", Slug = "seascapes", Description = "Ocean and coastal scenes" },
+        new() { Name = "Animals", Slug = "animals", Description = "Wildlife and animal paintings" },
+        new() { Name = "Flowers", Slug = "flowers", Description = "Floral paintings" },
+        new() { Name = "New Paintings", Slug = "new-paintings", Description = "Latest additions to the collection" }
+    };
+}
 ```
 
-### Modified DatabaseSeeder
+Similar patterns apply for Flynn site with `FlynnCategories`, `FlynnPaintings`, etc.
+
+#### Provider Factory
+
+**`SiteSeedDataProviderFactory.cs`:**
+```csharp
+namespace ServerApp.Infrastructure.SeedData.SiteSpecific;
+
+/// <summary>
+/// Factory for resolving site-specific seed data providers.
+/// </summary>
+public static class SiteSeedDataProviderFactory
+{
+    /// <summary>
+    /// Gets the seed data provider for the specified site name.
+    /// Falls back to default (GG) provider if site name is not recognized.
+    /// </summary>
+    /// <param name="siteName">The site identifier (e.g., "gg", "flynn").</param>
+    /// <returns>The appropriate ISiteSeedDataProvider implementation.</returns>
+    /// <exception cref="ArgumentException">Thrown when siteName is null or empty.</exception>
+    public static ISiteSeedDataProvider GetProvider(string? siteName)
+    {
+        if (string.IsNullOrWhiteSpace(siteName))
+        {
+            throw new ArgumentException("Site name cannot be null or empty.", nameof(siteName));
+        }
+
+        return siteName.ToLowerInvariant() switch
+        {
+            "gg" => new Gg.GgSeedDataProvider(),
+            "flynn" => new Flynn.FlynnSeedDataProvider(),
+            _ => throw new ArgumentException($"Unknown site name: {siteName}. Supported sites: gg, flynn", nameof(siteName))
+        };
+    }
+}
+```
+
+#### Modified DatabaseSeeder
 
 The [`DatabaseSeeder.cs`](ServerApp/ServerApp.Infrastructure/Services/DatabaseSeeder.cs) is modified to:
 
-1. Check for `SITE_NAME` environment variable
-2. If `SITE_NAME` is set and `/app/seed-data/` exists, load seed data from JSON files
-3. Otherwise, fall back to the existing hardcoded C# seed data classes
+1. Accept `IConfiguration` to read `SITE_NAME` environment variable
+2. Use `SiteSeedDataProviderFactory` to resolve the appropriate provider
+3. Use the provider's collections instead of static class references
 
 ```csharp
 internal sealed class DatabaseSeeder
 {
-    private readonly IConfiguration _configuration;
+    private readonly ISiteSeedDataProvider _seedDataProvider;
     // ... existing fields ...
 
     public DatabaseSeeder(
         IConfiguration configuration,
         // ... existing params ...)
     {
-        _configuration = configuration;
+        var siteName = configuration["SITE_NAME"];
+        _seedDataProvider = SiteSeedDataProviderFactory.GetProvider(siteName);
         // ...
     }
 
@@ -606,37 +704,12 @@ internal sealed class DatabaseSeeder
     {
         // ... existing empty check ...
 
-        var siteName = _configuration["SITE_NAME"];
-        var seedDataPath = "/app/seed-data";
+        // Use site-specific seed data provider
+        var categories = _seedDataProvider.Categories.ToList();
+        var paintings = _seedDataProvider.Paintings.ToList();
+        var pageContents = _seedDataProvider.PageContents.ToList();
 
-        if (!string.IsNullOrEmpty(siteName) && Directory.Exists(seedDataPath))
-        {
-            // Load from external JSON files
-            await SeedFromJsonFilesAsync(context, seedDataPath, databaseName, cancellationToken);
-        }
-        else
-        {
-            // Use existing hardcoded seed data
-            await SeedFromHardcodedDataAsync(context, databaseName, cancellationToken);
-        }
-    }
-
-    private async Task SeedFromJsonFilesAsync(
-        DbContext context, string seedDataPath, string databaseName, CancellationToken cancellationToken)
-    {
-        // Read categories.json
-        var categoriesJson = await File.ReadAllTextAsync(Path.Combine(seedDataPath, "categories.json"), cancellationToken);
-        var categorySeeds = JsonSerializer.Deserialize<List<PaintingCategorySeed>>(categoriesJson);
-
-        // Read paintings.json
-        var paintingsJson = await File.ReadAllTextAsync(Path.Combine(seedDataPath, "paintings.json"), cancellationToken);
-        var paintingSeeds = JsonSerializer.Deserialize<List<PaintingSeed>>(paintingsJson);
-
-        // Read page-content.json
-        var pageContentJson = await File.ReadAllTextAsync(Path.Combine(seedDataPath, "page-content.json"), cancellationToken);
-        var pageContentSeeds = JsonSerializer.Deserialize<List<PageContentSeed>>(pageContentJson);
-
-        // Use existing seeding logic with the loaded data
+        // Use existing seeding logic with the provider data
         // ...
     }
 }
@@ -726,13 +799,16 @@ The existing [`api.ts`](clientapp/src/lib/api.ts:26) already uses `SERVER_API_UR
 
 ## Implementation Phases
 
-### Phase 1: Externalize Seed Data
+### Phase 1: Implement Site-Specific C# Seed Data Providers
 
-1. Create `ServerApp/sites/{site}/seed-data/` directories
-2. Export current seed data from C# classes to JSON files
-3. Add JSON deserialization support to [`DatabaseSeeder.cs`](ServerApp/ServerApp.Infrastructure/Services/DatabaseSeeder.cs)
-4. Add `SITE_NAME` environment variable support
-5. Test with hardcoded `SITE_NAME` in development
+1. Create `ServerApp/ServerApp.Infrastructure/SeedData/SiteSpecific/` directory structure
+2. Create `ISiteSeedDataProvider.cs` interface
+3. Create `Gg/` subdirectory with `GgSeedDataProvider.cs`, `GgCategories.cs`, `GgPaintings.cs`, `GgPageContents.cs`
+4. Create `Flynn/` subdirectory with `FlynnSeedDataProvider.cs`, `FlynnCategories.cs`, `FlynnPaintings.cs`, `FlynnPageContents.cs`
+5. Create `SiteSeedDataProviderFactory.cs` with switch expression for provider resolution
+6. Modify [`DatabaseSeeder.cs`](ServerApp/ServerApp.Infrastructure/Services/DatabaseSeeder.cs) to accept `IConfiguration` and use `ISiteSeedDataProvider`
+7. Add `SITE_NAME` environment variable to docker-compose API services
+8. Test with `SITE_NAME=gg` and `SITE_NAME=flynn` in development
 
 ### Phase 2: Parameterize Frontend Site Configuration
 
@@ -747,9 +823,10 @@ The existing [`api.ts`](clientapp/src/lib/api.ts:26) already uses `SERVER_API_UR
 
 1. Create [`docker-compose/scripts/init-databases.sql`](docker-compose/scripts/init-databases.sql)
 2. Modify [`docker-compose/docker-compose.yml`](docker-compose/docker-compose.yml) with per-site services
-3. Add per-site volume mounts for seed data and image storage
-4. Create [`docker-compose/.env`](docker-compose/.env) with all site configurations
-5. Test single-site deployment first, then add second site
+3. Add `SITE_NAME` environment variable to each API service (e.g., `SITE_NAME: gg` for api-gg, `SITE_NAME: flynn` for api-flynn)
+4. Add per-site volume mounts for image storage
+5. Create [`docker-compose/.env`](docker-compose/.env) with all site configurations
+6. Test single-site deployment first, then add second site
 
 ### Phase 4: NGINX Multi-Site Routing
 
@@ -774,7 +851,7 @@ The current `ggpaintings.com` configuration becomes the `gg` site:
 
 - Current `POSTGRES_DB: artgallery` becomes `artgallery_gg`
 - Current container names prefixed with `artgallery-*` become `artgallery-*-gg`
-- Current seed data exported to `ServerApp/sites/gg/seed-data/`
+- Current seed data moved to `ServerApp/ServerApp.Infrastructure/SeedData/SiteSpecific/Gg/`
 
 ### Step 2: Database Migration
 
@@ -803,7 +880,7 @@ Update the connection string in docker-compose from `Database=artgallery` to `Da
 |------|--------|------------|
 | PostgreSQL multi-database resource usage | Medium | Monitor shared_buffers and work_mem settings |
 | NGINX configuration complexity | Low | Use includes for per-site server blocks |
-| Seed data JSON schema changes | Medium | Version the JSON schema, add validation |
+| Seed data C# class changes | Low | Compile-time type safety prevents schema errors |
 | Build-time env var changes require rebuild | Low | Document rebuild process clearly |
 | Image storage volume isolation | Low | Test upload/delete operations per site |
 | Cache invalidation across sites | Low | Each site has independent cache tags |
@@ -815,26 +892,34 @@ Update the connection string in docker-compose from `Database=artgallery` to `Da
 1. Add `artgallery_third` to [`init-databases.sql`](docker-compose/scripts/init-databases.sql)
 2. Add `api-third` and `frontend-third` services to docker-compose
 3. Add `upstream` and `server` blocks to nginx.conf
-4. Create `ServerApp/sites/third/seed-data/` with JSON files
+4. Create `ServerApp/ServerApp.Infrastructure/SeedData/SiteSpecific/Third/` with C# seed data classes
 5. Add `THIRD_*` environment variables to `.env`
 6. Rebuild and redeploy
 
 ### Shared Seed Data Between Sites
 
-If some paintings or categories are shared between sites, create a `shared/` directory in seed data:
+If some paintings or categories are shared between sites, create a `Shared/` subdirectory in the SiteSpecific folder:
 
 ```
-ServerApp/sites/
-  shared/
-    seed-data/
-      common-categories.json
-  gg/
-    seed-data/
-      categories.json    # Site-specific additions
-      paintings.json
+ServerApp/ServerApp.Infrastructure/SeedData/SiteSpecific/
+  Shared/
+    SharedCategories.cs      # Common categories shared across sites
+    SharedPaintings.cs       # Common paintings shared across sites
+  Gg/
+    GgSeedDataProvider.cs    # Can reference Shared.Categories
+    GgCategories.cs          # Site-specific additions
+    GgPaintings.cs
+  Flynn/
+    FlynnSeedDataProvider.cs # Can reference Shared.Categories
+    FlynnCategories.cs       # Site-specific additions
+    FlynnPaintings.cs
 ```
 
-The `DatabaseSeeder` would merge shared and site-specific data.
+Each site's provider can concatenate shared and site-specific data using LINQ:
+```csharp
+public IEnumerable<PaintingCategorySeed> Categories =>
+    Shared.SharedCategories.Categories.Concat(GgCategories.Categories).ToList();
+```
 
 ### Automated Deployment
 
@@ -871,7 +956,7 @@ docker-compose up -d --build
 | API | Separate containers per site | Isolated seed data, connection strings, and OAuth config |
 | Frontend | Separate containers per site | Build-time env vars baked into Next.js bundle |
 | NGINX | Single container, multiple server blocks | Native virtual hosting, minimal overhead |
-| Seed Data | JSON files mounted at runtime | No recompilation needed, easy to swap |
+| Seed Data | Site-specific C# classes via `SITE_NAME` | Compile-time type safety, provider pattern with factory resolution |
 | CSS | Build-time env vars via Next.js | Native Next.js support, no runtime overhead |
 | Images | Separate volumes per site | Data isolation, independent backups |
 

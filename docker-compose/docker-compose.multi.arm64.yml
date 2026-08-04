@@ -74,6 +74,7 @@ services:
     ports:
       - "${API_PORT_GG:-8081}:8080"
     environment:
+      SITE_NAME: gg
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=artgallery_gg;Username=postgres;Password=${POSTGRES_PASSWORD};
@@ -118,6 +119,7 @@ services:
       target: production
       args:
         NEXT_PUBLIC_SITE_NAME: ${GG_SITE_NAME}
+        NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL: ${GG_NAVBAR_ARTWORK_LABEL:-Paintings}
         NEXT_PUBLIC_SITE_DESCRIPTION: ${GG_SITE_DESCRIPTION}
         NEXT_PUBLIC_CONTACT_EMAIL: ${GG_CONTACT_EMAIL}
         NEXT_PUBLIC_CONTACT_PHONE: ${GG_CONTACT_PHONE}
@@ -128,6 +130,7 @@ services:
         NEXT_PUBLIC_CSS_BUTTON_COLOR: ${GG_CSS_BUTTON_COLOR}
         NEXT_PUBLIC_CSS_FONT: ${GG_CSS_FONT}
         NEXT_PUBLIC_CSS_LINK_HOVER: ${GG_CSS_LINK_HOVER}
+        NEXT_PUBLIC_CSS_MENU_HOVER: ${GG_CSS_MENU_HOVER}
         NEXT_PUBLIC_API_URL: ${GG_NEXT_PUBLIC_API_URL}
         SERVER_API_URL: ${GG_SERVER_API_URL}
     user: "1001:1001"
@@ -175,6 +178,7 @@ services:
     ports:
       - "${API_PORT_FLYNN:-8082}:8080"
     environment:
+      SITE_NAME: flynn
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=artgallery_flynn;Username=postgres;Password=${POSTGRES_PASSWORD};
@@ -219,6 +223,7 @@ services:
       target: production
       args:
         NEXT_PUBLIC_SITE_NAME: ${FLYNN_SITE_NAME}
+        NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL: ${FLYNN_NAVBAR_ARTWORK_LABEL:-Paintings}
         NEXT_PUBLIC_SITE_DESCRIPTION: ${FLYNN_SITE_DESCRIPTION}
         NEXT_PUBLIC_CONTACT_EMAIL: ${FLYNN_CONTACT_EMAIL}
         NEXT_PUBLIC_CONTACT_PHONE: ${FLYNN_CONTACT_PHONE}
@@ -229,6 +234,7 @@ services:
         NEXT_PUBLIC_CSS_BUTTON_COLOR: ${FLYNN_CSS_BUTTON_COLOR}
         NEXT_PUBLIC_CSS_FONT: ${FLYNN_CSS_FONT}
         NEXT_PUBLIC_CSS_LINK_HOVER: ${FLYNN_CSS_LINK_HOVER}
+        NEXT_PUBLIC_CSS_MENU_HOVER: ${FLYNN_CSS_MENU_HOVER}
         NEXT_PUBLIC_API_URL: ${FLYNN_NEXT_PUBLIC_API_URL}
         SERVER_API_URL: ${FLYNN_SERVER_API_URL}
     user: "1001:1001"

@@ -48,7 +48,39 @@
 - Convert args to `ENV` for build-time availability
 - Keep production stage `ENV` defaults for runtime override
 
-### Phase 2: Create Multi-Site Docker Compose Structure
+### Phase 0: Implement Site-Specific C# Seed Data Providers
+
+**Files to create:**
+1. `ServerApp/ServerApp.Infrastructure/SeedData/SiteSpecific/ISiteSeedDataProvider.cs` - Interface definition
+2. `ServerApp/ServerApp.Infrastructure/SeedData/SiteSpecific/SiteSeedDataProviderFactory.cs` - Factory with switch expression
+3. `ServerApp/ServerApp.Infrastructure/SeedData/SiteSpecific/Gg/GgSeedDataProvider.cs` - GG provider
+4. `ServerApp/ServerApp.Infrastructure/SeedData/SiteSpecific/Gg/GgCategories.cs` - GG categories
+5. `ServerApp/ServerApp.Infrastructure/SeedData/SiteSpecific/Gg/GgPaintings.cs` - GG paintings aggregator
+6. `ServerApp/ServerApp.Infrastructure/SeedData/SiteSpecific/Gg/GgPageContents.cs` - GG page content
+7. `ServerApp/ServerApp.Infrastructure/SeedData/SiteSpecific/Flynn/FlynnSeedDataProvider.cs` - Flynn provider
+8. `ServerApp/ServerApp.Infrastructure/SeedData/SiteSpecific/Flynn/FlynnCategories.cs` - Flynn categories
+9. `ServerApp/ServerApp.Infrastructure/SeedData/SiteSpecific/Flynn/FlynnPaintings.cs` - Flynn paintings aggregator
+10. `ServerApp/ServerApp.Infrastructure/SeedData/SiteSpecific/Flynn/FlynnPageContents.cs` - Flynn page content
+
+**Files to modify:**
+1. `ServerApp/ServerApp.Infrastructure/Services/DatabaseSeeder.cs` - Accept `IConfiguration`, use `ISiteSeedDataProvider`
+2. `docker-compose/docker-compose.multi.yml` - Add `SITE_NAME: gg` to api-gg, `SITE_NAME: flynn` to api-flynn
+3. `docker-compose/docker-compose.multi.arm64.yml` - Add `SITE_NAME: gg` to api-gg, `SITE_NAME: flynn` to api-flynn
+
+**Docker Compose SITE_NAME additions:**
+```yaml
+api-gg:
+  environment:
+    SITE_NAME: gg
+    # ... rest of env vars ...
+
+api-flynn:
+  environment:
+    SITE_NAME: flynn
+    # ... rest of env vars ...
+```
+
+### Phase 1: Create Multi-Site Docker Compose Structure
 
 **Files to create/modify:**
 1. Create `docker-compose/docker-compose.multi.yml` - Multi-site compose file

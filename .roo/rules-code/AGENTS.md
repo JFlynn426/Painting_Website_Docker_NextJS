@@ -179,3 +179,46 @@
   - `docker-compose/.env.multi.arm64.example`
 - This ensures consistency across local development, production, and ARM64 deployments
 - Variables to keep in sync include: `FLYNN_CSS_BACKGROUND`, `FLYNN_CSS_FOREGROUND`, `FLYNN_CSS_NAVBAR_FOOTER_BG`, `FLYNN_CSS_TITLE_COLOR`, `FLYNN_CSS_BUTTON_COLOR`, `FLYNN_CSS_FONT`, `FLYNN_CSS_LINK_HOVER`, and all corresponding `GG_` prefixed variables
+
+## Environment-Driven Variables (Three-Part Pattern)
+
+- **CRITICAL**: For any environment variable to be baked into a Next.js Docker image at build time, ALL THREE parts below are required. Missing any part will cause the variable to be silently ignored.
+
+### Part 1: `.env` File Variable
+- Define the site-specific value in the `.env.multi` files (all 3 must be synced per rule above):
+  ```
+  GG_NAVBAR_ARTWORK_LABEL="Paintings"
+  FLYNN_NAVBAR_ARTWORK_LABEL="Artwork"
+  ```
+
+### Part 2: `docker-compose` Build Arg Mapping
+- Map the `.env` variable to a `NEXT_PUBLIC_*` build argument in the frontend service's `build.args` section:
+  ```yaml
+  frontend-gg:
+    build:
+      context: ../../clientapp
+      args:
+        NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL: ${GG_NAVBAR_ARTWORK_LABEL:-Paintings}
+  ```
+- Do this for BOTH `docker-compose.multi.yml` AND `docker-compose.multi.arm64.yml`
+
+### Part 3: Dockerfile ARG + ENV Declarations
+- Add BOTH an `ARG` (to accept the build argument) AND an `ENV` (to pass it to the Next.js build process) in the `builder` stage of `clientapp/Dockerfile`:
+  ```dockerfile
+  # ARG declarations (with defaults for backward compatibility)
+  ARG NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL="Paintings"
+
+  # ENV assignments (must match the ARG name exactly)
+  ENV NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL=$NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL
+  ```
+- **Why both are needed**: `ARG` receives the value from `docker build --build-arg`. `ENV` makes it available to the Next.js compiler at build time so `process.env.NEXT_PUBLIC_*` resolves correctly. Without `ENV`, the ARG value is lost after the build step.
+- **Naming convention**: The `ARG`/`ENV` name must use the `NEXT_PUBLIC_` prefix (Next.js requirement for client-side access). The `.env` file variable uses a site prefix (`GG_` or `FLYNN_`) and the docker-compose mapping bridges the two naming conventions.
+
+### Verification Checklist
+When adding a new env-driven variable, verify:
+1. [ ] Variable defined in all 3 `.env` files (`.env.multi`, `.env.multi.example`, `.env.multi.arm64.example`)
+2. [ ] Build arg mapped in `docker-compose.multi.yml` frontend service
+3. [ ] Build arg mapped in `docker-compose.multi.arm64.yml` frontend service
+4. [ ] `ARG` declared in `clientapp/Dockerfile` builder stage
+5. [ ] `ENV` assigned in `clientapp/Dockerfile` builder stage
+6. [ ] Containers rebuilt with `--build` flag after changes

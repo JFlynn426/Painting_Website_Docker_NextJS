@@ -41,7 +41,7 @@ export default function AdminHeader() {
                     </h1>
                     <Link
                         href="/"
-                        className="inline-block px-6 py-3 border-2 border-blue-400 text-blue-400 rounded hover:bg-blue-400 hover:text-gray-900 transition-colors font-medium"
+                        className="inline-block px-6 py-3 border-2 border-[var(--title-color)] text-[var(--title-color)] rounded hover:bg-[var(--title-color)] hover:text-white transition-colors font-medium"
                     >
                         Back to Home Page
                     </Link>

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using ServerApp.Domain.Entities;
 using ServerApp.Domain.Factories;
@@ -7,15 +8,18 @@ using ServerApp.Domain.ValueObjects.Painting;
 using ServerApp.Domain.ValueObjects.PaintingCategory;
 using ServerApp.Infrastructure.EF.Contexts;
 using ServerApp.Infrastructure.SeedData;
+using ServerApp.Infrastructure.SeedData.SiteSpecific;
 
 namespace ServerApp.Infrastructure.Services;
 
 /// <summary>
 /// Seeds the database with initial data after migrations are applied.
+/// Uses site-specific seed data providers resolved via the SITE_NAME environment variable.
 /// </summary>
 internal sealed class DatabaseSeeder
 {
     private readonly ILogger<DatabaseSeeder> _logger;
+    private readonly ISiteSeedDataProvider _seedDataProvider;
     private readonly IPaintingCategoryFactory _categoryFactory;
     private readonly IPaintingFactory _paintingFactory;
     private readonly IPageContentFactory _pageContentFactory;
@@ -24,6 +28,7 @@ internal sealed class DatabaseSeeder
 
     public DatabaseSeeder(
         ILogger<DatabaseSeeder> logger,
+        IConfiguration configuration,
         IPaintingCategoryFactory categoryFactory,
         IPaintingFactory paintingFactory,
         IPageContentFactory pageContentFactory,
@@ -31,6 +36,8 @@ internal sealed class DatabaseSeeder
         ReadDbContext readDbContext)
     {
         _logger = logger;
+        var siteName = configuration["SITE_NAME"];
+        _seedDataProvider = SiteSeedDataProviderFactory.GetProvider(siteName);
         _categoryFactory = categoryFactory;
         _paintingFactory = paintingFactory;
         _pageContentFactory = pageContentFactory;
@@ -69,9 +76,9 @@ internal sealed class DatabaseSeeder
 
         _logger.LogInformation("Database is empty. Seeding initial data...");
 
-        // Seed painting categories from seed data
+        // Seed painting categories from site-specific seed data provider
         var categories = new Dictionary<string, PaintingCategory>();
-        foreach (var seedCategory in PaintingCategoriesSeedData.Categories)
+        foreach (var seedCategory in _seedDataProvider.Categories)
         {
             var category = await CreateCategoryAsync(
                 seedCategory.Name,
@@ -86,9 +93,9 @@ internal sealed class DatabaseSeeder
 
         _logger.LogInformation($"Seeded {categories.Count} painting categories.");
 
-        // Seed paintings from seed data
+        // Seed paintings from site-specific seed data provider
         var paintings = new List<Painting>();
-        foreach (var seedPainting in PaintingsSeedData.Paintings)
+        foreach (var seedPainting in _seedDataProvider.Paintings)
         {
             if (categories.TryGetValue(seedPainting.CategorySlug, out var category))
             {
@@ -106,9 +113,9 @@ internal sealed class DatabaseSeeder
 
         _logger.LogInformation($"Seeded {paintings.Count} paintings.");
 
-        // Seed page content from seed data
+        // Seed page content from site-specific seed data provider
         var pageContents = new List<PageContent>();
-        foreach (var seedPageContent in PageContentsSeedData.PageContents)
+        foreach (var seedPageContent in _seedDataProvider.PageContents)
         {
             var pageContent = _pageContentFactory.Create(
                 new PageAddress(seedPageContent.Address),

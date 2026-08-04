@@ -4,8 +4,8 @@
 # Usage: docker compose -f docker-compose.multi.yml -f docker-compose.multi.local.yml up -d --build
 #
 # Access sites at:
-#   - Site gg:     http://localhost:8181
-#   - Site flynn:  http://localhost:8182
+#   - Site gg:     https://localhost:8181
+#   - Site flynn:  https://localhost:8182
 #   - Health:      http://localhost:9090/health
 #   - Frontend gg (direct):  http://localhost:3001
 #   - Frontend flynn (direct): http://localhost:3002
@@ -19,6 +19,8 @@ services:
   nginx:
     volumes:
       - ./nginx/nginx.multi.local.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl/localhost/gg:/etc/nginx/ssl/gg:ro
+      - ./nginx/ssl/localhost/flynn:/etc/nginx/ssl/flynn:ro
 
   # Override frontend-gg to expose directly for debugging
   frontend-gg:

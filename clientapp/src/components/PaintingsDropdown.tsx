@@ -11,6 +11,7 @@ interface PaintingsDropdownProps {
 export default function PaintingsDropdown({ categories }: PaintingsDropdownProps) {
     const [isPaintingsOpen, setIsPaintingsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Paintings";
 
     const closePaintingsDropdown = () => {
         setIsPaintingsOpen(false);
@@ -39,7 +40,7 @@ export default function PaintingsDropdown({ categories }: PaintingsDropdownProps
                 onClick={() => setIsPaintingsOpen(!isPaintingsOpen)}
                 className="pl-3 py-2 rounded flex items-center hover:text-[var(--link-hover)] justify-center transition duration-200 ease-in-out w-full"
             >
-                Paintings
+                {artworkLabel}
                 <span style={{
                     display: 'inline-block',
                     transform: isPaintingsOpen ? 'rotate(0deg) scale(0.6)' : 'rotate(90deg) scale(0.6)',
@@ -55,7 +56,7 @@ export default function PaintingsDropdown({ categories }: PaintingsDropdownProps
                 </span>
             </button>
             {isPaintingsOpen && (
-                <div className="absolute left-0 top-full mt-1 bg-[#3a3a3a] rounded-md shadow-lg py-1 z-50 min-w-[200px]">
+                <div className="absolute left-0 top-full mt-1 bg-[var(--background)] rounded-md shadow-lg py-1 z-50 min-w-[200px]">
                     {categories
                         .filter(category => category.slug !== 'new-paintings')
                         .map((category) => (
@@ -63,7 +64,7 @@ export default function PaintingsDropdown({ categories }: PaintingsDropdownProps
                                 key={category.id}
                                 href={`/paintings/${category.slug}`}
                                 onClick={closePaintingsDropdown}
-                                className="block px-4 py-2 transition duration-200 ease-in-out hover:bg-[#1e3a8a] text-center"
+                                className="block px-4 py-2 transition duration-200 ease-in-out hover:bg-[var(--menu-hover)] text-center"
                             >
                                 {category.name}
                             </Link>

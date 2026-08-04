@@ -52,6 +52,7 @@ services:
     ports:
       - "${API_PORT:-8080}:8080"
     environment:
+      SITE_NAME: gg
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=artgallery;Username=postgres;Password=${POSTGRES_PASSWORD};
@@ -70,9 +71,9 @@ services:
       - artgallery-network
     restart: unless-stopped
     volumes:
-      - image_data:/app/images:rw  # Exception for image storage
+      - image_data:/app/images:rw # Exception for image storage
     tmpfs:
-      - /tmp  # Required for ASP.NET Core multipart form buffering
+      - /tmp # Required for ASP.NET Core multipart form buffering
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/api/health/health" ]
       interval: 30s

@@ -14,6 +14,7 @@ const cssNavbarFooterBg = process.env.NEXT_PUBLIC_CSS_NAVBAR_FOOTER_BG || "#2d2d
 const cssTitleColor = process.env.NEXT_PUBLIC_CSS_TITLE_COLOR || "#66b3ff";
 const cssButtonColor = process.env.NEXT_PUBLIC_CSS_BUTTON_COLOR || "#1e3a8a";
 const cssLinkHover = process.env.NEXT_PUBLIC_CSS_LINK_HOVER || "#60a5fa";
+const cssMenuHover = process.env.NEXT_PUBLIC_CSS_MENU_HOVER || "#1e3a8a";
 
 export const metadata: Metadata = {
   title: siteName,
@@ -43,6 +44,8 @@ export default function RootLayout({
               --title-color: ${cssTitleColor};
               --button-color: ${cssButtonColor};
               --link-hover: ${cssLinkHover};
+              --menu-hover: ${cssMenuHover};
+              --menu-hover: ${cssMenuHover};
               --font-local: 'SiteFont', sans-serif;
             }
             @media (prefers-color-scheme: dark) {
