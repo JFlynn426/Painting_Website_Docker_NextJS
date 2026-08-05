@@ -118,16 +118,16 @@
     justify-content: center;
     padding: 12px 24px;
     background-color: transparent;
-    color: #55a0ee;
+    color: var(--link-hover);
     text-decoration: none;
-    border: 1px solid #55a0ee;
+    border: 1px solid var(--link-hover);
     border-radius: 5px;
     font-size: 1rem;
     transition: all 0.2s ease;
 }
 
 .backButton:hover {
-    background-color: #55a0ee;
+    background-color: var(--link-hover);
     color: white;
     border: 1px solid transparent;
 }
@@ -137,7 +137,7 @@
     align-items: center;
     justify-content: center;
     padding: 12px 24px;
-    background-color: #55a0ee;
+    background-color: var(--link-hover);
     color: white;
     border: 1px solid white;
     border-radius: 5px;
@@ -147,7 +147,7 @@
 }
 
 .inquireButton:hover {
-    background-color: var(--button-color);
+    background-color: var(--examine-painting);
     border: 1px solid transparent;
 }
 
@@ -157,7 +157,7 @@
     justify-content: center;
     gap: 8px;
     padding: 12px 24px;
-    background-color: var(--button-color);
+    background-color: var(--examine-painting);
     color: white;
     text-decoration: none;
     border-radius: 5px;
@@ -167,7 +167,7 @@
 }
 
 .examineButton:hover {
-    background-color: #55a0ee;
+    background-color: var(--link-hover);
     border: 1px solid transparent;
 }
 

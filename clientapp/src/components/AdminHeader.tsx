@@ -82,7 +82,7 @@ export default function AdminHeader() {
                                     {user.displayName.charAt(0).toUpperCase()}
                                 </div>
                             )}
-                            <span className="text-gray-300 text-sm whitespace-nowrap">{user.displayName}</span>
+                            <span className="text-[var(--foreground)] text-sm whitespace-nowrap">{user.displayName}</span>
                         </div>
                     )}
                 </div>
@@ -92,8 +92,8 @@ export default function AdminHeader() {
                             key={link.href}
                             href={link.href}
                             className={`px-3 py-2 rounded transition-colors whitespace-nowrap ${link.href === '/admin/history' ? 'hidden' : ''} ${activeHref === link.href
-                                ? 'bg-blue-600 text-white'
-                                : 'text-gray-300 hover:bg-gray-700'
+                                ? 'bg-[var(--examine-painting)] text-white'
+                                : 'text-[var(--foreground)] hover:bg-[var(--admin-hover)]'
                                 }`}
                         >
                             {link.label}

@@ -40,7 +40,7 @@ export default function AdminDashboardPage() {
     return (
         <div>
             <h1 className="text-3xl font-bold mb-2 text-[var(--title-color)]">Welcome, {user?.displayName} - Dashboard</h1>
-            <p className="text-gray-400 mb-6">
+            <p className="text-[var(--foreground)] mb-6">
                 Select an item to edit from the list below. You can navigate between items from the dashboard (this page) or from the navigation bar.
             </p>
 
@@ -48,7 +48,7 @@ export default function AdminDashboardPage() {
                 <Link href="/admin/paintings" className="block">
                     <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Paintings</h2>
-                        <p className="text-gray-400">
+                        <p className="text-[var(--foreground)]">
                             Manage paintings: add new paintings, delete existing ones, edit details, and select new arrivals.
                         </p>
                     </div>
@@ -57,7 +57,7 @@ export default function AdminDashboardPage() {
                 <Link href="/admin/categories" className="block">
                     <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Categories</h2>
-                        <p className="text-gray-400">
+                        <p className="text-[var(--foreground)]">
                             Manage painting categories: create new categories, edit existing ones, or remove categories.
                         </p>
                     </div>
@@ -66,7 +66,7 @@ export default function AdminDashboardPage() {
                 <Link href="/admin/content" className="block">
                     <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Content</h2>
-                        <p className="text-gray-400">
+                        <p className="text-[var(--foreground)]">
                             Manage other website content: edit page text, descriptions, home page carousel, etc...
                         </p>
                     </div>
@@ -75,7 +75,7 @@ export default function AdminDashboardPage() {
                 <Link href="/admin/history" className="hidden">
                     <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">History</h2>
-                        <p className="text-gray-400">
+                        <p className="text-[var(--foreground)]">
                             View editing history: track all changes made to paintings, categories, and content.
                         </p>
                     </div>

@@ -15,6 +15,8 @@ const cssTitleColor = process.env.NEXT_PUBLIC_CSS_TITLE_COLOR || "#66b3ff";
 const cssButtonColor = process.env.NEXT_PUBLIC_CSS_BUTTON_COLOR || "#1e3a8a";
 const cssLinkHover = process.env.NEXT_PUBLIC_CSS_LINK_HOVER || "#60a5fa";
 const cssMenuHover = process.env.NEXT_PUBLIC_CSS_MENU_HOVER || "#1e3a8a";
+const cssAdminHover = process.env.NEXT_PUBLIC_CSS_ADMIN_HOVER || "#374151";
+const cssExaminePainting = process.env.NEXT_PUBLIC_CSS_EXAMINE_PAINTING || "#1e3a8a";
 
 export const metadata: Metadata = {
   title: siteName,
@@ -45,7 +47,8 @@ export default function RootLayout({
               --button-color: ${cssButtonColor};
               --link-hover: ${cssLinkHover};
               --menu-hover: ${cssMenuHover};
-              --menu-hover: ${cssMenuHover};
+              --admin-hover: ${cssAdminHover};
+              --examine-painting: ${cssExaminePainting};
               --font-local: 'SiteFont', sans-serif;
             }
             @media (prefers-color-scheme: dark) {
@@ -56,6 +59,8 @@ export default function RootLayout({
                 --title-color: ${cssTitleColor};
                 --button-color: ${cssButtonColor};
                 --link-hover: ${cssLinkHover};
+                --admin-hover: ${cssAdminHover};
+                --examine-painting: ${cssExaminePainting};
               }
             }
             strong, b {

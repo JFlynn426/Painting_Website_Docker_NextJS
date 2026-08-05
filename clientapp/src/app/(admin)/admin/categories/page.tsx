@@ -9,7 +9,7 @@ export default function CategoriesAdminPage() {
                 <Link href="/admin/categories/add" className="block">
                     <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Add Category</h2>
-                        <p className="text-gray-400">
+                        <p className="text-[var(--foreground)]">
                             Create a new painting category to organize your artwork. Set the category name and description for better navigation.
                         </p>
                     </div>
@@ -18,7 +18,7 @@ export default function CategoriesAdminPage() {
                 <Link href="/admin/categories/edit" className="block">
                     <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Edit Category</h2>
-                        <p className="text-gray-400">
+                        <p className="text-[var(--foreground)]">
                             Edit existing category name or description. Update category information to better reflect your painting collections.
                         </p>
                     </div>
@@ -27,7 +27,7 @@ export default function CategoriesAdminPage() {
                 <Link href="/admin/categories/delete" className="block">
                     <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Delete Category</h2>
-                        <p className="text-gray-400">
+                        <p className="text-[var(--foreground)]">
                             Remove a painting category. Note: You can only delete a category if all paintings have been removed from it first.
                         </p>
                     </div>
@@ -36,7 +36,7 @@ export default function CategoriesAdminPage() {
                 <Link href="/admin/categories/reassign" className="block">
                     <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Reassign Paintings</h2>
-                        <p className="text-gray-400">
+                        <p className="text-[var(--foreground)]">
                             Move paintings between categories. Transfer paintings from one category to another before deleting empty categories or after creating a new category.
                         </p>
                     </div>

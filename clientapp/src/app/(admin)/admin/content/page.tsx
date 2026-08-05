@@ -9,7 +9,7 @@ export default function ContentAdminPage() {
                 <Link href="/admin/content/edit" className="block">
                     <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Edit Content</h2>
-                        <p className="text-gray-400">
+                        <p className="text-[var(--foreground)]">
                             Edit page text, descriptions, and about page photo. Update the home page, about page, galleries and contact page.
                         </p>
                     </div>
@@ -18,7 +18,7 @@ export default function ContentAdminPage() {
                 <Link href="/admin/content/carousel" className="block">
                     <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Change Carousel</h2>
-                        <p className="text-gray-400">
+                        <p className="text-[var(--foreground)]">
                             Manage the images displayed in the homepage carousel. Add, remove, or reorder the carousel images shown on the front page.
                         </p>
                     </div>
