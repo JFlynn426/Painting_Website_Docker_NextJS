@@ -99,7 +99,7 @@ export default function SelectNewPaintingsPage() {
             <div>
                 <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Select New Paintings</h1>
                 <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6">
-                    <p className="text-gray-400">Loading paintings...</p>
+                    <p className="text-[var(--foreground)]">Loading paintings...</p>
                 </div>
             </div>
         );
@@ -109,8 +109,8 @@ export default function SelectNewPaintingsPage() {
         return (
             <div>
                 <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Select New Paintings</h1>
-                <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-6">
-                    <p className="text-red-200">Error: {loadError}</p>
+                <div className="bg-red-200 border border-red-500 rounded-lg p-6">
+                    <p className="text-black">Error: {loadError}</p>
                 </div>
             </div>
         );
@@ -119,25 +119,25 @@ export default function SelectNewPaintingsPage() {
     return (
         <div>
             <h1 className="text-3xl font-bold mb-2 text-[var(--title-color)]">Select New Paintings</h1>
-            <p className="text-gray-400 mb-6">
+            <p className="text-[var(--foreground)] mb-6">
                 This page allows you to select the paintings which are displayed in the New Paintings page.
             </p>
 
-            <div className="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-4 mb-6">
-                <p className="text-yellow-200 text-sm">
+            <div className="bg-yellow-100 border border-yellow-600 rounded-lg p-4 mb-6">
+                <p className="text-black text-sm">
                     <strong>Note:</strong> The New Paintings section can have no more than 30 paintings. It is suggested that this section should contain 8 or more paintings.
                 </p>
             </div>
 
             {saveSuccess && (
-                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-4 mb-6">
-                    <p className="text-green-200">Changes saved successfully! ({updatedNewPaintings.length} paintings selected)</p>
+                <div className="bg-green-200 border border-green-500 rounded-lg p-4 mb-6">
+                    <p className="text-black">Changes saved successfully! ({updatedNewPaintings.length} paintings selected)</p>
                 </div>
             )}
 
             {saveError && (
-                <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-4 mb-6">
-                    <p className="text-red-200">Error: {saveError}</p>
+                <div className="bg-red-200 border border-red-500 rounded-lg p-4 mb-6">
+                    <p className="text-black">Error: {saveError}</p>
                 </div>
             )}
 
@@ -147,7 +147,7 @@ export default function SelectNewPaintingsPage() {
                     Current New Paintings ({currentNewPaintings.length})
                 </h2>
                 {currentNewPaintings.length === 0 ? (
-                    <p className="text-gray-400">No paintings are currently marked as new.</p>
+                    <p className="text-[var(--foreground)]">No paintings are currently marked as new.</p>
                 ) : (
                     <div className="grid lg:grid-cols-6 gap-4">
                         {currentNewPaintings.map((painting) => (
@@ -165,7 +165,7 @@ export default function SelectNewPaintingsPage() {
                                         unoptimized={(painting.thumbnailUrl || painting.imageUrl).startsWith('/images/')}
                                     />
                                 </div>
-                                <p className="text-xs text-white truncate">
+                                <p className="text-xs text-[var(--foreground)] truncate">
                                     {painting.title}
                                 </p>
                             </div>
@@ -180,7 +180,7 @@ export default function SelectNewPaintingsPage() {
                     Updated New Paintings ({updatedNewPaintings.length})
                 </h2>
                 {updatedNewPaintings.length === 0 ? (
-                    <p className="text-gray-400">No paintings selected yet. Click on paintings below to add them.</p>
+                    <p className="text-[var(--foreground)]">No paintings selected yet. Click on paintings below to add them.</p>
                 ) : (
                     <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
                         {updatedNewPaintings.map((painting) => (
@@ -198,7 +198,7 @@ export default function SelectNewPaintingsPage() {
                                         unoptimized={(painting.thumbnailUrl || painting.imageUrl).startsWith('/images/')}
                                     />
                                 </div>
-                                <p className="text-xs text-white truncate">
+                                <p className="text-xs text-[var(--foreground)] truncate">
                                     {painting.title}
                                 </p>
                             </div>
@@ -212,17 +212,17 @@ export default function SelectNewPaintingsPage() {
                 <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    className="px-6 py-2 bg-[var(--button-color)] text-white rounded hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
                     {isSaving ? 'Saving...' : 'Save Selection'}
                 </button>
                 {updatedNewPaintings.length > 0 && updatedNewPaintings.length < 8 && (
-                    <p className="text-yellow-400 text-sm mt-2">
+                    <p className="text-[var(--foreground)] text-sm mt-2">
                         ⚠ Warning: Fewer than 8 paintings selected. It is suggested that this section should contain 8 or more paintings.
                     </p>
                 )}
                 {updatedNewPaintings.length > 30 && (
-                    <p className="text-red-400 text-sm mt-2">
+                    <p className="text-[var(--foreground)] text-sm mt-2">
                         ⚠ Error: Exceeds maximum of 30 paintings.
                     </p>
                 )}
@@ -233,7 +233,7 @@ export default function SelectNewPaintingsPage() {
                 <h2 className="text-xl font-semibold mb-3 text-[var(--title-color)]">
                     All Paintings ({allPaintings.length})
                 </h2>
-                <p className="text-gray-400 text-sm mb-4">
+                <p className="text-[var(--foreground)] text-sm mb-4">
                     Click on a painting to toggle it as a {'"'}New Painting{'"'}. Selected paintings are highlighted with a blue border.
                 </p>
                 <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
@@ -258,7 +258,7 @@ export default function SelectNewPaintingsPage() {
                                         unoptimized={(painting.thumbnailUrl || painting.imageUrl).startsWith('/images/')}
                                     />
                                 </div>
-                                <p className={`text-xs truncate group-hover:text-[var(--title-color)] transition-colors ${isSelected ? 'text-[var(--title-color)]' : 'text-white'
+                                <p className={`text-xs truncate group-hover:text-[var(--title-color)] transition-colors ${isSelected ? 'text-[var(--title-color)]' : 'text-[var(--foreground)]'
                                     }`}>
                                     {painting.title}
                                 </p>

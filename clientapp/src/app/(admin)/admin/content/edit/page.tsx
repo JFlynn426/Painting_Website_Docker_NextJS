@@ -22,13 +22,13 @@ export default async function EditContentPage() {
             <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Page Content</h1>
 
             {error && (
-                <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-4 mb-6">
-                    <p className="text-red-200">Error: {error}</p>
+                <div className="bg-red-200 border border-red-500 rounded-lg p-4 mb-6">
+                    <p className="text-black">Error: {error}</p>
                 </div>
             )}
 
             {pageContents.length === 0 && !error ? (
-                <p className="text-gray-400">No page content items found.</p>
+                <p className="text-[var(--foreground)]">No page content items found.</p>
             ) : (
                 <div className="space-y-4">
                     {pageContents.map((content) => {

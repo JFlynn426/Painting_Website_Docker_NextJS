@@ -23,13 +23,13 @@ export default async function AddPaintingsPage() {
             <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Add Paintings to Existing Categories</h1>
 
             {error && (
-                <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-4 mb-6">
-                    <p className="text-red-200">Error: {error}</p>
+                <div className="bg-red-200 border border-red-500 rounded-lg p-4 mb-6">
+                    <p className="text-black">Error: {error}</p>
                 </div>
             )}
 
             {categories.length === 0 && !error ? (
-                <p className="text-gray-400">No categories found.</p>
+                <p className="text-[var(--foreground)]">No categories found.</p>
             ) : (
                 <div className="space-y-4">
                     {categories.map((category) => (
@@ -37,12 +37,12 @@ export default async function AddPaintingsPage() {
                             <div>
                                 <h2 className="text-xl font-bold text-[var(--title-color)]">{category.name}</h2>
                                 {category.description && (
-                                    <p className="text-gray-400">{category.description}</p>
+                                    <p className="text-[var(--foreground)]">{category.description}</p>
                                 )}
                             </div>
                             <Link
                                 href={`/admin/paintings/add/${category.slug}`}
-                                className="flex-shrink-0 ml-4 w-10 h-10 flex items-center justify-center bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-2xl font-bold"
+                                className="flex-shrink-0 ml-4 w-10 h-10 flex items-center justify-center bg-[var(--button-color)] text-white rounded hover:opacity-90 transition-opacity text-2xl font-bold"
                             >
                                 +
                             </Link>

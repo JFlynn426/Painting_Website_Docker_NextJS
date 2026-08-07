@@ -18,6 +18,8 @@ export default function CarouselContentPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Paintings";
+    const artworkLabelLower = artworkLabel.toLowerCase();
 
     useEffect(() => {
         async function loadData() {
@@ -115,7 +117,7 @@ export default function CarouselContentPage() {
             <div>
                 <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Change Carousel Images</h1>
                 <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6">
-                    <p className="text-gray-400">Loading paintings...</p>
+                    <p className="text-[var(--foreground)]">Loading paintings...</p>
                 </div>
             </div>
         );
@@ -125,8 +127,8 @@ export default function CarouselContentPage() {
         return (
             <div>
                 <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Change Carousel Images</h1>
-                <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-6">
-                    <p className="text-red-200">Error: {loadError}</p>
+                <div className="bg-red-200 border border-red-500 rounded-lg p-6">
+                    <p className="text-black">Error: {loadError}</p>
                 </div>
             </div>
         );
@@ -135,38 +137,38 @@ export default function CarouselContentPage() {
     return (
         <div>
             <h1 className="text-3xl font-bold mb-2 text-[var(--title-color)]">Change Carousel Images</h1>
-            <p className="text-gray-400 mb-6">
-                This page allows you to select and order the paintings displayed in the homepage carousel.
+            <p className="text-[var(--foreground)] mb-6">
+                This page allows you to select and order the {artworkLabelLower} displayed in the homepage carousel.
             </p>
 
-            <div className="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-4 mb-6">
-                <p className="text-yellow-200 text-sm">
-                    <strong>Note:</strong> The carousel requires between 3 and 8 paintings to be selected. Order determines display sequence.
+            <div className="bg-yellow-100 border border-yellow-600 rounded-lg p-4 mb-6">
+                <p className="text-black text-sm">
+                    <strong>Note:</strong> The carousel requires between 3 and 8 {artworkLabelLower} to be selected. Order determines display sequence.
                 </p>
-                <p className="text-yellow-200 text-sm mt-1">
-                    <strong>Requirement:</strong> Only paintings that are wider than they are tall (landscape orientation) can be added to the carousel.
+                <p className="text-black text-sm mt-1">
+                    <strong>Requirement:</strong> Only {artworkLabelLower} that are wider than they are tall (landscape orientation) can be added to the carousel.
                 </p>
             </div>
 
             {saveSuccess && (
-                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-4 mb-6">
-                    <p className="text-green-200">Changes saved successfully! ({selectedPaintings.length} paintings selected)</p>
+                <div className="bg-green-200 border border-green-500 rounded-lg p-4 mb-6">
+                    <p className="text-black">Changes saved successfully! ({selectedPaintings.length} {artworkLabelLower} selected)</p>
                 </div>
             )}
 
             {saveError && (
-                <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-4 mb-6">
-                    <p className="text-red-200">Error: {saveError}</p>
+                <div className="bg-red-200 border border-red-500 rounded-lg p-4 mb-6">
+                    <p className="text-black">Error: {saveError}</p>
                 </div>
             )}
 
             {/* Current Carousel Paintings */}
             <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-3 text-[var(--title-color)]">
-                    Current Carousel Paintings ({currentCarouselPaintings.length})
+                    Current Carousel {artworkLabel} ({currentCarouselPaintings.length})
                 </h2>
                 {currentCarouselPaintings.length === 0 ? (
-                    <p className="text-gray-400">No paintings are currently set for the carousel.</p>
+                    <p className="text-[var(--foreground)]">No {artworkLabelLower} are currently set for the carousel.</p>
                 ) : (
                     <div className="grid lg:grid-cols-6 gap-4">
                         {currentCarouselPaintings.map((painting, index) => (
@@ -174,7 +176,7 @@ export default function CarouselContentPage() {
                                 key={painting.id}
                                 className="bg-[var(--navbar-footer-bg)] rounded-lg p-2 relative"
                             >
-                                <span className="absolute top-2 left-2 bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold z-10">
+                                <span className="absolute top-2 left-2 bg-[var(--button-color)] text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold z-10">
                                     {index + 1}
                                 </span>
                                 <div className="aspect-square mb-1 overflow-hidden rounded relative">
@@ -187,7 +189,7 @@ export default function CarouselContentPage() {
                                         unoptimized={(painting.thumbnailUrl || painting.imageUrl).startsWith('/images/')}
                                     />
                                 </div>
-                                <p className="text-xs text-white truncate">
+                                <p className="text-xs text-[var(--foreground)] truncate">
                                     {painting.title}
                                 </p>
                             </div>
@@ -199,10 +201,10 @@ export default function CarouselContentPage() {
             {/* Updated Carousel Paintings Preview */}
             <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-3 text-[var(--title-color)]">
-                    Updated Carousel Paintings ({selectedPaintings.length})
+                    Updated Carousel {artworkLabel} ({selectedPaintings.length})
                 </h2>
                 {selectedPaintings.length === 0 ? (
-                    <p className="text-gray-400">No paintings selected yet. Click on paintings below to add them.</p>
+                    <p className="text-[var(--foreground)]">No {artworkLabelLower} selected yet. Click on {artworkLabelLower} below to add them.</p>
                 ) : (
                     <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
                         {selectedPaintings.map((painting, index) => (
@@ -210,7 +212,7 @@ export default function CarouselContentPage() {
                                 key={painting.id}
                                 className="bg-[var(--navbar-footer-bg)] rounded-lg p-2 relative"
                             >
-                                <span className="absolute top-2 left-2 bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold z-10">
+                                <span className="absolute top-2 left-2 bg-[var(--button-color)] text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold z-10">
                                     {index + 1}
                                 </span>
                                 <div className="aspect-square mb-1 overflow-hidden rounded relative">
@@ -223,14 +225,14 @@ export default function CarouselContentPage() {
                                         unoptimized={(painting.thumbnailUrl || painting.imageUrl).startsWith('/images/')}
                                     />
                                 </div>
-                                <p className="text-xs text-white truncate mb-1">
+                                <p className="text-xs text-[var(--foreground)] truncate mb-1">
                                     {painting.title}
                                 </p>
                                 <div className="flex gap-1">
                                     <button
                                         onClick={() => moveUp(index)}
                                         disabled={index === 0}
-                                        className="flex-1 px-1 py-0.5 text-xs bg-gray-600 text-white rounded hover:bg-gray-500 disabled:opacity-30"
+                                        className="flex-1 px-1 py-0.5 text-xs bg-[var(--admin-hover)] text-[var(--foreground)] rounded hover:opacity-90 disabled:opacity-30"
                                         title="Move up"
                                     >
                                         ↑
@@ -238,7 +240,7 @@ export default function CarouselContentPage() {
                                     <button
                                         onClick={() => moveDown(index)}
                                         disabled={index >= selectedPaintings.length - 1}
-                                        className="flex-1 px-1 py-0.5 text-xs bg-gray-600 text-white rounded hover:bg-gray-500 disabled:opacity-30"
+                                        className="flex-1 px-1 py-0.5 text-xs bg-[var(--admin-hover)] text-[var(--foreground)] rounded hover:opacity-90 disabled:opacity-30"
                                         title="Move down"
                                     >
                                         ↓
@@ -262,18 +264,18 @@ export default function CarouselContentPage() {
                 <button
                     onClick={handleSave}
                     disabled={isSaving || !isValidCount}
-                    className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    className="px-6 py-2 bg-[var(--button-color)] text-white rounded hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
                     {isSaving ? 'Saving...' : 'Save Selection'}
                 </button>
                 {selectedPaintings.length > 0 && selectedPaintings.length < 3 && (
-                    <p className="text-yellow-400 text-sm mt-2">
-                        Warning: You must select between 3 and 8 carousel paintings. You have selected {selectedPaintings.length}.
+                    <p className="text-[var(--foreground)] text-sm mt-2">
+                        Warning: You must select between 3 and 8 carousel {artworkLabelLower}. You have selected {selectedPaintings.length}.
                     </p>
                 )}
                 {selectedPaintings.length > 8 && (
-                    <p className="text-yellow-400 text-sm mt-2">
-                        Warning: You must select between 3 and 8 carousel paintings. You have selected {selectedPaintings.length}.
+                    <p className="text-[var(--foreground)] text-sm mt-2">
+                        Warning: You must select between 3 and 8 carousel {artworkLabelLower}. You have selected {selectedPaintings.length}.
                     </p>
                 )}
             </div>
@@ -281,10 +283,10 @@ export default function CarouselContentPage() {
             {/* All Paintings */}
             <div>
                 <h2 className="text-xl font-semibold mb-3 text-[var(--title-color)]">
-                    Landscape Paintings ({allPaintings.filter(p => p.isLandscape).length})
+                    Landscape {artworkLabel} ({allPaintings.filter(p => p.isLandscape).length})
                 </h2>
-                <p className="text-gray-400 text-sm mb-4">
-                    Click on a painting to toggle it in the carousel. Selected paintings are highlighted with a blue border.
+                <p className="text-[var(--foreground)] text-sm mb-4">
+                    Click on a {artworkLabelLower} to toggle it in the carousel. Selected {artworkLabelLower} are highlighted with a blue border.
                 </p>
                 <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
                     {allPaintings.filter(p => p.isLandscape).map((painting) => {
@@ -308,7 +310,7 @@ export default function CarouselContentPage() {
                                         unoptimized={(painting.thumbnailUrl || painting.imageUrl).startsWith('/images/')}
                                     />
                                 </div>
-                                <p className={`text-xs truncate group-hover:text-[var(--title-color)] transition-colors ${isSelected ? 'text-[var(--title-color)]' : 'text-white'
+                                <p className={`text-xs truncate group-hover:text-[var(--title-color)] transition-colors ${isSelected ? 'text-[var(--title-color)]' : 'text-[var(--foreground)]'
                                     }`}>
                                     {painting.title}
                                 </p>

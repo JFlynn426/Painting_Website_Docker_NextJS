@@ -18,6 +18,8 @@ export default function ReassignPaintingsPage() {
     const [saveError, setSaveError] = useState<string | null>(null);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [savedCount, setSavedCount] = useState(0);
+    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Paintings";
+    const artworkLabelLower = artworkLabel.toLowerCase();
 
     useEffect(() => {
         async function loadData() {
@@ -171,9 +173,9 @@ export default function ReassignPaintingsPage() {
     if (loading) {
         return (
             <div>
-                <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Reassign Paintings</h1>
+                <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Reassign {artworkLabel}</h1>
                 <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6">
-                    <p className="text-gray-400">Loading paintings and categories...</p>
+                    <p className="text-[var(--foreground)]">Loading {artworkLabelLower} and categories...</p>
                 </div>
             </div>
         );
@@ -182,9 +184,9 @@ export default function ReassignPaintingsPage() {
     if (loadError) {
         return (
             <div>
-                <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Reassign Paintings</h1>
-                <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-6">
-                    <p className="text-red-200">Error: {loadError}</p>
+                <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Reassign {artworkLabel}</h1>
+                <div className="bg-red-200 border border-red-500 rounded-lg p-6">
+                    <p className="text-black">Error: {loadError}</p>
                 </div>
             </div>
         );
@@ -192,26 +194,26 @@ export default function ReassignPaintingsPage() {
 
     return (
         <div>
-            <h1 className="text-3xl font-bold mb-2 text-[var(--title-color)]">Reassign Paintings</h1>
-            <p className="text-gray-400 mb-6">
-                Paintings are displayed in their initial categories. Select the category to move the painting to by selecting a new category in the dropdown.
+            <h1 className="text-3xl font-bold mb-2 text-[var(--title-color)]">Reassign {artworkLabel}</h1>
+            <p className="text-[var(--foreground)] mb-6">
+                {artworkLabel} are displayed in their initial categories. Select the category to move the {artworkLabelLower} to by selecting a new category in the dropdown.
             </p>
 
-            <div className="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-4 mb-6">
-                <p className="text-yellow-200 text-sm">
-                    <strong>Note:</strong> Categories can have no more than 30 paintings per page. It is suggested that each category should contain 8 or more paintings.
+            <div className="bg-yellow-100 border border-yellow-600 rounded-lg p-4 mb-6">
+                <p className="text-black text-sm">
+                    <strong>Note:</strong> Categories can have no more than 30 {artworkLabelLower} per page. It is suggested that each category should contain 8 or more {artworkLabelLower}.
                 </p>
             </div>
 
             {saveSuccess && (
-                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-4 mb-6">
-                    <p className="text-green-200">Changes saved successfully! ({savedCount} painting{savedCount !== 1 ? 's' : ''} reassigned)</p>
+                <div className="bg-green-200 border border-green-500 rounded-lg p-4 mb-6">
+                    <p className="text-black">Changes saved successfully! ({savedCount} {artworkLabelLower} reassigned)</p>
                 </div>
             )}
 
             {saveError && (
-                <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-4 mb-6">
-                    <p className="text-red-200">Error: {saveError}</p>
+                <div className="bg-red-200 border border-red-500 rounded-lg p-4 mb-6">
+                    <p className="text-black">Error: {saveError}</p>
                 </div>
             )}
 
@@ -231,28 +233,28 @@ export default function ReassignPaintingsPage() {
                             </h2>
                             {hasChanges && (
                                 <p className="text-sm mb-2">
-                                    <span className="text-gray-400">Projected after changes: </span>
-                                    <span className={projectedCount > 30 ? 'text-red-400 font-bold' : projectedCount < 8 ? 'text-yellow-400 font-bold' : 'text-green-400 font-bold'}>
+                                    <span className="text-[var(--foreground)]">Projected after changes: </span>
+                                    <span className={projectedCount > 30 ? 'text-red-700 font-bold' : projectedCount < 8 ? 'text-yellow-700 font-bold' : 'text-green-700 font-bold'}>
                                         {projectedCount}
                                     </span>
                                     {projectedCount > 30 && (
-                                        <span className="text-red-400 ml-2">⚠ Error: Exceeds maximum of 30 paintings</span>
+                                        <span className="text-red-700 ml-2">⚠ Error: Exceeds maximum of 30 {artworkLabelLower}</span>
                                     )}
                                     {projectedCount < 8 && projectedCount <= 30 && (
-                                        <span className="text-yellow-400 ml-2">⚠ Warning: Fewer than 8 paintings suggested</span>
+                                        <span className="text-yellow-700 ml-2">⚠ Warning: Fewer than 8 {artworkLabelLower} suggested</span>
                                     )}
                                 </p>
                             )}
                             {!hasChanges && paintings.length < 8 && (
-                                <div className="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-3 mb-3">
-                                    <p className="text-yellow-200 text-sm">
-                                        <strong>Warning:</strong> This category has fewer than 8 paintings. It is suggested that each category should contain 8 or more paintings.
+                                <div className="bg-yellow-100 border border-yellow-600 rounded-lg p-3 mb-3">
+                                    <p className="text-black text-sm">
+                                        <strong>Warning:</strong> This category has fewer than 8 {artworkLabelLower}. It is suggested that each category should contain 8 or more {artworkLabelLower}.
                                     </p>
                                 </div>
                             )}
                             {paintings.length === 0 ? (
-                                <div className="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-4">
-                                    <p className="text-yellow-200 text-sm">
+                                <div className="bg-yellow-100 border border-yellow-600 rounded-lg p-4">
+                                    <p className="text-black text-sm">
                                         <strong>No paintings assigned to this category.</strong> Assign paintings from other categories above to add them here.
                                     </p>
                                 </div>
@@ -276,13 +278,13 @@ export default function ReassignPaintingsPage() {
                                                         unoptimized={(painting.thumbnailUrl || painting.imageUrl).startsWith('/images/')}
                                                     />
                                                 </div>
-                                                <p className="text-xs text-white truncate mb-2">
+                                                <p className="text-xs text-[var(--foreground)] truncate mb-2">
                                                     {painting.title}
                                                 </p>
                                                 <select
                                                     value={selectedCategories[painting.id] || painting.categorySlug}
                                                     onChange={(e) => handleCategoryChange(painting.id, e.target.value)}
-                                                    className="w-full text-xs bg-gray-700 rounded px-2 py-1 border border-gray-600 focus:border-blue-500 focus:outline-none"
+                                                    className="w-full text-xs bg-[var(--admin-hover)] rounded px-2 py-1 border border-gray-600 focus:border-blue-500 focus:outline-none"
                                                 >
                                                     {categories.map((cat) => (
                                                         <option key={cat.slug} value={cat.slug}>
@@ -318,7 +320,7 @@ export default function ReassignPaintingsPage() {
                                                         unoptimized={(painting.thumbnailUrl || painting.imageUrl).startsWith('/images/')}
                                                     />
                                                 </div>
-                                                <p className="text-xs text-white truncate">
+                                                <p className="text-xs text-[var(--foreground)] truncate">
                                                     {painting.title}
                                                 </p>
                                             </div>
@@ -352,8 +354,8 @@ export default function ReassignPaintingsPage() {
                                     const newCategory = categories.find(c => c.slug === selectedCategories[painting.id]);
                                     return (
                                         <tr key={painting.id} className="border-b border-gray-700">
-                                            <td className="py-2 px-3 text-white">{painting.title}</td>
-                                            <td className="py-2 px-3 text-gray-400">{currentCategory?.name || painting.categorySlug}</td>
+                                            <td className="py-2 px-3 text-[var(--foreground)]">{painting.title}</td>
+                                            <td className="py-2 px-3 text-[var(--foreground)]">{currentCategory?.name || painting.categorySlug}</td>
                                             <td className="py-2 px-3 text-yellow-400">{newCategory?.name || selectedCategories[painting.id]}</td>
                                         </tr>
                                     );
@@ -364,7 +366,7 @@ export default function ReassignPaintingsPage() {
                     <button
                         onClick={handleSave}
                         disabled={isSaving}
-                        className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+                        className="px-6 py-2 bg-[var(--button-color)] text-white rounded hover:opacity-90 transition-opacity disabled:opacity-50"
                     >
                         {isSaving ? 'Saving...' : `Save Changes (${changedPaintings.length})`}
                     </button>

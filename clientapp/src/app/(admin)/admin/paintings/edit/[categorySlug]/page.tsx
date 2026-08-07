@@ -29,16 +29,16 @@ export default async function EditCategoryPaintingsPage({ params }: EditCategory
             <h1 className="text-3xl font-bold mb-2 text-[var(--title-color)]">
                 Edit Paintings in {categoryName} Category
             </h1>
-            <p className="text-gray-400 mb-6 text-sm">Please select a painting to edit</p>
+            <p className="text-[var(--foreground)] mb-6 text-sm">Please select a painting to edit</p>
 
             {error && (
-                <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-4 mb-6">
-                    <p className="text-red-200">Error: {error}</p>
+                <div className="bg-red-200 border border-red-500 rounded-lg p-4 mb-6">
+                    <p className="text-black">Error: {error}</p>
                 </div>
             )}
 
             {category && category.paintings.length === 0 ? (
-                <p className="text-gray-400">No paintings found in this category.</p>
+                <p className="text-[var(--foreground)]">No paintings found in this category.</p>
             ) : category ? (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {category.paintings.map((painting) => (
@@ -57,7 +57,7 @@ export default async function EditCategoryPaintingsPage({ params }: EditCategory
                                     unoptimized={(painting.thumbnailUrl || painting.imageUrl).startsWith('/images/')}
                                 />
                             </div>
-                            <p className="text-sm text-white truncate group-hover:text-[var(--title-color)] transition-colors">
+                            <p className="text-sm text-[var(--foreground)] truncate group-hover:text-[var(--title-color)] transition-colors">
                                 {painting.title}
                             </p>
                         </Link>

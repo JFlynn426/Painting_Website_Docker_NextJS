@@ -1,5 +1,6 @@
 import AdminHeader from "@/components/AdminHeader";
 import AdminFooter from "@/components/AdminFooter";
+import AuthGuard from "@/components/AuthGuard";
 
 export default function AdminLayout({
     children,
@@ -10,7 +11,9 @@ export default function AdminLayout({
         <div className="min-h-screen flex flex-col">
             <AdminHeader />
             <main className="flex-1 container mx-auto p-6">
-                {children}
+                <AuthGuard>
+                    {children}
+                </AuthGuard>
             </main>
             <AdminFooter />
         </div>

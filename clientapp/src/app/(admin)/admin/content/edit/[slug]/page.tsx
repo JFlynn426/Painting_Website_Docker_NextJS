@@ -159,7 +159,7 @@ export default function EditPageContentPage({ params }: EditPageContentProps) {
         return (
             <div>
                 <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Edit Page Content: {content?.title || slug}</h1>
-                <p className="text-gray-400">Loading...</p>
+                <p className="text-[var(--foreground)]">Loading...</p>
             </div>
         );
     }
@@ -168,8 +168,8 @@ export default function EditPageContentPage({ params }: EditPageContentProps) {
         return (
             <div>
                 <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Edit Page Content</h1>
-                <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-4 mb-6">
-                    <p className="text-red-200">{loadError || 'Page content not found'}</p>
+                <div className="bg-red-200 border border-red-500 rounded-lg p-4 mb-6">
+                    <p className="text-black">{loadError || 'Page content not found'}</p>
                 </div>
                 <Link href="/admin/content/edit" className="text-[var(--title-color)] hover:underline">
                     &larr; Back to Edit Content
@@ -185,14 +185,14 @@ export default function EditPageContentPage({ params }: EditPageContentProps) {
                 <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Edit: {content.title || content.slug}</h1>
 
                 {submitError && (
-                    <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-4 mb-6">
-                        <p className="text-red-200">Error: {submitError}</p>
+                    <div className="bg-red-200 border border-red-500 rounded-lg p-4 mb-6">
+                        <p className="text-black">Error: {submitError}</p>
                     </div>
                 )}
 
                 {submitSuccess && (
-                    <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-4 mb-6">
-                        <p className="text-green-200">Page content updated successfully!</p>
+                    <div className="bg-green-200 border border-green-500 rounded-lg p-4 mb-6">
+                        <p className="text-black">Page content updated successfully!</p>
                     </div>
                 )}
 
@@ -201,7 +201,7 @@ export default function EditPageContentPage({ params }: EditPageContentProps) {
                     <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 mb-6">
                         <h2 className="text-xl font-bold mb-4 text-[var(--title-color)]">Current Version (Before Edits)</h2>
                         <div
-                            className="w-full px-3 py-2 bg-[var(--background)] border border-gray-600 rounded text-white text-sm font-normal min-h-[100px]"
+                            className="w-full px-3 py-2 bg-[var(--background)] border border-gray-600 rounded text-[var(--foreground)] text-sm font-normal min-h-[100px]"
                             style={{ fontFamily: 'var(--font-local)' }}
                             dangerouslySetInnerHTML={{ __html: initialContentHtml }}
                         />
@@ -210,7 +210,7 @@ export default function EditPageContentPage({ params }: EditPageContentProps) {
 
                 <form onSubmit={handleSubmit} className="bg-[var(--navbar-footer-bg)] rounded-lg p-6">
                     <div className="mb-4">
-                        <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-2">
+                        <label htmlFor="title" className="block text-sm font-medium text-[var(--foreground)] mb-2">
                             Title (optional)
                         </label>
                         <input
@@ -218,7 +218,7 @@ export default function EditPageContentPage({ params }: EditPageContentProps) {
                             id="title"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            className="w-full px-3 py-2 bg-[var(--background)] border border-gray-600 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 bg-[var(--background)] border border-gray-600 rounded text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Enter page title..."
                         />
                         {errors.title && (
@@ -227,7 +227,7 @@ export default function EditPageContentPage({ params }: EditPageContentProps) {
                     </div>
 
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-[var(--foreground)] mb-2">
                             Content (separate paragraphs with blank lines)
                         </label>
                         {/* Formatting toolbar */}
@@ -285,7 +285,7 @@ export default function EditPageContentPage({ params }: EditPageContentProps) {
                             ref={contentEditorRef}
                             contentEditable
                             suppressContentEditableWarning
-                            className="w-full px-3 py-2 bg-[var(--background)] border border-gray-600 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[300px] text-sm font-normal"
+                            className="w-full px-3 py-2 bg-[var(--background)] border border-gray-600 rounded text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[300px] text-sm font-normal"
                             style={{ fontFamily: 'var(--font-local)' }}
                         />
                         {errors.content && (
@@ -294,11 +294,11 @@ export default function EditPageContentPage({ params }: EditPageContentProps) {
                     </div>
                     {slug === 'about' && (
                         <div className="mb-4">
-                            <h2 className="text-sm font-medium text-gray-300 mb-2">Photo (Only 1 photo allowed for About page)</h2>
+                            <h2 className="text-sm font-medium text-[var(--foreground)] mb-2">Photo (Only 1 photo allowed for About page)</h2>
                             <div className="flex justify-center relative w-full max-w-xs mx-auto h-48">
                                 <Image src={photoUrls[0] || '/placeholder.jpg'} alt="Photo" fill className="rounded object-contain" unoptimized={(photoUrls[0] || '/placeholder.jpg').startsWith('/images/')} />
                             </div>
-                            <input type="file" accept=".jpg,.jpeg" onChange={handleFileUpload} className="w-full text-gray-300 mt-2 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700" />
+                            <input type="file" accept=".jpg,.jpeg" onChange={handleFileUpload} className="w-full text-[var(--foreground)] mt-2 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-[var(--button-color)] file:text-white hover:file:opacity-90" />
                             {errors.file && (
                                 <p className="text-red-400 text-sm mt-1">{errors.file}</p>
                             )}
@@ -309,7 +309,7 @@ export default function EditPageContentPage({ params }: EditPageContentProps) {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors font-bold disabled:opacity-50"
+                            className="px-4 py-2 bg-[var(--button-color)] text-white rounded hover:opacity-90 transition-opacity font-bold disabled:opacity-50"
                         >
                             {isSubmitting ? 'Saving...' : 'Save Changes'}
                         </button>

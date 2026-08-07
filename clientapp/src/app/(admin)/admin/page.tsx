@@ -9,6 +9,8 @@ export default function AdminDashboardPage() {
     const router = useRouter();
     const [user, setUser] = useState<AdminUserDto | null>(null);
     const [loading, setLoading] = useState(true);
+    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Paintings";
+    const artworkLabelLower = artworkLabel.toLowerCase();
 
     useEffect(() => {
         verifyAuth().then(result => {
@@ -46,25 +48,25 @@ export default function AdminDashboardPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Link href="/admin/paintings" className="block">
-                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
-                        <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Paintings</h2>
+                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-[var(--admin-hover)] transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
+                        <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">{artworkLabel}</h2>
                         <p className="text-[var(--foreground)]">
-                            Manage paintings: add new paintings, delete existing ones, edit details, and select new arrivals.
+                            Manage {artworkLabelLower}: add new {artworkLabelLower}, delete existing ones, edit details, and select new arrivals.
                         </p>
                     </div>
                 </Link>
 
                 <Link href="/admin/categories" className="block">
-                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
+                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-[var(--admin-hover)] transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Categories</h2>
                         <p className="text-[var(--foreground)]">
-                            Manage painting categories: create new categories, edit existing ones, or remove categories.
+                            Manage {artworkLabelLower} categories: create new categories, edit existing ones, or remove categories.
                         </p>
                     </div>
                 </Link>
 
                 <Link href="/admin/content" className="block">
-                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
+                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-[var(--admin-hover)] transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Content</h2>
                         <p className="text-[var(--foreground)]">
                             Manage other website content: edit page text, descriptions, home page carousel, etc...
@@ -73,10 +75,10 @@ export default function AdminDashboardPage() {
                 </Link>
 
                 <Link href="/admin/history" className="hidden">
-                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-gray-700 transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
+                    <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-[var(--admin-hover)] transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">History</h2>
                         <p className="text-[var(--foreground)]">
-                            View editing history: track all changes made to paintings, categories, and content.
+                            View editing history: track all changes made to {artworkLabelLower}, categories, and content.
                         </p>
                     </div>
                 </Link>

@@ -218,34 +218,34 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                     Add Painting to: {slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                 </h1>
 
-                <div className="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-4 mb-6">
-                    <p className="text-yellow-200 text-sm">
+                <div className="bg-yellow-100 border border-yellow-600 rounded-lg p-4 mb-6">
+                    <p className="text-black text-sm">
                         <strong>Note:</strong> Required fields are marked with a red asterisk. Attempt to fill out the same fields for every painting, where possible, to maintain consistency across the site.
                     </p>
                 </div>
 
                 {submitSuccess && (
-                    <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-4 mb-6">
-                        <p className="text-green-200">Painting added successfully!</p>
+                    <div className="bg-green-200 border border-green-500 rounded-lg p-4 mb-6">
+                        <p className="text-black">Painting added successfully!</p>
                     </div>
                 )}
 
                 {submitError && (
-                    <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-4 mb-6">
-                        <p className="text-red-200">Error: {submitError}</p>
+                    <div className="bg-red-200 border border-red-500 rounded-lg p-4 mb-6">
+                        <p className="text-black">Error: {submitError}</p>
                     </div>
                 )}
 
                 {errors.file && (
-                    <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-4 mb-6">
-                        <p className="text-red-200">{errors.file}</p>
+                    <div className="bg-red-200 border border-red-500 rounded-lg p-4 mb-6">
+                        <p className="text-black">{errors.file}</p>
                     </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 space-y-4">
                     {/* Image Upload */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-[var(--foreground)] mb-2">
                             Painting Image (.jpg) <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -253,7 +253,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                             accept=".jpg,.jpeg"
                             onChange={handleFileUpload}
                             disabled={isUploading}
-                            className="w-full text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 disabled:opacity-50"
+                            className="w-full text-[var(--foreground)] file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-[var(--button-color)] file:text-white hover:file:opacity-90 disabled:opacity-50"
                         />
                         {isUploading && <p className="text-blue-400 text-sm mt-1">Uploading and processing image...</p>}
                         {errors.file && <p className="text-red-500 text-sm mt-1">{errors.file}</p>}
@@ -266,7 +266,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
 
                     {/* Title */}
                     <div>
-                        <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-1">
+                        <label htmlFor="title" className="block text-sm font-medium text-[var(--foreground)] mb-1">
                             Title <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -275,7 +275,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                             value={title}
                             onChange={e => setTitle(e.target.value)}
                             maxLength={100}
-                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                            className="w-full px-3 py-2 bg-[var(--background)] text-[var(--foreground)] border border-gray-600 rounded focus:outline-none focus:border-blue-500"
                             placeholder="Enter painting title (Required)"
                         />
                         <p className="text-gray-500 text-xs mt-1">{title.length}/100 characters</p>
@@ -284,7 +284,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
 
                     {/* Description */}
                     <div>
-                        <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">
+                        <label htmlFor="description" className="block text-sm font-medium text-[var(--foreground)] mb-1">
                             Description
                         </label>
                         <textarea
@@ -293,7 +293,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                             onChange={e => setDescription(e.target.value)}
                             maxLength={500}
                             rows={4}
-                            className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                            className="w-full px-3 py-2 bg-[var(--background)] text-[var(--foreground)] border border-gray-600 rounded focus:outline-none focus:border-blue-500"
                             placeholder="Enter painting description (Suggested)"
                         />
                         <p className="text-gray-500 text-xs mt-1">{description.length}/500 characters</p>
@@ -303,7 +303,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                     {/* Dimensions */}
                     <div className="grid grid-cols-3 gap-4">
                         <div>
-                            <label htmlFor="width" className="block text-sm font-medium text-gray-300 mb-1">
+                            <label htmlFor="width" className="block text-sm font-medium text-[var(--foreground)] mb-1">
                                 Width
                             </label>
                             <input
@@ -313,13 +313,13 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                                 onChange={e => setWidth(e.target.value)}
                                 step="0.01"
                                 min="0.01"
-                                className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                                className="w-full px-3 py-2 bg-[var(--background)] text-[var(--foreground)] border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 placeholder="Width (Suggested)"
                             />
                             {errors.width && <p className="text-red-500 text-sm mt-1">{errors.width}</p>}
                         </div>
                         <div>
-                            <label htmlFor="height" className="block text-sm font-medium text-gray-300 mb-1">
+                            <label htmlFor="height" className="block text-sm font-medium text-[var(--foreground)] mb-1">
                                 Height
                             </label>
                             <input
@@ -329,13 +329,13 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                                 onChange={e => setHeight(e.target.value)}
                                 step="0.01"
                                 min="0.01"
-                                className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                                className="w-full px-3 py-2 bg-[var(--background)] text-[var(--foreground)] border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 placeholder="Height (Suggested)"
                             />
                             {errors.height && <p className="text-red-500 text-sm mt-1">{errors.height}</p>}
                         </div>
                         <div>
-                            <label htmlFor="depth" className="block text-sm font-medium text-gray-300 mb-1">
+                            <label htmlFor="depth" className="block text-sm font-medium text-[var(--foreground)] mb-1">
                                 Depth
                             </label>
                             <input
@@ -345,7 +345,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                                 onChange={e => setDepth(e.target.value)}
                                 step="0.01"
                                 min="0.01"
-                                className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                                className="w-full px-3 py-2 bg-[var(--background)] text-[var(--foreground)] border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 placeholder="Depth (Optional)"
                             />
                             {errors.depth && <p className="text-red-500 text-sm mt-1">{errors.depth}</p>}
@@ -355,7 +355,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                     {/* Year and Price */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label htmlFor="year" className="block text-sm font-medium text-gray-300 mb-1">
+                            <label htmlFor="year" className="block text-sm font-medium text-[var(--foreground)] mb-1">
                                 Year
                             </label>
                             <input
@@ -365,13 +365,13 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                                 onChange={e => setYear(e.target.value)}
                                 min={1900}
                                 max={2100}
-                                className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                                className="w-full px-3 py-2 bg-[var(--background)] text-[var(--foreground)] border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 placeholder="Year created (Optional)"
                             />
                             {errors.year && <p className="text-red-500 text-sm mt-1">{errors.year}</p>}
                         </div>
                         <div>
-                            <label htmlFor="price" className="block text-sm font-medium text-gray-300 mb-1">
+                            <label htmlFor="price" className="block text-sm font-medium text-[var(--foreground)] mb-1">
                                 Price ($)
                             </label>
                             <input
@@ -381,7 +381,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                                 onChange={e => setPrice(e.target.value)}
                                 step="0.01"
                                 min="0"
-                                className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                                className="w-full px-3 py-2 bg-[var(--background)] text-[var(--foreground)] border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 placeholder="Price (Suggested for available paintings)"
                             />
                             {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
@@ -397,7 +397,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                             onChange={e => setIsAvailable(e.target.checked)}
                             className="w-4 h-4 text-blue-600 bg-[var(--background)] border-gray-600 rounded focus:ring-blue-500"
                         />
-                        <label htmlFor="isAvailable" className="ml-2 block text-sm font-medium text-gray-300">
+                        <label htmlFor="isAvailable" className="ml-2 block text-sm font-medium text-[var(--foreground)]">
                             Painting is available
                         </label>
                     </div>
@@ -411,7 +411,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                             onChange={e => setIsNew(e.target.checked)}
                             className="w-4 h-4 text-blue-600 bg-[var(--background)] border-gray-600 rounded focus:ring-blue-500"
                         />
-                        <label htmlFor="isNew" className="ml-2 block text-sm font-medium text-gray-300">
+                        <label htmlFor="isNew" className="ml-2 block text-sm font-medium text-[var(--foreground)]">
                             Add to New Paintings
                         </label>
                     </div>
@@ -421,7 +421,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+                            className="px-6 py-2 bg-[var(--button-color)] text-white rounded hover:opacity-90 transition-opacity disabled:opacity-50"
                         >
                             {isSubmitting ? 'Adding...' : 'Add Painting'}
                         </button>

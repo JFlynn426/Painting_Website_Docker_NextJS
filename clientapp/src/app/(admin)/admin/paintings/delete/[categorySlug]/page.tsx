@@ -70,7 +70,7 @@ export default function DeleteCategoryPaintingsPage({ params }: DeleteCategoryPa
                     Delete Paintings from {categoryName}
                 </h1>
                 <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6">
-                    <p className="text-gray-400">Loading paintings...</p>
+                    <p className="text-[var(--foreground)]">Loading paintings...</p>
                 </div>
             </div>
         );
@@ -82,8 +82,8 @@ export default function DeleteCategoryPaintingsPage({ params }: DeleteCategoryPa
                 <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">
                     Delete Paintings from {categoryName}
                 </h1>
-                <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-6">
-                    <p className="text-red-200">Error: {loadError}</p>
+                <div className="bg-red-200 border border-red-500 rounded-lg p-6">
+                    <p className="text-black">Error: {loadError}</p>
                 </div>
                 <div className="mt-6">
                     <Link href="/admin/paintings/delete" className="text-[var(--title-color)] hover:underline">
@@ -99,24 +99,24 @@ export default function DeleteCategoryPaintingsPage({ params }: DeleteCategoryPa
             <h1 className="text-3xl font-bold mb-2 text-[var(--title-color)]">
                 Delete Paintings from {categoryName}
             </h1>
-            <p className="text-gray-400 mb-6">
+            <p className="text-[var(--foreground)] mb-6">
                 Click the delete button to permanently remove a painting from the database. This action cannot be undone.
             </p>
 
             {deletedCount > 0 && (
-                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-4 mb-6">
-                    <p className="text-green-200">{deletedCount} painting{deletedCount !== 1 ? 's' : ''} deleted successfully.</p>
+                <div className="bg-green-200 border border-green-500 rounded-lg p-4 mb-6">
+                    <p className="text-black">{deletedCount} painting{deletedCount !== 1 ? 's' : ''} deleted successfully.</p>
                 </div>
             )}
 
             {deleteError && (
-                <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-4 mb-6">
-                    <p className="text-red-200">Error: {deleteError}</p>
+                <div className="bg-red-200 border border-red-500 rounded-lg p-4 mb-6">
+                    <p className="text-black">Error: {deleteError}</p>
                 </div>
             )}
 
             {category && category.paintings.length === 0 ? (
-                <p className="text-gray-400">No paintings found in this category.</p>
+                <p className="text-[var(--foreground)]">No paintings found in this category.</p>
             ) : category ? (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {category.paintings.map((painting) => (
@@ -134,13 +134,13 @@ export default function DeleteCategoryPaintingsPage({ params }: DeleteCategoryPa
                                     unoptimized={(painting.thumbnailUrl || painting.imageUrl).startsWith('/images/')}
                                 />
                             </div>
-                            <p className="text-sm text-white truncate group-hover:text-[var(--title-color)] transition-colors mb-2">
+                            <p className="text-sm text-[var(--foreground)] truncate group-hover:text-[var(--title-color)] transition-colors mb-2">
                                 {painting.title}
                             </p>
 
                             {confirmDelete === painting.id ? (
                                 <div className="space-y-1">
-                                    <p className="text-red-400 text-xs">Are you sure?</p>
+                                    <p className="text-red-700 text-xs">Are you sure?</p>
                                     <button
                                         onClick={() => handleDelete(painting.id, painting.title)}
                                         disabled={deletingId === painting.id}

@@ -101,7 +101,7 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
                     Edit Category
                 </h1>
                 <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6">
-                    <p className="text-gray-400">Loading category data...</p>
+                    <p className="text-[var(--foreground)]">Loading category data...</p>
                 </div>
             </div>
         );
@@ -113,8 +113,8 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
                 <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">
                     Edit Category
                 </h1>
-                <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-6">
-                    <p className="text-red-200">{loadError || 'Category not found'}</p>
+                <div className="bg-red-200 border border-red-500 rounded-lg p-6">
+                    <p className="text-black">{loadError || 'Category not found'}</p>
                 </div>
                 <div className="mt-6">
                     <Link href="/admin/categories/edit" className="block text-[var(--title-color)] hover:underline">
@@ -135,21 +135,21 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
             </h1>
 
             {submitSuccess && (
-                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-4 mb-6">
-                    <p className="text-green-200">Category updated successfully!</p>
+                <div className="bg-green-200 border border-green-500 rounded-lg p-4 mb-6">
+                    <p className="text-black">Category updated successfully!</p>
                 </div>
             )}
 
             {submitError && (
-                <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-4 mb-6">
-                    <p className="text-red-200">Error: {submitError}</p>
+                <div className="bg-red-200 border border-red-500 rounded-lg p-4 mb-6">
+                    <p className="text-black">Error: {submitError}</p>
                 </div>
             )}
 
             <form onSubmit={handleSubmit} className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 space-y-4">
                 {/* Name */}
                 <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="name" className="block text-sm font-medium text-[var(--foreground)] mb-1">
                         Category Name <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -158,18 +158,18 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
                         value={name}
                         onChange={e => setName(e.target.value)}
                         maxLength={50}
-                        className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                        className="w-full px-3 py-2 bg-[var(--background)] text-[var(--foreground)] border border-gray-600 rounded focus:outline-none focus:border-blue-500"
                     />
                     <p className="text-gray-500 text-xs mt-1">{name.length}/50 characters</p>
                     {name !== originalName && (
-                        <p className="text-white text-xs mt-1">Original: {originalName}</p>
+                        <p className="text-[var(--foreground)] text-xs mt-1">Original: {originalName}</p>
                     )}
                     {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
                 </div>
 
                 {/* Description */}
                 <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="description" className="block text-sm font-medium text-[var(--foreground)] mb-1">
                         Description
                     </label>
                     <textarea
@@ -178,11 +178,11 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
                         onChange={e => setDescription(e.target.value)}
                         maxLength={200}
                         rows={4}
-                        className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                        className="w-full px-3 py-2 bg-[var(--background)] text-[var(--foreground)] border border-gray-600 rounded focus:outline-none focus:border-blue-500"
                     />
                     <p className="text-gray-500 text-xs mt-1">{description.length}/200 characters</p>
                     {description !== originalDescription && (
-                        <p className="text-white text-xs mt-1">Original: {originalDescription || '(empty)'}</p>
+                        <p className="text-[var(--foreground)] text-xs mt-1">Original: {originalDescription || '(empty)'}</p>
                     )}
                     {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
                 </div>
@@ -192,7 +192,7 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+                        className="px-6 py-2 bg-[var(--button-color)] text-white rounded hover:opacity-90 transition-opacity disabled:opacity-50"
                     >
                         {isSubmitting ? 'Updating...' : 'Update Category'}
                     </button>

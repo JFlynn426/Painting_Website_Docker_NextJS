@@ -12,6 +12,7 @@ export default function AddCategoryPage() {
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [submitSuccess, setSubmitSuccess] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Paintings";
 
     const validate = (): boolean => {
         const newErrors: Record<string, string> = {};
@@ -63,25 +64,25 @@ export default function AddCategoryPage() {
     return (
         <div>
             <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">
-                Add Painting Category
+                Add {artworkLabel} Category
             </h1>
 
             {submitSuccess && (
-                <div className="bg-green-900 bg-opacity-50 border border-green-500 rounded-lg p-4 mb-6">
-                    <p className="text-green-200">Category added successfully!</p>
+                <div className="bg-green-200 border border-green-500 rounded-lg p-4 mb-6">
+                    <p className="text-black">Category added successfully!</p>
                 </div>
             )}
 
             {submitError && (
-                <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-4 mb-6">
-                    <p className="text-red-200">Error: {submitError}</p>
+                <div className="bg-red-200 border border-red-500 rounded-lg p-4 mb-6">
+                    <p className="text-black">Error: {submitError}</p>
                 </div>
             )}
 
             <form onSubmit={handleSubmit} className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 space-y-4">
                 {/* Name */}
                 <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="name" className="block text-sm font-medium text-[var(--foreground)] mb-1">
                         Category Name <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -90,7 +91,7 @@ export default function AddCategoryPage() {
                         value={name}
                         onChange={e => setName(e.target.value)}
                         maxLength={50}
-                        className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                        className="w-full px-3 py-2 bg-[var(--background)] text-[var(--foreground)] border border-gray-600 rounded focus:outline-none focus:border-blue-500"
                         placeholder="Enter category name"
                     />
                     <p className="text-gray-500 text-xs mt-1">{name.length}/50 characters</p>
@@ -99,7 +100,7 @@ export default function AddCategoryPage() {
 
                 {/* Description */}
                 <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="description" className="block text-sm font-medium text-[var(--foreground)] mb-1">
                         Description
                     </label>
                     <textarea
@@ -108,7 +109,7 @@ export default function AddCategoryPage() {
                         onChange={e => setDescription(e.target.value)}
                         maxLength={200}
                         rows={4}
-                        className="w-full px-3 py-2 bg-[var(--background)] text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                        className="w-full px-3 py-2 bg-[var(--background)] text-[var(--foreground)] border border-gray-600 rounded focus:outline-none focus:border-blue-500"
                         placeholder="Enter category description (optional) - This description is displayed underneath the category title"
                     />
                     <p className="text-gray-500 text-xs mt-1">{description.length}/200 characters</p>
@@ -120,7 +121,7 @@ export default function AddCategoryPage() {
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+                        className="px-6 py-2 bg-[var(--button-color)] text-white rounded hover:opacity-90 transition-opacity disabled:opacity-50"
                     >
                         {isSubmitting ? 'Adding...' : 'Add Category'}
                     </button>

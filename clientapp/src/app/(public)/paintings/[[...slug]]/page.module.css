@@ -147,7 +147,7 @@
 }
 
 .inquireButton:hover {
-    background-color: var(--examine-painting);
+    background-color: var(--button-color);
     border: 1px solid transparent;
 }
 
@@ -157,7 +157,7 @@
     justify-content: center;
     gap: 8px;
     padding: 12px 24px;
-    background-color: var(--examine-painting);
+    background-color: var(--button-color);
     color: white;
     text-decoration: none;
     border-radius: 5px;

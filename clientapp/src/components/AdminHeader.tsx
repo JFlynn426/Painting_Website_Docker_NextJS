@@ -17,9 +17,11 @@ export default function AdminHeader() {
         await logout();
     };
 
+    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Paintings";
+
     const navLinks = [
         { href: '/admin', label: 'Dashboard' },
-        { href: '/admin/paintings', label: 'Paintings' },
+        { href: '/admin/paintings', label: artworkLabel },
         { href: '/admin/categories', label: 'Categories' },
         { href: '/admin/content', label: 'Content' },
         { href: '/admin/history', label: 'History' },
@@ -71,14 +73,14 @@ export default function AdminHeader() {
                                         const parent = target.parentElement;
                                         if (parent) {
                                             const fallback = document.createElement('div');
-                                            fallback.className = 'w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold';
+                                            fallback.className = 'w-8 h-8 rounded-full bg-[var(--button-color)] flex items-center justify-center text-white text-sm font-bold';
                                             fallback.textContent = user.displayName.charAt(0).toUpperCase();
                                             parent.insertBefore(fallback, target);
                                         }
                                     }}
                                 />
                             ) : (
-                                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold">
+                                <div className="w-8 h-8 rounded-full bg-[var(--button-color)] flex items-center justify-center text-white text-sm font-bold">
                                     {user.displayName.charAt(0).toUpperCase()}
                                 </div>
                             )}
@@ -92,7 +94,7 @@ export default function AdminHeader() {
                             key={link.href}
                             href={link.href}
                             className={`px-3 py-2 rounded transition-colors whitespace-nowrap ${link.href === '/admin/history' ? 'hidden' : ''} ${activeHref === link.href
-                                ? 'bg-[var(--examine-painting)] text-white'
+                                ? 'bg-[var(--button-color)] text-white'
                                 : 'text-[var(--foreground)] hover:bg-[var(--admin-hover)]'
                                 }`}
                         >
