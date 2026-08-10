@@ -48,15 +48,35 @@ public class AdminUserConfiguration : IEntityTypeConfiguration<AdminUser>
                     v => v == null ? null : v.Value,
                     v => v == null ? null : new AdminPictureUrl(v)));
 
-        // GoogleSubjectId - required, unique
+        // GoogleSubjectId - nullable, unique for non-null values (partial index)
         builder.Property(e => e.GoogleSubjectId)
             .HasColumnName("GoogleSubjectId")
             .HasColumnType("varchar(100)")
-            .IsRequired()
+            .IsRequired(false)
             .HasConversion(
-                g => g.Value,
-                value => new AdminGoogleSub(value));
-        builder.HasIndex(e => e.GoogleSubjectId).IsUnique();
+                new ValueConverter<AdminGoogleSub?, string?>(
+                    v => v == null ? null : v.Value,
+                    v => v == null ? null : new AdminGoogleSub(v)));
+        // Partial unique index - allows multiple NULLs but unique for non-NULL values
+        builder.HasIndex(e => e.GoogleSubjectId)
+            .HasDatabaseName("IX_AdminUsers_GoogleSubjectId")
+            .IsUnique()
+            .HasFilter("GoogleSubjectId IS NOT NULL");
+
+        // YahooGuid - nullable, unique for non-null values (partial index)
+        builder.Property(e => e.YahooGuid)
+            .HasColumnName("YahooGuid")
+            .HasColumnType("varchar(100)")
+            .IsRequired(false)
+            .HasConversion(
+                new ValueConverter<AdminYahooGuid?, string?>(
+                    v => v == null ? null : v.Value,
+                    v => v == null ? null : new AdminYahooGuid(v)));
+        // Partial unique index - allows multiple NULLs but unique for non-NULL values
+        builder.HasIndex(e => e.YahooGuid)
+            .HasDatabaseName("IX_AdminUsers_YahooGuid")
+            .IsUnique()
+            .HasFilter("YahooGuid IS NOT NULL");
 
         // LastLoginAt - required
         builder.Property(e => e.LastLoginAt)

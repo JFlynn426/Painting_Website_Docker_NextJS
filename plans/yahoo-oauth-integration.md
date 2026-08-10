@@ -4,6 +4,82 @@
 
 This document outlines the changes required to add Yahoo OAuth2 authentication as an additional provider alongside the existing Google OAuth2 authentication.
 
+## PLAN REVIEW - UPDATED 2026-08-10
+
+The following section documents discrepancies discovered when cross-referencing this plan against the current codebase, and additional requirements that were missed in the original plan.
+
+### Discrepancy 1: Multi-Site Environment Variables Missing
+
+The original plan mentions adding Yahoo config to `docker-compose/.env.example` and `appsettings.Development.json`. However, the current multi-site architecture uses site-specific environment variables in `docker-compose/.env.multi` (e.g., `GG_GOOGLE_AUTH_CLIENT_ID`, `FLYNN_GOOGLE_AUTH_CLIENT_ID`). The plan must be updated to include:
+
+```env
+# For each site in .env.multi and .env.multi.example:
+GG_YAHOO_AUTH_CLIENT_ID=your_yahoo_client_id
+GG_YAHOO_AUTH_CLIENT_SECRET=your_yahoo_client_secret
+GG_YAHOO_AUTH_REDIRECT_URI=https://localhost:8181/admin/login
+
+FLYNN_YAHOO_AUTH_CLIENT_ID=your_yahoo_client_id
+FLYNN_YAHOO_AUTH_CLIENT_SECRET=your_yahoo_client_secret
+FLYNN_YAHOO_AUTH_REDIRECT_URI=https://localhost:8182/admin/login
+```
+
+Additionally, `.env.multi.arm64.example` needs the same variables.
+
+### Discrepancy 2: `appsettings.Development.json` is NOT the Source of Config
+
+The original plan suggests adding Yahoo config to `ServerApp/ServerApp.Api/appsettings.Development.json`. However, the current codebase reads OAuth config from environment variables using `IConfiguration` with colon notation (e.g., `configuration["GoogleAuth:ClientId"]` in [`GoogleAuthService.cs`](ServerApp/ServerApp.Infrastructure/Services/GoogleAuthService.cs:24)). The multi-site Docker Compose files map these environment variables to the backend containers. No `appsettings` changes are needed for the multi-site deployment.
+
+### Discrepancy 3: `AdminUser` Constructor Requires `googleSubjectId` as Non-Nullable
+
+The current [`AdminUser`](ServerApp/ServerApp.Domain/Entities/AdminUser.cs:21) constructor signature is:
+```csharp
+internal AdminUser(AdminID id, AdminEmail email, AdminName displayName,
+    AdminPictureUrl? pictureUrl, AdminGoogleSub googleSubjectId)
+```
+
+The `googleSubjectId` parameter is non-nullable. The plan correctly identifies this needs to change, but the constructor body at line 28 directly assigns `GoogleSubjectId = googleSubjectId;`. Making this nullable requires updating both the parameter type AND handling the null assignment.
+
+### Discrepancy 4: Unique Index on `GoogleSubjectId` with Nullable Column
+
+The current EF configuration at [`AdminUserConfiguration.cs:59`](ServerApp/ServerApp.Infrastructure/EF/Config/AdminUserConfiguration.cs:59) creates a unique index:
+```csharp
+builder.HasIndex(e => e.GoogleSubjectId).IsUnique();
+```
+
+When making `GoogleSubjectId` nullable in PostgreSQL, a unique index allows only ONE null value. This means only ONE Yahoo user could be created. The unique index must be changed to a **partial index** that excludes null values:
+```csharp
+builder.HasIndex(e => e.GoogleSubjectId)
+    .HasDatabaseName("IX_AdminUsers_GoogleSubjectId")
+    .IsUnique()
+    .HasFilter("GoogleSubjectId IS NOT NULL");
+```
+
+Alternatively, use a filtered index via migration SQL.
+
+### Discrepancy 5: `AdminUserFactory.Create` Method Signature
+
+The current [`IAdminUserFactory`](ServerApp/ServerApp.Domain/Factories/IAdminUserFactory.cs:8) and [`AdminUserFactory`](ServerApp/ServerApp.Domain/Factories/AdminUserFactory.cs:8) use a single `Create` method. The plan suggests making `googleSubjectId` optional and adding `yahooGuid`. However, this creates ambiguity: a Yahoo-only login would pass `googleSubjectId = null` and `yahooGuid = "xxx"`. The factory needs to handle BOTH provider IDs being potentially null, with validation that at least ONE is provided.
+
+### Discrepancy 6: `LoginWithYahoo` Command Return Type
+
+The plan suggests `LoginWithYahoo` should return `GoogleAuthResponse`. While technically correct (the response structure is generic), this is semantically confusing. Consider creating a provider-generic `OAuthResponse` DTO or renaming `GoogleAuthResponse` to `AuthResponse`.
+
+### Discrepancy 7: Frontend Login Page Needs Significant Updates
+
+The current [`login/page.tsx`](clientapp/src/app/(admin)/admin/login/page.tsx:20) has:
+- Google-specific `handleGoogleLogin()` function
+- Google-specific callback handling in `useEffect`
+- Google-branded button with inline SVG icon
+
+The plan mentions adding a Yahoo button but doesn't detail the refactoring needed to support multiple providers cleanly. Consider:
+- Extracting provider-agnostic callback handling
+- Adding a Yahoo button with appropriate branding
+- Updating the subtitle text from "Sign in with Google" to "Sign in to access the admin panel"
+
+### Discrepancy 8: `GoogleAuthRequest` DTO Reuse
+
+The plan mentions reusing `GoogleAuthRequest` for Yahoo callback. The current DTO at [`GoogleAuthRequest.cs`](ServerApp/ServerApp.Application/DTOs/GoogleAuthRequest.cs:3) is named specifically for Google. Consider renaming to `OAuthRequest` for clarity.
+
 ## CRITICAL ISSUES IDENTIFIED FROM AI RESPONSE REVIEW
 
 The following issues were discovered when cross-referencing the AI's suggested approach against the actual codebase:
@@ -154,14 +230,22 @@ Change to:
 public AdminGoogleSub? GoogleSubjectId { get; private set; }
 ```
 
-**Modify:** [`AdminUserConfiguration`](ServerApp/ServerApp.Infrastructure/EF/Config/AdminUserConfiguration.cs:55)
+**Modify:** [`AdminUserConfiguration`](ServerApp/ServerApp.Infrastructure/EF/Config/AdminUserConfiguration.cs:51)
 
-Change from `.IsRequired()` to `.IsRequired(false)`:
+**CRITICAL - Unique Index with Nullable Column:** The current unique index on `GoogleSubjectId` (line 59) will fail with multiple null values in PostgreSQL. A standard unique index allows only ONE null. This must be changed to a **partial index** that excludes null values:
+
 ```csharp
-// Line 55: .IsRequired()  ->  .IsRequired(false)
+// Remove the old unique index and replace with partial index:
+// builder.HasIndex(e => e.GoogleSubjectId).IsUnique();  // REMOVE THIS
+
+// Add partial unique index (allows multiple NULLs, unique for non-NULL values):
+builder.HasIndex(e => e.GoogleSubjectId)
+    .HasDatabaseName("IX_AdminUsers_GoogleSubjectId")
+    .IsUnique()
+    .HasFilter("GoogleSubjectId IS NOT NULL");
 ```
 
-Also add nullable conversion for the property (similar to `PictureUrl` pattern on line 47):
+Change from `.IsRequired()` to `.IsRequired(false)` and update the conversion to handle nullable:
 ```csharp
 builder.Property(e => e.GoogleSubjectId)
     .HasColumnName("GoogleSubjectId")
@@ -173,7 +257,11 @@ builder.Property(e => e.GoogleSubjectId)
             v => v == null ? null : new AdminGoogleSub(v)));
 ```
 
-**Generate new EF migration:** This creates a migration that alters the `GoogleSubjectId` column to allow NULL values. This is a **non-breaking change** since existing Google users already have values in this column.
+**EF Migration Strategy:** This requires TWO migrations in sequence:
+1. **Migration 1:** Drop the existing unique index `IX_AdminUsers_GoogleSubjectId` and create a new partial unique index with `HasFilter("GoogleSubjectId IS NOT NULL")`. Alter column to allow NULL.
+2. **Migration 2:** Add `YahooGuid` column as nullable varchar(100) with its own partial unique index.
+
+These can potentially be combined into a single migration, but separating them reduces risk.
 
 #### 1.2 Add `AdminYahooGuid` Value Object
 
@@ -205,19 +293,30 @@ Add nullable `AdminYahooGuid` property:
 public AdminYahooGuid? YahooGuid { get; private set; }
 ```
 
-Update constructor to accept optional provider identifiers:
+Update constructor to accept optional provider identifiers. **Note:** The current constructor at line 21 requires `AdminGoogleSub googleSubjectId` as non-nullable. Both parameters must become optional with validation that at least one is provided:
+
 ```csharp
 internal AdminUser(AdminID id, AdminEmail email, AdminName displayName,
     AdminPictureUrl? pictureUrl, AdminGoogleSub? googleSubjectId = null,
     AdminYahooGuid? yahooGuid = null)
 {
+    // Validation: at least one provider ID must be provided
+    if (googleSubjectId == null && yahooGuid == null)
+    {
+        throw new ArgumentException("At least one OAuth provider identifier must be provided.");
+    }
+
     Id = id.Value;
     Email = email;
     DisplayName = displayName;
     PictureUrl = pictureUrl;
     GoogleSubjectId = googleSubjectId;
     YahooGuid = yahooGuid;
-    // ... rest unchanged
+    CreatedAt = new AdminCreatedAt(DateTime.UtcNow);
+    LastLoginAt = new AdminLastLoginAt(DateTime.UtcNow);
+    IsActive = new AdminIsActive(true);
+
+    AddEvent(new AdminCreatedEvent(Id, Email.Value));
 }
 ```
 
@@ -225,7 +324,8 @@ internal AdminUser(AdminID id, AdminEmail email, AdminName displayName,
 
 **Modify:** [`IAdminUserFactory`](ServerApp/ServerApp.Domain/Factories/IAdminUserFactory.cs:6)
 
-Update `Create` method signature:
+Update `Create` method signature. **Important:** The current signature requires `googleSubjectId` as non-nullable. Both parameters become optional:
+
 ```csharp
 AdminUser Create(
     AdminEmail email,
@@ -237,7 +337,9 @@ AdminUser Create(
 
 **Modify:** [`AdminUserFactory`](ServerApp/ServerApp.Domain/Factories/AdminUserFactory.cs:6)
 
-Update implementation to pass both provider identifiers to constructor.
+Update implementation to pass both provider identifiers to constructor. The factory delegates validation to the entity constructor.
+
+**BREAKING CHANGE NOTE:** The existing `LoginWithGoogleHandler` calls `_factory.Create(email, displayName, pictureUrl, googleSub)` at line 84. This call site must continue to work since `googleSubjectId` now accepts nullable but the Google handler will always pass a non-null value. No changes needed at the call site.
 
 ### Phase 2: Backend - Application Layer
 
@@ -343,58 +445,119 @@ Inject `IYahooAuthService` into constructor.
 
 #### 5.1 Update Login Page
 
-**Modify:** [`login/page.tsx`](clientapp/src/app/(admin)/admin/login/page.tsx:48)
+**Modify:** [`login/page.tsx`](clientapp/src/app/(admin)/admin/login/page.tsx:20)
 
-Add Yahoo login button alongside Google button:
-- `handleYahooLogin()` function calling `/api/auth/yahoo/url`
-- Yahoo callback handling in `useEffect`
-- Yahoo-branded button with appropriate icon
+Current state:
+- Line 37-46: `useEffect` checks URL params for `code` and `state`, calls `handleCallback(code, state)` which posts to `/api/auth/google/callback`
+- Line 48-64: `handleGoogleLogin()` fetches `/api/auth/google/url`
+- Line 109: Subtitle says "Sign in with Google to access the admin panel"
+- Line 117-147: Single Google button with inline SVG icon
 
-#### 5.2 Create Yahoo Callback API Route
+Required changes:
+1. **Refactor callback handling** - The current `useEffect` at line 37 handles Google callback. Need to detect which provider callback is being processed. Options:
+   - Add a `provider` URL param (e.g., `?code=xxx&state=yyy&provider=yahoo`)
+   - Or use separate URL paths for each provider callback
+2. **Add `handleYahooLogin()`** - Mirrors `handleGoogleLogin()` but calls `/api/auth/yahoo/url`
+3. **Add Yahoo button** - Yahoo-branded button (purple `#720e9e` is Yahoo's brand color) with appropriate icon
+4. **Update subtitle** - Change from "Sign in with Google" to "Sign in to access the admin panel"
+5. **Update page title** - Consider making it provider-agnostic
+
+#### 5.2 Create Yahoo URL API Route
+
+**New file:** `clientapp/src/app/api/auth/yahoo/url/route.ts`
+
+Mirrors [`google/url/route.ts`](clientapp/src/app/api/auth/google/url/route.ts:7) but proxies to `/auth/yahoo/url`.
+
+#### 5.3 Create Yahoo Callback API Route
 
 **New file:** `clientapp/src/app/api/auth/yahoo/callback/route.ts`
 
 Mirrors [`google/callback/route.ts`](clientapp/src/app/api/auth/google/callback/route.ts:7) but proxies to `/auth/yahoo/callback`.
 
-#### 5.3 Update API Service Functions
+#### 5.4 No Changes to `api.ts` Needed
 
-**Modify:** `clientapp/src/lib/api.ts`
-
-Add `yahooAuthUrl()` and `yahooAuthCallback()` functions mirroring existing Google functions.
+**NOTE:** The current login page uses direct `fetch()` calls to `/api/auth/google/*` routes, not the `api.ts` service layer. No changes to `api.ts` are needed for Yahoo auth. The API route proxy pattern is sufficient.
 
 ### Phase 6: Configuration
 
-#### 6.1 Environment Variables
+#### 6.1 Multi-Site Environment Variables
 
-Add to `docker-compose/.env.example`:
+**IMPORTANT:** The current multi-site architecture uses site-prefixed environment variables (e.g., `GG_GOOGLE_AUTH_CLIENT_ID`, `FLYNN_GOOGLE_AUTH_CLIENT_ID`). The `YahooAuthService` must read config using the same pattern.
+
+**Modify:** `docker-compose/.env.multi` and `docker-compose/.env.multi.example`:
 
 ```env
-YahooAuth__ClientId=your_yahoo_client_id
-YahooAuth__ClientSecret=your_yahoo_client_secret
-YahooAuth__RedirectUri=http://localhost:5000/api/auth/yahoo/callback
+# Site: gg
+GG_YAHOO_AUTH_CLIENT_ID=your_yahoo_client_id
+GG_YAHOO_AUTH_CLIENT_SECRET=your_yahoo_client_secret
+GG_YAHOO_AUTH_REDIRECT_URI=https://localhost:8181/admin/login
+
+# Site: flynn
+FLYNN_YAHOO_AUTH_CLIENT_ID=your_yahoo_client_id
+FLYNN_YAHOO_AUTH_CLIENT_SECRET=your_yahoo_client_secret
+FLYNN_YAHOO_AUTH_REDIRECT_URI=https://localhost:8182/admin/login
 ```
 
-#### 6.2 AppSettings
+**Modify:** `docker-compose/.env.multi.arm64.example` - same variables as above.
 
-Add to `ServerApp/ServerApp.Api/appsettings.Development.json`:
-
-```json
-"YahooAuth": {
-    "ClientId": "",
-    "ClientSecret": "",
-    "RedirectUri": "http://localhost:5000/api/auth/yahoo/callback"
-}
+**Modify:** `docker-compose/.env.example` (single-site):
+```env
+YAHOO_AUTH_CLIENT_ID=your_yahoo_client_id
+YAHOO_AUTH_CLIENT_SECRET=your_yahoo_client_secret
+YAHOO_AUTH_REDIRECT_URI=http://localhost:5000/api/auth/yahoo/callback
 ```
+
+#### 6.2 YahooAuthService Configuration Reading
+
+**CRITICAL:** The current [`GoogleAuthService`](ServerApp/ServerApp.Infrastructure/Services/GoogleAuthService.cs:24) reads config with:
+```csharp
+_clientId = configuration["GoogleAuth:ClientId"]
+```
+
+For multi-site support, the `YahooAuthService` must use the same pattern:
+```csharp
+_clientId = configuration["YahooAuth:ClientId"]
+_clientSecret = configuration["YahooAuth:ClientSecret"]
+_redirectUri = configuration["YahooAuth:RedirectUri"]
+```
+
+#### 6.3 Docker Compose Environment Variable Mapping
+
+The docker-compose files use the `__` (double underscore) convention to map env vars to nested config keys. The existing Google pattern in `docker-compose.multi.yml` (line 62-64):
+
+```yaml
+GoogleAuth__ClientId: ${GG_GOOGLE_AUTH_CLIENT_ID}
+GoogleAuth__ClientSecret: ${GG_GOOGLE_AUTH_CLIENT_SECRET}
+GoogleAuth__RedirectUri: ${GG_GOOGLE_AUTH_REDIRECT_URI}
+```
+
+This must be replicated for Yahoo in **ALL** docker-compose files:
+
+**Files to modify:**
+- `docker-compose/docker-compose.multi.yml` - Add to both gg (after line 64) and flynn (after line 167) API service blocks:
+  ```yaml
+  YahooAuth__ClientId: ${GG_YAHOO_AUTH_CLIENT_ID}
+  YahooAuth__ClientSecret: ${GG_YAHOO_AUTH_CLIENT_SECRET}
+  YahooAuth__RedirectUri: ${GG_YAHOO_AUTH_REDIRECT_URI}
+  ```
+- `docker-compose/docker-compose.multi.arm64.yml` - Same pattern for both sites
+- `docker-compose/docker-compose.yml` - Single-site version
+- `docker-compose/docker-compose.arm64.yml` - Single-site ARM64 version
+- `docker-compose/docker-compose.prod.yml` - Production single-site version
+
+#### 6.3 No AppSettings Changes Needed
+
+**NOTE:** Unlike the original plan suggestion, `appsettings.Development.json` does NOT need Yahoo configuration. The multi-site architecture reads all config from environment variables mapped through Docker Compose. The `appsettings` files are only used for VS Code local debugging, which is a secondary concern.
 
 ## Files Summary
 
 ### New Files
 | File | Layer | Description |
 |------|-------|-------------|
-| `ServerApp/ServerApp.Domain/ValueObjects/Admin/AdminYahooGuid.cs` | Domain | Value object for Yahoo GUID |
-| `ServerApp/ServerApp.Application/Services/IYahooAuthService.cs` | Application | Yahoo auth service interface |
+| `ServerApp/ServerApp.Domain/ValueObjects/Admin/AdminYahooGuid.cs` | Domain | Value object for Yahoo GUID (extends `StringValueObject`) |
+| `ServerApp/ServerApp.Application/Services/IYahooAuthService.cs` | Application | Yahoo auth service interface with `YahooUserProfile` record |
 | `ServerApp/ServerApp.Application/Commands/LoginWithYahoo.cs` | Application | Yahoo login command |
-| `ServerApp/ServerApp.Application/Commands/Handlers/LoginWithYahooHandler.cs` | Application | Yahoo login handler |
+| `ServerApp/ServerApp.Application/Commands/Handlers/LoginWithYahooHandler.cs` | Application | Yahoo login handler (mirrors `LoginWithGoogleHandler`) |
 | `ServerApp/ServerApp.Infrastructure/Services/YahooAuthService.cs` | Infrastructure | Yahoo OAuth2 implementation |
 | `clientapp/src/app/api/auth/yahoo/url/route.ts` | Frontend | Next.js API route for Yahoo auth URL |
 | `clientapp/src/app/api/auth/yahoo/callback/route.ts` | Frontend | Next.js API route for Yahoo callback |
@@ -402,26 +565,31 @@ Add to `ServerApp/ServerApp.Api/appsettings.Development.json`:
 ### Modified Files
 | File | Layer | Change |
 |------|-------|--------|
-| `ServerApp/ServerApp.Domain/Entities/AdminUser.cs` | Domain | Make `GoogleSubjectId` nullable, add `YahooGuid` property |
+| `ServerApp/ServerApp.Domain/Entities/AdminUser.cs` | Domain | Make `GoogleSubjectId` nullable, add `YahooGuid` property, add validation in constructor |
 | `ServerApp/ServerApp.Domain/Factories/IAdminUserFactory.cs` | Domain | Make `googleSubjectId` optional, add `yahooGuid` parameter |
 | `ServerApp/ServerApp.Domain/Factories/AdminUserFactory.cs` | Domain | Update `Create` method with optional provider IDs |
 | `ServerApp/ServerApp.Infrastructure/Extensions.cs` | Infrastructure | Register `IYahooAuthService` |
-| `ServerApp/ServerApp.Infrastructure/EF/Config/AdminUserConfiguration.cs` | Infrastructure | Make `GoogleSubjectId` nullable, add `YahooGuid` column config |
+| `ServerApp/ServerApp.Infrastructure/EF/Config/AdminUserConfiguration.cs` | Infrastructure | Make `GoogleSubjectId` nullable with partial unique index, add `YahooGuid` column config with partial unique index |
 | `ServerApp/ServerApp.Api/Controllers/AuthController.cs` | API | Add Yahoo endpoints, inject `IYahooAuthService` |
-| `clientapp/src/app/(admin)/admin/login/page.tsx` | Frontend | Add Yahoo login button and callback handling |
-| `clientapp/src/lib/api.ts` | Frontend | Add Yahoo API functions |
-| `docker-compose/.env.example` | Config | Add Yahoo env vars |
-| `ServerApp/ServerApp.Api/appsettings.Development.json` | Config | Add Yahoo config section |
+| `clientapp/src/app/(admin)/admin/login/page.tsx` | Frontend | Add Yahoo login button, refactor callback handling for multiple providers |
+| `clientapp/src/lib/api.ts` | Frontend | Add Yahoo API functions (if used; currently login page uses direct fetch) |
+| `docker-compose/.env.multi` | Config | Add `GG_YAHOO_AUTH_*` and `FLYNN_YAHOO_AUTH_*` vars |
+| `docker-compose/.env.multi.example` | Config | Add Yahoo env vars template |
+| `docker-compose/.env.multi.arm64.example` | Config | Add Yahoo env vars template |
+| `docker-compose/.env.example` | Config | Add Yahoo env vars for single-site |
+| `docker-compose/docker-compose.multi.local.yml` | Config | Map Yahoo env vars to container config keys |
 
 ## Risk Assessment
 
 | Risk | Level | Mitigation |
 |------|-------|------------|
 | Breaking existing Google auth | **Medium** | Making `GoogleSubjectId` nullable affects existing entity. All existing Google users have values, but the factory and handler need careful testing. |
+| Unique index on nullable column | **High** | PostgreSQL unique index allows only ONE null value. Must use partial index with `HasFilter("GoogleSubjectId IS NOT NULL")`. Same for `YahooGuid`. |
 | Yahoo API changes | Medium | Yahoo OAuth2 is stable; abstracted behind interface |
 | Email authorization conflict | Low | Same `_authorizedEmails` list used for both providers |
-| Database migration downtime | **Medium** | Two migrations needed: (1) Make `GoogleSubjectId` nullable, (2) Add `YahooGuid` column. Both are non-breaking but require careful ordering. |
-| Yahoo HTTPS redirect URI | **High** | Yahoo requires HTTPS for redirect URIs. Local development requires tunneling (ngrok/cloudflared). This is a blocker for local testing. |
+| Database migration downtime | **Medium** | Two migrations needed: (1) Make `GoogleSubjectId` nullable with partial index, (2) Add `YahooGuid` column with partial index. Both are non-breaking but require careful ordering. |
+| Yahoo HTTPS redirect URI | **High** | Yahoo requires HTTPS for redirect URIs. Local development requires tunneling (ngrok/cloudflared). Production nginx already uses HTTPS so no issue there. |
+| Multi-site config mapping | **Medium** | Docker Compose must correctly map `GG_YAHOO_AUTH_CLIENT_ID` to container's `YahooAuth:ClientId`. Must follow existing Google pattern exactly. |
 
 ## AI Response Evaluation
 

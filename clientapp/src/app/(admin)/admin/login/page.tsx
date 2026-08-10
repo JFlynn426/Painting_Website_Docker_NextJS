@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { verifyAuth } from '@/lib/auth';
 import styles from './page.module.css';
 
-interface GoogleAuthResponse {
+interface AuthResponse {
     adminUser: {
         id: string;
         email: string;
@@ -34,41 +34,16 @@ export default function AdminLoginPage() {
         });
     }, [router]);
 
-    useEffect(() => {
-        // Check if we have a Google auth code in the URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const state = urlParams.get('state');
-
-        if (code && state) {
-            handleCallback(code, state);
-        }
-    }, []);
-
-    const handleGoogleLogin = async () => {
+    const handleCallback = useCallback(async (code: string, state: string, provider: string) => {
         setLoading(true);
         setError(null);
 
         try {
-            const response = await fetch('/api/auth/google/url');
-            if (!response.ok) {
-                throw new Error('Failed to get Google authorization URL');
-            }
+            const callbackEndpoint = provider === 'yahoo'
+                ? '/api/auth/yahoo/callback'
+                : '/api/auth/google/callback';
 
-            const data = await response.json();
-            window.location.href = data.url;
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred');
-            setLoading(false);
-        }
-    };
-
-    const handleCallback = async (code: string, state: string) => {
-        setLoading(true);
-        setError(null);
-
-        try {
-            const response = await fetch('/api/auth/google/callback', {
+            const response = await fetch(callbackEndpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -82,7 +57,7 @@ export default function AdminLoginPage() {
                 throw new Error(errorData.message || 'Authentication failed');
             }
 
-            const data: GoogleAuthResponse = await response.json();
+            const data: AuthResponse = await response.json();
 
             // Store only non-sensitive display data in localStorage
             // The actual auth token is stored as httpOnly cookie by the backend
@@ -91,10 +66,61 @@ export default function AdminLoginPage() {
                 pictureUrl: data.adminUser.pictureUrl
             }));
 
-            // Redirect to admin dashboard (or home page for now)
-            window.location.href = '/admin';
+            // Redirect to admin dashboard
+            router.push('/admin');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Authentication failed');
+            setLoading(false);
+        }
+    }, [router]);
+
+    useEffect(() => {
+        // Check if we have an auth code in the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const state = urlParams.get('state');
+        const provider = sessionStorage.getItem('oauth_provider');
+
+        if (code && state && provider) {
+            sessionStorage.removeItem('oauth_provider');
+            handleCallback(code, state, provider);
+        }
+    }, [handleCallback]);
+
+    const handleGoogleLogin = async () => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch('/api/auth/google/url');
+            if (!response.ok) {
+                throw new Error('Failed to get Google authorization URL');
+            }
+
+            const data = await response.json();
+            sessionStorage.setItem('oauth_provider', 'google');
+            window.location.href = data.url;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'An error occurred');
+            setLoading(false);
+        }
+    };
+
+    const handleYahooLogin = async () => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch('/api/auth/yahoo/url');
+            if (!response.ok) {
+                throw new Error('Failed to get Yahoo authorization URL');
+            }
+
+            const data = await response.json();
+            sessionStorage.setItem('oauth_provider', 'yahoo');
+            window.location.href = data.url;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'An error occurred');
             setLoading(false);
         }
     };
@@ -106,7 +132,7 @@ export default function AdminLoginPage() {
             )}
             <div className={styles.loginCard}>
                 <h1 className={styles.title}>Admin Login</h1>
-                <p className={styles.subtitle}>Sign in with Google to access the admin panel</p>
+                <p className={styles.subtitle}>Sign in to access the admin panel</p>
 
                 {error && (
                     <div className={styles.error}>
@@ -142,6 +168,26 @@ export default function AdminLoginPage() {
                                 />
                             </svg>
                             Sign in with Google
+                        </>
+                    )}
+                </button>
+
+                <button
+                    onClick={handleYahooLogin}
+                    disabled={loading}
+                    className={styles.yahooButton}
+                >
+                    {loading ? (
+                        'Signing in...'
+                    ) : (
+                        <>
+                            <svg className={styles.yahooIcon} viewBox="0 0 24 24">
+                                <path
+                                    fill="#ffffff"
+                                    d="M12.473 2.594l-4.14 5.228h2.567l-.293 2.754H2.594v2.754h8.177l-1.186 11.122h2.886l1.17-11.122h2.346l-2.514-2.754h-2.567l.293-2.754h2.567l-2.003-5.228z"
+                                />
+                            </svg>
+                            Sign in with Yahoo
                         </>
                     )}
                 </button>

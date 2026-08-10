@@ -82,6 +82,9 @@ services:
       GoogleAuth__ClientId: ${GG_GOOGLE_AUTH_CLIENT_ID}
       GoogleAuth__ClientSecret: ${GG_GOOGLE_AUTH_CLIENT_SECRET}
       GoogleAuth__RedirectUri: ${GG_GOOGLE_AUTH_REDIRECT_URI}
+      YahooAuth__ClientId: ${GG_YAHOO_AUTH_CLIENT_ID}
+      YahooAuth__ClientSecret: ${GG_YAHOO_AUTH_CLIENT_SECRET}
+      YahooAuth__RedirectUri: ${GG_YAHOO_AUTH_REDIRECT_URI}
       Admin__JwtSecretKey: ${GG_ADMIN_JWT_SECRET_KEY}
       Admin__JwtExpiryMinutes: ${GG_ADMIN_JWT_EXPIRY_MINUTES:-60}
       Admin__AuthorizedEmails: ${GG_ADMIN_AUTHORIZED_EMAILS}
@@ -187,6 +190,9 @@ services:
       GoogleAuth__ClientId: ${FLYNN_GOOGLE_AUTH_CLIENT_ID}
       GoogleAuth__ClientSecret: ${FLYNN_GOOGLE_AUTH_CLIENT_SECRET}
       GoogleAuth__RedirectUri: ${FLYNN_GOOGLE_AUTH_REDIRECT_URI}
+      YahooAuth__ClientId: ${FLYNN_YAHOO_AUTH_CLIENT_ID}
+      YahooAuth__ClientSecret: ${FLYNN_YAHOO_AUTH_CLIENT_SECRET}
+      YahooAuth__RedirectUri: ${FLYNN_YAHOO_AUTH_REDIRECT_URI}
       Admin__JwtSecretKey: ${FLYNN_ADMIN_JWT_SECRET_KEY}
       Admin__JwtExpiryMinutes: ${FLYNN_ADMIN_JWT_EXPIRY_MINUTES:-60}
       Admin__AuthorizedEmails: ${FLYNN_ADMIN_AUTHORIZED_EMAILS}

@@ -1,7 +1,9 @@
 namespace ServerApp.Infrastructure.Services;
 
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using ServerApp.Application.Services;
 
@@ -12,14 +14,14 @@ public class GoogleAuthService : IGoogleAuthService
     private readonly string _clientId;
     private readonly string _clientSecret;
     private readonly string _redirectUri;
-    private readonly HttpClient _httpClient;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<GoogleAuthService> _logger;
 
     private const string GoogleAuthorizationUrl = "https://accounts.google.com/o/oauth2/v2/auth";
     private const string GoogleTokenUrl = "https://oauth2.googleapis.com/token";
     private const string GoogleUserInfoUrl = "https://www.googleapis.com/oauth2/v2/userinfo";
 
-    public GoogleAuthService(IConfiguration configuration, ILogger<GoogleAuthService> logger)
+    public GoogleAuthService(IConfiguration configuration, IHttpClientFactory httpClientFactory, ILogger<GoogleAuthService> logger)
     {
         _clientId = configuration["GoogleAuth:ClientId"]
             ?? throw new ArgumentNullException("GoogleAuth:ClientId is not configured");
@@ -27,7 +29,7 @@ public class GoogleAuthService : IGoogleAuthService
             ?? throw new ArgumentNullException("GoogleAuth:ClientSecret is not configured");
         _redirectUri = configuration["GoogleAuth:RedirectUri"]
             ?? throw new ArgumentNullException("GoogleAuth:RedirectUri is not configured");
-        _httpClient = new HttpClient();
+        _httpClientFactory = httpClientFactory;
         _logger = logger;
     }
 
@@ -59,7 +61,8 @@ public class GoogleAuthService : IGoogleAuthService
             { "redirect_uri", _redirectUri }
         };
 
-        var tokenResponse = await _httpClient.PostAsync(GoogleTokenUrl,
+        var tokenHttpClient = _httpClientFactory.CreateClient();
+        var tokenResponse = await tokenHttpClient.PostAsync(GoogleTokenUrl,
             new FormUrlEncodedContent(tokenRequest));
 
         if (!tokenResponse.IsSuccessStatusCode)
@@ -91,10 +94,11 @@ public class GoogleAuthService : IGoogleAuthService
         }
 
         // Step 2: Get user profile from Google OAuth2 userinfo endpoint
-        _httpClient.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+        var userInfoHttpClient = _httpClientFactory.CreateClient();
+        userInfoHttpClient.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", accessToken);
 
-        var userInfoResponse = await _httpClient.GetAsync(GoogleUserInfoUrl);
+        var userInfoResponse = await userInfoHttpClient.GetAsync(GoogleUserInfoUrl);
 
         if (!userInfoResponse.IsSuccessStatusCode)
         {

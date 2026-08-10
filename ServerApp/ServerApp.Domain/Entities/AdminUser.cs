@@ -3,13 +3,15 @@ namespace ServerApp.Domain.Entities;
 using ServerApp.Shared.Domain;
 using ServerApp.Domain.ValueObjects.Admin;
 using ServerApp.Domain.Events;
+using ServerApp.Domain.Exceptions;
 
 public class AdminUser : AggregateRoot<Guid>
 {
     public AdminEmail Email { get; private set; } = default!;
     public AdminName DisplayName { get; private set; } = default!;
     public AdminPictureUrl? PictureUrl { get; private set; }
-    public AdminGoogleSub GoogleSubjectId { get; private set; } = default!;
+    public AdminGoogleSub? GoogleSubjectId { get; private set; }
+    public AdminYahooGuid? YahooGuid { get; private set; }
     public AdminLastLoginAt LastLoginAt { get; private set; } = default!;
     public AdminCreatedAt CreatedAt { get; private set; } = default!;
     public AdminIsActive IsActive { get; private set; } = default!;
@@ -19,13 +21,21 @@ public class AdminUser : AggregateRoot<Guid>
 
     // Internal constructor that accepts pre-computed ID (used by factory)
     internal AdminUser(AdminID id, AdminEmail email, AdminName displayName,
-        AdminPictureUrl? pictureUrl, AdminGoogleSub googleSubjectId)
+        AdminPictureUrl? pictureUrl, AdminGoogleSub? googleSubjectId = null,
+        AdminYahooGuid? yahooGuid = null)
     {
+        // Validation: at least one provider ID must be provided
+        if (googleSubjectId == null && yahooGuid == null)
+        {
+            throw new AdminUserRequiresAuthProviderException();
+        }
+
         Id = id.Value;
         Email = email;
         DisplayName = displayName;
         PictureUrl = pictureUrl;
         GoogleSubjectId = googleSubjectId;
+        YahooGuid = yahooGuid;
         CreatedAt = new AdminCreatedAt(DateTime.UtcNow);
         LastLoginAt = new AdminLastLoginAt(DateTime.UtcNow);
         IsActive = new AdminIsActive(true);

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ServerApp.Infrastructure.EF.Contexts;
@@ -11,9 +12,11 @@ using ServerApp.Infrastructure.EF.Contexts;
 namespace ServerApp.Infrastructure.EF.Migrations
 {
     [DbContext(typeof(WriteDbContext))]
-    partial class WriteDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260810135347_MakeGoogleSubjectIdNullable")]
+    partial class MakeGoogleSubjectIdNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -62,10 +65,6 @@ namespace ServerApp.Infrastructure.EF.Migrations
                     b.Property<int>("Version")
                         .HasColumnType("integer");
 
-                    b.Property<string>("YahooGuid")
-                        .HasColumnType("varchar(100)")
-                        .HasColumnName("YahooGuid");
-
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -75,11 +74,6 @@ namespace ServerApp.Infrastructure.EF.Migrations
                         .IsUnique()
                         .HasDatabaseName("IX_AdminUsers_GoogleSubjectId")
                         .HasFilter("GoogleSubjectId IS NOT NULL");
-
-                    b.HasIndex("YahooGuid")
-                        .IsUnique()
-                        .HasDatabaseName("IX_AdminUsers_YahooGuid")
-                        .HasFilter("YahooGuid IS NOT NULL");
 
                     b.ToTable("AdminUsers", (string)null);
                 });

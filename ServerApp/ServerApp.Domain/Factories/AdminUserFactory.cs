@@ -9,12 +9,13 @@ public class AdminUserFactory : IAdminUserFactory
         AdminEmail email,
         AdminName displayName,
         AdminPictureUrl? pictureUrl,
-        AdminGoogleSub googleSubjectId)
+        AdminGoogleSub? googleSubjectId = null,
+        AdminYahooGuid? yahooGuid = null)
     {
         // Auto-generate ID (single source of truth for ID generation)
         var id = new AdminID();
 
-        var adminUser = new AdminUser(id, email, displayName, pictureUrl, googleSubjectId);
+        var adminUser = new AdminUser(id, email, displayName, pictureUrl, googleSubjectId, yahooGuid);
         return adminUser;
     }
 }

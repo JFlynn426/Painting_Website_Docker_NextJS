@@ -8,7 +8,7 @@ using ServerApp.Application.Services;
 namespace ServerApp.Api.Controllers;
 
 /// <summary>
-/// Controller for admin authentication with Google OAuth.
+/// Controller for admin authentication with Google and Yahoo OAuth.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -16,12 +16,14 @@ public class AuthController : BaseController
 {
     private readonly IMediator _mediator;
     private readonly IGoogleAuthService _googleAuthService;
+    private readonly IYahooAuthService _yahooAuthService;
     private readonly IJwtTokenService _jwtTokenService;
 
-    public AuthController(IMediator mediator, IGoogleAuthService googleAuthService, IJwtTokenService jwtTokenService)
+    public AuthController(IMediator mediator, IGoogleAuthService googleAuthService, IYahooAuthService yahooAuthService, IJwtTokenService jwtTokenService)
     {
         _mediator = mediator;
         _googleAuthService = googleAuthService;
+        _yahooAuthService = yahooAuthService;
         _jwtTokenService = jwtTokenService;
     }
 
@@ -42,9 +44,43 @@ public class AuthController : BaseController
     /// <param name="request">The OAuth callback request containing the authorization code.</param>
     /// <returns>JWT token and admin user information.</returns>
     [HttpPost("google/callback")]
-    public async Task<ActionResult<GoogleAuthResponse>> LoginWithGoogle([FromBody] GoogleAuthRequest request)
+    public async Task<ActionResult<AuthResponse>> LoginWithGoogle([FromBody] AuthRequest request)
     {
         var command = new LoginWithGoogle(request.Code, request.State);
+        var result = await _mediator.Send(command);
+
+        // Set httpOnly cookie with the JWT token
+        Response.Cookies.Append("admin_token", result.Token, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTime.UtcNow.AddHours(1)
+        });
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Gets the Yahoo OAuth authorization URL to redirect the user.
+    /// </summary>
+    /// <returns>Object containing the authorization URL.</returns>
+    [HttpGet("yahoo/url")]
+    public ActionResult<Dictionary<string, string>> GetYahooAuthorizationUrl()
+    {
+        var url = _yahooAuthService.GetAuthorizationUrl();
+        return Ok(new Dictionary<string, string> { { "url", url } });
+    }
+
+    /// <summary>
+    /// Handles the Yahoo OAuth callback and exchanges the authorization code for a JWT token.
+    /// </summary>
+    /// <param name="request">The OAuth callback request containing the authorization code.</param>
+    /// <returns>JWT token and admin user information.</returns>
+    [HttpPost("yahoo/callback")]
+    public async Task<ActionResult<AuthResponse>> LoginWithYahoo([FromBody] AuthRequest request)
+    {
+        var command = new LoginWithYahoo(request.Code, request.State);
         var result = await _mediator.Send(command);
 
         // Set httpOnly cookie with the JWT token

@@ -67,6 +67,11 @@ public class ExceptionMiddleware
                 await response.WriteAsJsonAsync(new { error = "Invalid category", message = ex.Message });
                 break;
 
+            case AdminUserRequiresAuthProviderException ex:
+                response.StatusCode = StatusCodes.Status400BadRequest;
+                await response.WriteAsJsonAsync(new { error = "Invalid admin user", message = ex.Message });
+                break;
+
             case StringValueObjectException ex:
                 response.StatusCode = StatusCodes.Status400BadRequest;
                 await response.WriteAsJsonAsync(new { error = "Invalid input", message = ex.Message });

@@ -12,9 +12,9 @@ using ServerApp.Domain.Repositories.Read;
 using ServerApp.Domain.ValueObjects.Admin;
 using ServerApp.Application.Exceptions;
 
-public class LoginWithGoogleHandler : IRequestHandler<LoginWithGoogle, AuthResponse>
+public class LoginWithYahooHandler : IRequestHandler<LoginWithYahoo, AuthResponse>
 {
-    private readonly IGoogleAuthService _googleAuthService;
+    private readonly IYahooAuthService _yahooAuthService;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IAdminUserFactory _factory;
     private readonly IAdminUserWriteRepository _adminWriteRepository;
@@ -22,8 +22,8 @@ public class LoginWithGoogleHandler : IRequestHandler<LoginWithGoogle, AuthRespo
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEnumerable<string> _authorizedEmails;
 
-    public LoginWithGoogleHandler(
-        IGoogleAuthService googleAuthService,
+    public LoginWithYahooHandler(
+        IYahooAuthService yahooAuthService,
         IJwtTokenService jwtTokenService,
         IAdminUserFactory factory,
         IAdminUserWriteRepository adminWriteRepository,
@@ -31,7 +31,7 @@ public class LoginWithGoogleHandler : IRequestHandler<LoginWithGoogle, AuthRespo
         IUnitOfWork unitOfWork,
         IEnumerable<string> authorizedEmails)
     {
-        _googleAuthService = googleAuthService;
+        _yahooAuthService = yahooAuthService;
         _jwtTokenService = jwtTokenService;
         _factory = factory;
         _adminWriteRepository = adminWriteRepository;
@@ -40,18 +40,18 @@ public class LoginWithGoogleHandler : IRequestHandler<LoginWithGoogle, AuthRespo
         _authorizedEmails = authorizedEmails.Select(e => e.ToLowerInvariant());
     }
 
-    public async Task<AuthResponse> Handle(LoginWithGoogle command, CancellationToken cancellationToken = default)
+    public async Task<AuthResponse> Handle(LoginWithYahoo command, CancellationToken cancellationToken = default)
     {
         await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
         try
         {
-            // Exchange Google auth code for user profile
-            var userProfile = await _googleAuthService.ExchangeCodeForUserProfileAsync(command.Code);
+            // Exchange Yahoo auth code for user profile
+            var userProfile = await _yahooAuthService.ExchangeCodeForUserProfileAsync(command.Code);
 
             if (userProfile == null)
             {
-                throw new InvalidOperationException("Failed to retrieve user profile from Google.");
+                throw new InvalidOperationException("Failed to retrieve user profile from Yahoo.");
             }
 
             // Check if email is authorized
@@ -65,7 +65,7 @@ public class LoginWithGoogleHandler : IRequestHandler<LoginWithGoogle, AuthRespo
             var pictureUrl = string.IsNullOrEmpty(userProfile.PictureUrl)
                 ? null
                 : new AdminPictureUrl(userProfile.PictureUrl);
-            var googleSub = new AdminGoogleSub(userProfile.GoogleSubjectId);
+            var yahooGuid = new AdminYahooGuid(userProfile.YahooGuid);
 
             // Try to find existing admin user by email
             var existingAdmin = await _adminWriteRepository.GetByEmailAsync(userProfile.Email, cancellationToken);
@@ -81,7 +81,7 @@ public class LoginWithGoogleHandler : IRequestHandler<LoginWithGoogle, AuthRespo
             else
             {
                 // Create new admin user
-                adminUser = _factory.Create(email, displayName, pictureUrl, googleSubjectId: googleSub);
+                adminUser = _factory.Create(email, displayName, pictureUrl, yahooGuid: yahooGuid);
                 await _adminWriteRepository.AddAsync(adminUser, cancellationToken);
             }
 

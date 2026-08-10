@@ -55,8 +55,12 @@ public static class InfrastructureExtensions
         // Register the app initializer for database migrations and seeding
         services.AddHostedService<AppInitializer>();
 
+        // Register IHttpClientFactory for auth services
+        services.AddHttpClient();
+
         // Register authentication services
         services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+        services.AddScoped<IYahooAuthService, YahooAuthService>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
 
         // Register concurrency and idempotency services

@@ -81,6 +81,7 @@
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s, box-shadow 0.2s;
+    margin-bottom: 0.75rem;
 }
 
 .googleButton:hover {
@@ -94,6 +95,38 @@
 }
 
 .googleIcon {
+    width: 18px;
+    height: 18px;
+}
+
+.yahooButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    background-color: #720e9e;
+    color: #ffffff;
+    border: 1px solid #720e9e;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.yahooButton:hover {
+    background-color: #5a0b7a;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.yahooButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.yahooIcon {
     width: 18px;
     height: 18px;
 }

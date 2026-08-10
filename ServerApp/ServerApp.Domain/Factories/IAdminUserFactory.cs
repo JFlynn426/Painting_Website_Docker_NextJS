@@ -9,5 +9,6 @@ public interface IAdminUserFactory
         AdminEmail email,
         AdminName displayName,
         AdminPictureUrl? pictureUrl,
-        AdminGoogleSub googleSubjectId);
+        AdminGoogleSub? googleSubjectId = null,
+        AdminYahooGuid? yahooGuid = null);
 }
