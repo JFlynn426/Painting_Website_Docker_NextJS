@@ -2,7 +2,7 @@ namespace ServerApp.Application.Services;
 
 public interface IGoogleAuthService
 {
-    string GetAuthorizationUrl();
+    (string Url, string State) GetAuthorizationUrl();
     Task<GoogleUserProfile?> ExchangeCodeForUserProfileAsync(string code);
 }
 

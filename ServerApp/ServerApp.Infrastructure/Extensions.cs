@@ -55,13 +55,23 @@ public static class InfrastructureExtensions
         // Register the app initializer for database migrations and seeding
         services.AddHostedService<AppInitializer>();
 
-        // Register IHttpClientFactory for auth services
-        services.AddHttpClient();
+        // Register named HTTP clients for auth services with 30-second timeout
+        services.AddHttpClient("GoogleAuth", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+        services.AddHttpClient("YahooAuth", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
 
         // Register authentication services
         services.AddScoped<IGoogleAuthService, GoogleAuthService>();
         services.AddScoped<IYahooAuthService, YahooAuthService>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
+
+        // Register OAuth state store
+        services.AddScoped<IStateStore, StateStore>();
 
         // Register concurrency and idempotency services
         services.AddSingleton<IConcurrencyLockService, ConcurrencyLockService>();

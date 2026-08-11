@@ -34,8 +34,8 @@ public class AuthController : BaseController
     [HttpGet("google/url")]
     public ActionResult<Dictionary<string, string>> GetGoogleAuthorizationUrl()
     {
-        var url = _googleAuthService.GetAuthorizationUrl();
-        return Ok(new Dictionary<string, string> { { "url", url } });
+        var (url, state) = _googleAuthService.GetAuthorizationUrl();
+        return Ok(new Dictionary<string, string> { { "url", url }, { "state", state } });
     }
 
     /// <summary>
@@ -68,8 +68,8 @@ public class AuthController : BaseController
     [HttpGet("yahoo/url")]
     public ActionResult<Dictionary<string, string>> GetYahooAuthorizationUrl()
     {
-        var url = _yahooAuthService.GetAuthorizationUrl();
-        return Ok(new Dictionary<string, string> { { "url", url } });
+        var (url, state) = _yahooAuthService.GetAuthorizationUrl();
+        return Ok(new Dictionary<string, string> { { "url", url }, { "state", state } });
     }
 
     /// <summary>

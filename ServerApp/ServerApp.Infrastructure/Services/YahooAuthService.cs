@@ -16,12 +16,13 @@ public class YahooAuthService : IYahooAuthService
     private readonly string _redirectUri;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<YahooAuthService> _logger;
+    private readonly IStateStore _stateStore;
 
     private const string YahooAuthorizationUrl = "https://api.login.yahoo.com/oauth2/request_auth";
     private const string YahooTokenUrl = "https://api.login.yahoo.com/oauth2/get_token";
-    private const string YahooProfileUrl = "https://social.yahooapis.com/v1/user/{0}/profile?format=json";
+    private const string YahooProfileUrl = "https://api.login.yahoo.com/openid/v1/userinfo";
 
-    public YahooAuthService(IConfiguration configuration, IHttpClientFactory httpClientFactory, ILogger<YahooAuthService> logger)
+    public YahooAuthService(IConfiguration configuration, IHttpClientFactory httpClientFactory, ILogger<YahooAuthService> logger, IStateStore stateStore)
     {
         _clientId = configuration["YahooAuth:ClientId"]
             ?? throw new ArgumentNullException("YahooAuth:ClientId is not configured");
@@ -31,20 +32,26 @@ public class YahooAuthService : IYahooAuthService
             ?? throw new ArgumentNullException("YahooAuth:RedirectUri is not configured");
         _httpClientFactory = httpClientFactory;
         _logger = logger;
+        _stateStore = stateStore;
     }
 
-    public string GetAuthorizationUrl()
+    public (string Url, string State) GetAuthorizationUrl()
     {
-        var scope = Uri.EscapeDataString("profile email");
-        var state = Uri.EscapeDataString(Guid.NewGuid().ToString());
+        var scope = Uri.EscapeDataString("openid profile email");
+        var state = Guid.NewGuid().ToString();
         var redirectUri = Uri.EscapeDataString(_redirectUri);
 
-        return $"{YahooAuthorizationUrl}" +
+        // Store state for CSRF validation
+        _stateStore.StoreState(state);
+
+        var url = $"{YahooAuthorizationUrl}" +
                $"?response_type=code" +
                $"&client_id={Uri.EscapeDataString(_clientId)}" +
                $"&redirect_uri={redirectUri}" +
                $"&scope={scope}" +
-               $"&state={state}";
+               $"&state={Uri.EscapeDataString(state)}";
+
+        return (url, state);
     }
 
     public async Task<YahooUserProfile?> ExchangeCodeForUserProfileAsync(string code)
@@ -59,7 +66,7 @@ public class YahooAuthService : IYahooAuthService
             { "redirect_uri", _redirectUri }
         };
 
-        var tokenHttpClient = _httpClientFactory.CreateClient();
+        var tokenHttpClient = _httpClientFactory.CreateClient("YahooAuth");
         var tokenResponse = await tokenHttpClient.PostAsync(YahooTokenUrl,
             new FormUrlEncodedContent(tokenRequest));
 
@@ -91,24 +98,12 @@ public class YahooAuthService : IYahooAuthService
             return null;
         }
 
-        // Extract guid from token response (Yahoo returns guid in the token response)
-        var guid = tokenData.TryGetProperty("guid", out var guidElement)
-            ? guidElement.GetString()
-            : null;
-
-        if (string.IsNullOrEmpty(guid))
-        {
-            _logger.LogError("Yahoo token response does not contain guid");
-            return null;
-        }
-
-        // Step 2: Get user profile from Yahoo using the guid
-        var profileUrl = string.Format(YahooProfileUrl, Uri.EscapeDataString(guid));
-        var profileHttpClient = _httpClientFactory.CreateClient();
+        // Step 2: Get user profile from Yahoo OIDC userinfo endpoint
+        var profileHttpClient = _httpClientFactory.CreateClient("YahooAuth");
         profileHttpClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", accessToken);
 
-        var profileResponse = await profileHttpClient.GetAsync(profileUrl);
+        var profileResponse = await profileHttpClient.GetAsync(YahooProfileUrl);
 
         if (!profileResponse.IsSuccessStatusCode)
         {
@@ -128,15 +123,9 @@ public class YahooAuthService : IYahooAuthService
             return null;
         }
 
-        // Navigate to profile nested object
-        if (!profileData.TryGetProperty("profile", out var profileObject))
-        {
-            _logger.LogError("Yahoo profile response does not contain profile object");
-            return null;
-        }
-
+        // OIDC userinfo returns flat JSON: { sub, email, name, picture }
         // Extract email
-        var email = profileObject.TryGetProperty("email", out var emailElement)
+        var email = profileData.TryGetProperty("email", out var emailElement)
             ? emailElement.GetString()
             : null;
         if (string.IsNullOrEmpty(email))
@@ -145,25 +134,27 @@ public class YahooAuthService : IYahooAuthService
             return null;
         }
 
-        // Extract display name (Yahoo uses givenName and familyName)
-        var givenName = profileObject.TryGetProperty("givenName", out var givenNameElement)
-            ? givenNameElement.GetString()
-            : null;
-        var familyName = profileObject.TryGetProperty("familyName", out var familyNameElement)
-            ? familyNameElement.GetString()
-            : null;
+        // Extract display name (OIDC uses "name")
+        var displayName = profileData.TryGetProperty("name", out var nameElement)
+            ? nameElement.GetString()
+            : email;
 
-        var displayName = string.IsNullOrEmpty(givenName) && string.IsNullOrEmpty(familyName)
-            ? email
-            : $"{givenName ?? string.Empty} {familyName ?? string.Empty}".Trim();
-
-        // Extract picture URL (Yahoo uses image -> imageSize -> imageUrl or profileImage)
-        var pictureUrl = profileObject.TryGetProperty("image", out var imageElement) && imageElement.ValueKind == JsonValueKind.Object
-            ? imageElement.TryGetProperty("imageUrl", out var imageUrlElement)
-                ? imageUrlElement.GetString()
-                : null
+        // Extract picture URL (OIDC uses "picture")
+        var pictureUrl = profileData.TryGetProperty("picture", out var pictureElement)
+            ? pictureElement.GetString()
             : null;
 
-        return new YahooUserProfile(email, displayName, pictureUrl, guid);
+        // Use sub from userinfo as the Yahoo GUID (unique user identifier)
+        var yahooGuid = profileData.TryGetProperty("sub", out var subElement)
+            ? subElement.GetString()
+            : null;
+
+        if (string.IsNullOrEmpty(yahooGuid))
+        {
+            _logger.LogWarning("Yahoo userinfo response does not contain 'sub' (user identifier). " +
+                "User will not be linked to a Yahoo GUID.");
+        }
+
+        return new YahooUserProfile(email!, displayName!, pictureUrl, yahooGuid);
     }
 }

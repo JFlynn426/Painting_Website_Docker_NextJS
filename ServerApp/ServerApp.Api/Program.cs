@@ -1,13 +1,7 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
-using Microsoft.OpenApi.MicrosoftExtensions;
+using ServerApp.Api.Middleware;
 using ServerApp.Application;
 using ServerApp.Infrastructure;
-using ServerApp.Api.Middleware;
-using Swashbuckle.AspNetCore.Swagger;
-using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace ServerApp.Api
 {
@@ -43,6 +37,9 @@ namespace ServerApp.Api
                 });
             });
 
+            // Add MemoryCache for OAuth state storage
+            builder.Services.AddMemoryCache();
+
             // Add Application layer services
             builder.Services.AddApplicationServices();
 
@@ -54,7 +51,8 @@ namespace ServerApp.Api
             var authorizedEmails = !string.IsNullOrEmpty(authorizedEmailsConfig)
                 ? authorizedEmailsConfig.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 : Array.Empty<string>();
-            builder.Services.AddSingleton<IEnumerable<string>>(authorizedEmails);
+            builder.Services.AddSingleton<HashSet<string>>(
+                new HashSet<string>(authorizedEmails, StringComparer.OrdinalIgnoreCase));
 
             var app = builder.Build();
 

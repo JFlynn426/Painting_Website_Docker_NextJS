@@ -106,9 +106,9 @@
     gap: 0.75rem;
     width: 100%;
     padding: 0.75rem 1.5rem;
-    background-color: #720e9e;
+    background-color: #5F01D1;
     color: #ffffff;
-    border: 1px solid #720e9e;
+    border: 1px solid #5F01D1;
     border-radius: 4px;
     font-size: 1rem;
     font-weight: 500;
@@ -117,7 +117,7 @@
 }
 
 .yahooButton:hover {
-    background-color: #5a0b7a;
+    background-color: #4a00a0;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 

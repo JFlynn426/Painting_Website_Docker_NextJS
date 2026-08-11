@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 
 function getApiBaseUrl(): string {
-    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+        throw new Error('NEXT_PUBLIC_API_URL is not set');
+    }
+    return apiUrl;
 }
 
 export async function GET() {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { verifyAuth } from '@/lib/auth';
 import styles from './page.module.css';
@@ -78,12 +79,14 @@ export default function AdminLoginPage() {
         // Check if we have an auth code in the URL
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
-        const state = urlParams.get('state');
+        const stateFromUrl = urlParams.get('state');
         const provider = sessionStorage.getItem('oauth_provider');
+        const stateFromServer = sessionStorage.getItem('oauth_state');
 
-        if (code && state && provider) {
+        if (code && stateFromUrl && provider && stateFromServer) {
             sessionStorage.removeItem('oauth_provider');
-            handleCallback(code, state, provider);
+            sessionStorage.removeItem('oauth_state');
+            handleCallback(code, stateFromServer, provider);
         }
     }, [handleCallback]);
 
@@ -99,6 +102,7 @@ export default function AdminLoginPage() {
 
             const data = await response.json();
             sessionStorage.setItem('oauth_provider', 'google');
+            sessionStorage.setItem('oauth_state', data.state);
             window.location.href = data.url;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred');
@@ -118,6 +122,7 @@ export default function AdminLoginPage() {
 
             const data = await response.json();
             sessionStorage.setItem('oauth_provider', 'yahoo');
+            sessionStorage.setItem('oauth_state', data.state);
             window.location.href = data.url;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred');
@@ -181,12 +186,13 @@ export default function AdminLoginPage() {
                         'Signing in...'
                     ) : (
                         <>
-                            <svg className={styles.yahooIcon} viewBox="0 0 24 24">
-                                <path
-                                    fill="#ffffff"
-                                    d="M12.473 2.594l-4.14 5.228h2.567l-.293 2.754H2.594v2.754h8.177l-1.186 11.122h2.886l1.17-11.122h2.346l-2.514-2.754h-2.567l.293-2.754h2.567l-2.003-5.228z"
-                                />
-                            </svg>
+                            <Image
+                                src="/yahoo.svg"
+                                alt="Yahoo"
+                                width={18}
+                                height={18}
+                                className={styles.yahooIcon}
+                            />
                             Sign in with Yahoo
                         </>
                     )}

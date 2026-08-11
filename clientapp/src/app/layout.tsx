@@ -6,6 +6,7 @@ const cssFont = process.env.NEXT_PUBLIC_CSS_FONT || "Manjari-Thin.ttf";
 // Site configuration from environment variables (build-time)
 const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Gloria Gronowicz Fine Art";
 const siteDescription = process.env.NEXT_PUBLIC_SITE_DESCRIPTION || "Gloria Gronowicz is an oil painter who combines fine art with conservation. As a former Ph.D. scientist she seeks to tell the story of different species and their varied habitats, particularly in South Florida. Through color and light she creates a vignette of life in nature.";
+const favicon = process.env.NEXT_PUBLIC_FAVICON || "/favicon.ico";
 
 // CSS theme configuration from environment variables (build-time)
 const cssBackground = process.env.NEXT_PUBLIC_CSS_BACKGROUND || "#3d3d3d";
@@ -20,6 +21,9 @@ const cssAdminHover = process.env.NEXT_PUBLIC_CSS_ADMIN_HOVER || "#374151";
 export const metadata: Metadata = {
   title: siteName,
   description: siteDescription,
+  icons: {
+    icon: favicon,
+  },
 };
 
 export default function RootLayout({

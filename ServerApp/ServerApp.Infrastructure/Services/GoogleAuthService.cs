@@ -16,12 +16,13 @@ public class GoogleAuthService : IGoogleAuthService
     private readonly string _redirectUri;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<GoogleAuthService> _logger;
+    private readonly IStateStore _stateStore;
 
     private const string GoogleAuthorizationUrl = "https://accounts.google.com/o/oauth2/v2/auth";
     private const string GoogleTokenUrl = "https://oauth2.googleapis.com/token";
     private const string GoogleUserInfoUrl = "https://www.googleapis.com/oauth2/v2/userinfo";
 
-    public GoogleAuthService(IConfiguration configuration, IHttpClientFactory httpClientFactory, ILogger<GoogleAuthService> logger)
+    public GoogleAuthService(IConfiguration configuration, IHttpClientFactory httpClientFactory, ILogger<GoogleAuthService> logger, IStateStore stateStore)
     {
         _clientId = configuration["GoogleAuth:ClientId"]
             ?? throw new ArgumentNullException("GoogleAuth:ClientId is not configured");
@@ -31,22 +32,28 @@ public class GoogleAuthService : IGoogleAuthService
             ?? throw new ArgumentNullException("GoogleAuth:RedirectUri is not configured");
         _httpClientFactory = httpClientFactory;
         _logger = logger;
+        _stateStore = stateStore;
     }
 
-    public string GetAuthorizationUrl()
+    public (string Url, string State) GetAuthorizationUrl()
     {
         var scope = Uri.EscapeDataString("email profile openid");
-        var state = Uri.EscapeDataString(Guid.NewGuid().ToString());
+        var state = Guid.NewGuid().ToString();
         var redirectUri = Uri.EscapeDataString(_redirectUri);
 
-        return $"{GoogleAuthorizationUrl}" +
+        // Store state for CSRF validation
+        _stateStore.StoreState(state);
+
+        var url = $"{GoogleAuthorizationUrl}" +
                $"?response_type=code" +
                $"&client_id={Uri.EscapeDataString(_clientId)}" +
                $"&redirect_uri={redirectUri}" +
                $"&scope={scope}" +
                $"&access_type=offline" +
                $"&prompt=select_account" +
-               $"&state={state}";
+               $"&state={Uri.EscapeDataString(state)}";
+
+        return (url, state);
     }
 
     public async Task<GoogleUserProfile?> ExchangeCodeForUserProfileAsync(string code)
@@ -61,7 +68,7 @@ public class GoogleAuthService : IGoogleAuthService
             { "redirect_uri", _redirectUri }
         };
 
-        var tokenHttpClient = _httpClientFactory.CreateClient();
+        var tokenHttpClient = _httpClientFactory.CreateClient("GoogleAuth");
         var tokenResponse = await tokenHttpClient.PostAsync(GoogleTokenUrl,
             new FormUrlEncodedContent(tokenRequest));
 
@@ -94,7 +101,7 @@ public class GoogleAuthService : IGoogleAuthService
         }
 
         // Step 2: Get user profile from Google OAuth2 userinfo endpoint
-        var userInfoHttpClient = _httpClientFactory.CreateClient();
+        var userInfoHttpClient = _httpClientFactory.CreateClient("GoogleAuth");
         userInfoHttpClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", accessToken);
 
