@@ -48,6 +48,7 @@ public class PaintingCategoriesController : BaseController
     /// </summary>
     /// <param name="command">The add painting category command from the Application layer.</param>
     /// <returns>201 Created status with the created category.</returns>
+    [ServerApp.Api.Filters.AdminAuthorized]
     [HttpPost]
     public async Task<IActionResult> Add([FromBody] AddPaintingCategory command)
     {
@@ -60,6 +61,7 @@ public class PaintingCategoriesController : BaseController
     /// </summary>
     /// <param name="command">The delete painting category command from the Application layer.</param>
     /// <returns>204 No Content status.</returns>
+    [ServerApp.Api.Filters.AdminAuthorized]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete([FromRoute] DeletePaintingCategory command)
     {

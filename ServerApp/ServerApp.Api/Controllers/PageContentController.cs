@@ -48,6 +48,7 @@ public class PageContentController : BaseController
     /// </summary>
     /// <param name="command">The add page content command from the Application layer.</param>
     /// <returns>201 Created status with the created page content.</returns>
+    [ServerApp.Api.Filters.AdminAuthorized]
     [HttpPost]
     public async Task<IActionResult> Add([FromBody] AddPageContent command)
     {
@@ -80,6 +81,7 @@ public class PageContentController : BaseController
     /// </summary>
     /// <param name="command">The delete page content command from the Application layer.</param>
     /// <returns>204 No Content status.</returns>
+    [ServerApp.Api.Filters.AdminAuthorized]
     [HttpDelete("{address}")]
     public async Task<IActionResult> Delete([FromRoute] DeletePageContent command)
     {

@@ -71,6 +71,7 @@ public class PaintingsController : BaseController
     /// </summary>
     /// <param name="command">The add painting command from the Application layer.</param>
     /// <returns>201 Created status with the created painting.</returns>
+    [ServerApp.Api.Filters.AdminAuthorized]
     [HttpPost]
     public async Task<IActionResult> Add([FromBody] AddPainting command)
     {
@@ -83,6 +84,7 @@ public class PaintingsController : BaseController
     /// </summary>
     /// <param name="command">The delete painting command from the Application layer.</param>
     /// <returns>204 No Content status.</returns>
+    [ServerApp.Api.Filters.AdminAuthorized]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete([FromRoute] DeletePainting command)
     {

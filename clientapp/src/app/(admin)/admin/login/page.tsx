@@ -67,8 +67,10 @@ export default function AdminLoginPage() {
                 pictureUrl: data.adminUser.pictureUrl
             }));
 
-            // Redirect to admin dashboard
-            router.push('/admin');
+            // Use window.location.href instead of router.push to force a full page navigation.
+            // This gives the browser time to persist the Set-Cookie header before the next
+            // request, ensuring the admin_token cookie is sent with /api/auth/me.
+            window.location.href = '/admin';
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Authentication failed');
             setLoading(false);
@@ -201,3 +203,4 @@ export default function AdminLoginPage() {
         </div>
     );
 }
+
