@@ -17,11 +17,11 @@ export default function AdminHeader() {
         await logout();
     };
 
-    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Paintings";
+    const artworkLabelPlural = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL_PLURAL || "Paintings";
 
     const navLinks = [
         { href: '/admin', label: 'Dashboard' },
-        { href: '/admin/paintings', label: artworkLabel },
+        { href: '/admin/paintings', label: `${artworkLabelPlural}` },
         { href: '/admin/categories', label: 'Categories' },
         { href: '/admin/content', label: 'Content' },
         { href: '/admin/history', label: 'History' },

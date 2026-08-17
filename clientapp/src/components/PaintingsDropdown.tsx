@@ -11,7 +11,7 @@ interface PaintingsDropdownProps {
 export default function PaintingsDropdown({ categories }: PaintingsDropdownProps) {
     const [isPaintingsOpen, setIsPaintingsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Paintings";
+    const artworkLabelPlural = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL_PLURAL || "Paintings";
 
     const closePaintingsDropdown = () => {
         setIsPaintingsOpen(false);
@@ -40,7 +40,7 @@ export default function PaintingsDropdown({ categories }: PaintingsDropdownProps
                 onClick={() => setIsPaintingsOpen(!isPaintingsOpen)}
                 className="pl-3 py-2 rounded flex items-center hover:text-[var(--link-hover)] justify-center transition duration-200 ease-in-out w-full"
             >
-                {artworkLabel}
+                {artworkLabelPlural}
                 <span style={{
                     display: 'inline-block',
                     transform: isPaintingsOpen ? 'rotate(0deg) scale(0.6)' : 'rotate(90deg) scale(0.6)',

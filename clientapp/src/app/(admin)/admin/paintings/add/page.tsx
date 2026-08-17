@@ -7,6 +7,7 @@ import { PaintingCategory } from '@/types';
 export const dynamic = 'force-dynamic';
 
 export default async function AddPaintingsPage() {
+    const artworkLabelPlural = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL_PLURAL || "Paintings";
     let categories: PaintingCategory[] = [];
     let error: string | null = null;
 
@@ -20,7 +21,7 @@ export default async function AddPaintingsPage() {
 
     return (
         <div>
-            <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Add Paintings to Existing Categories</h1>
+            <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Add {artworkLabelPlural} to Existing Categories</h1>
 
             {error && (
                 <div className="bg-red-200 border border-red-500 rounded-lg p-4 mb-6">
@@ -53,7 +54,7 @@ export default async function AddPaintingsPage() {
 
             <div className="mt-6">
                 <Link href="/admin/paintings" className="text-[var(--title-color)] hover:underline">
-                    &larr; Back to Paintings
+                    &larr; Back to {artworkLabelPlural}
                 </Link>
             </div>
         </div>

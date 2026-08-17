@@ -3,8 +3,8 @@
 import Link from 'next/link';
 
 export default function ViewEditingHistoryPage() {
-    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Paintings";
-    const artworkLabelLower = artworkLabel.toLowerCase();
+    const artworkLabelPlural = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL_PLURAL || "Paintings";
+    const artworkLabelLowerPlural = artworkLabelPlural.toLowerCase();
 
     return (
         <div>
@@ -16,7 +16,7 @@ export default function ViewEditingHistoryPage() {
 
             <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6">
                 <p className="text-[var(--foreground)]">
-                    Browse all editing history records for {artworkLabelLower}, categories, and content changes. This feature is coming soon.
+                    Browse all editing history records for {artworkLabelLowerPlural}, categories, and content changes. This feature is coming soon.
                 </p>
             </div>
         </div>

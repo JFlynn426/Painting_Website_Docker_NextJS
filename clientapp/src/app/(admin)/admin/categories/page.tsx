@@ -3,8 +3,10 @@
 import Link from 'next/link';
 
 export default function CategoriesAdminPage() {
-    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Paintings";
+    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Painting";
+    const artworkLabelPlural = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL_PLURAL || "Paintings";
     const artworkLabelLower = artworkLabel.toLowerCase();
+    const artworkLabelLowerPlural = artworkLabelPlural.toLowerCase();
 
     return (
         <div>
@@ -15,7 +17,7 @@ export default function CategoriesAdminPage() {
                     <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-[var(--admin-hover)] transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Add Category</h2>
                         <p className="text-[var(--foreground)]">
-                            Create a new {artworkLabelLower} category to organize your artwork. Set the category name and description for better navigation.
+                            Create a new category to organize your {artworkLabelLowerPlural}. Set the category name and description for better navigation.
                         </p>
                     </div>
                 </Link>
@@ -33,16 +35,16 @@ export default function CategoriesAdminPage() {
                     <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-[var(--admin-hover)] transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Delete Category</h2>
                         <p className="text-[var(--foreground)]">
-                            Remove a {artworkLabelLower} category. Note: You can only delete a category if all {artworkLabelLower} have been removed from it first.
+                            Remove {artworkLabelLower} categories. Note: You can only delete a category after it is empty of {artworkLabelLowerPlural}.
                         </p>
                     </div>
                 </Link>
 
                 <Link href="/admin/categories/reassign" className="block">
                     <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-[var(--admin-hover)] transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
-                        <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Reassign {artworkLabel}</h2>
+                        <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Reassign {artworkLabelPlural}</h2>
                         <p className="text-[var(--foreground)]">
-                            Move {artworkLabelLower} between categories. Transfer {artworkLabelLower} from one category to another before deleting empty categories or after creating a new category.
+                            Move {artworkLabelLowerPlural} between categories. Transfer {artworkLabelLowerPlural} from one category to another before deleting empty categories or after creating a new category.
                         </p>
                     </div>
                 </Link>

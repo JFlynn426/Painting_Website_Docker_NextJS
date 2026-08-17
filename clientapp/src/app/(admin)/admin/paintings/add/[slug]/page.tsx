@@ -12,6 +12,10 @@ interface AddPaintingToCategoryPageProps {
 
 export default function AddPaintingToCategoryPage({ params }: AddPaintingToCategoryPageProps) {
     const { slug } = use(params);
+    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Painting";
+    const artworkLabelPlural = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL_PLURAL || "Paintings";
+    const artworkLabelLower = artworkLabel.toLowerCase();
+    const artworkLabelLowerPlural = artworkLabelPlural.toLowerCase();
 
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -205,7 +209,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
             setIsAvailable(true);
             setIsNew(true);
         } catch (err) {
-            setSubmitError(err instanceof Error ? err.message : 'Failed to add painting');
+            setSubmitError(err instanceof Error ? err.message : `Failed to add ${artworkLabelLower}`);
         } finally {
             setIsSubmitting(false);
         }
@@ -215,18 +219,18 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
         <Fragment>
             <div>
                 <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">
-                    Add Painting to: {slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                    Add {artworkLabel} to: {slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                 </h1>
 
                 <div className="bg-yellow-100 border border-yellow-600 rounded-lg p-4 mb-6">
                     <p className="text-black text-sm">
-                        <strong>Note:</strong> Required fields are marked with a red asterisk. Attempt to fill out the same fields for every painting, where possible, to maintain consistency across the site.
+                        <strong>Note:</strong> Required fields are marked with a red asterisk. Attempt to fill out the same fields for all {artworkLabelLowerPlural}, where possible, to maintain consistency across the site.
                     </p>
                 </div>
 
                 {submitSuccess && (
                     <div className="bg-green-200 border border-green-500 rounded-lg p-4 mb-6">
-                        <p className="text-black">Painting added successfully!</p>
+                        <p className="text-black">{artworkLabel} added successfully!</p>
                     </div>
                 )}
 
@@ -246,7 +250,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                     {/* Image Upload */}
                     <div>
                         <label className="block text-sm font-medium text-[var(--foreground)] mb-2">
-                            Painting Image (.jpg) <span className="text-red-500">*</span>
+                            {artworkLabel} Image (.jpg) <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="file"
@@ -276,7 +280,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                             onChange={e => setTitle(e.target.value)}
                             maxLength={100}
                             className="w-full px-3 py-2 bg-[var(--background)] text-[var(--foreground)] border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                            placeholder="Enter painting title (Required)"
+                            placeholder={`Enter ${artworkLabelLower} title (Required)`}
                         />
                         <p className="text-gray-500 text-xs mt-1">{title.length}/100 characters</p>
                         {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
@@ -294,7 +298,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                             maxLength={500}
                             rows={4}
                             className="w-full px-3 py-2 bg-[var(--background)] text-[var(--foreground)] border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                            placeholder="Enter painting description (Suggested)"
+                            placeholder={`Enter ${artworkLabelLower} description (Suggested)`}
                         />
                         <p className="text-gray-500 text-xs mt-1">{description.length}/500 characters</p>
                         {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
@@ -382,7 +386,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                                 step="0.01"
                                 min="0"
                                 className="w-full px-3 py-2 bg-[var(--background)] text-[var(--foreground)] border border-gray-600 rounded focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                placeholder="Price (Suggested for available paintings)"
+                                placeholder={`Price (Suggested for available ${artworkLabelLower})`}
                             />
                             {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
                         </div>
@@ -398,7 +402,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                             className="w-4 h-4 text-blue-600 bg-[var(--background)] border-gray-600 rounded focus:ring-blue-500"
                         />
                         <label htmlFor="isAvailable" className="ml-2 block text-sm font-medium text-[var(--foreground)]">
-                            Painting is available
+                            {artworkLabel} is available
                         </label>
                     </div>
 
@@ -412,7 +416,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                             className="w-4 h-4 text-blue-600 bg-[var(--background)] border-gray-600 rounded focus:ring-blue-500"
                         />
                         <label htmlFor="isNew" className="ml-2 block text-sm font-medium text-[var(--foreground)]">
-                            Add to New Paintings
+                            Add to New {artworkLabelPlural}
                         </label>
                     </div>
 
@@ -423,7 +427,7 @@ export default function AddPaintingToCategoryPage({ params }: AddPaintingToCateg
                             disabled={isSubmitting}
                             className="px-6 py-2 bg-[var(--button-color)] text-white rounded hover:opacity-90 transition-opacity disabled:opacity-50"
                         >
-                            {isSubmitting ? 'Adding...' : 'Add Painting'}
+                            {isSubmitting ? 'Adding...' : `Add ${artworkLabel}`}
                         </button>
                         <button
                             type="button"

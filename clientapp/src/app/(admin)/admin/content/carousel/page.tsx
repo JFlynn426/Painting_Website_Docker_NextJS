@@ -18,8 +18,10 @@ export default function CarouselContentPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
     const [saveSuccess, setSaveSuccess] = useState(false);
-    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Paintings";
+    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Painting";
+    const artworkLabelPlural = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL_PLURAL || "Paintings";
     const artworkLabelLower = artworkLabel.toLowerCase();
+    const artworkLabelLowerPlural = artworkLabelPlural.toLowerCase();
 
     useEffect(() => {
         async function loadData() {
@@ -83,7 +85,7 @@ export default function CarouselContentPage() {
 
     const handleSave = async () => {
         if (selectedPaintings.length < 3 || selectedPaintings.length > 8) {
-            setSaveError('You must select between 3 and 8 carousel paintings.');
+            setSaveError(`You must select between 3 and 8 carousel ${artworkLabelLowerPlural}.`);
             return;
         }
 
@@ -117,7 +119,7 @@ export default function CarouselContentPage() {
             <div>
                 <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Change Carousel Images</h1>
                 <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6">
-                    <p className="text-[var(--foreground)]">Loading paintings...</p>
+                    <p className="text-[var(--foreground)]">Loading {artworkLabelLowerPlural}...</p>
                 </div>
             </div>
         );
@@ -138,21 +140,21 @@ export default function CarouselContentPage() {
         <div>
             <h1 className="text-3xl font-bold mb-2 text-[var(--title-color)]">Change Carousel Images</h1>
             <p className="text-[var(--foreground)] mb-6">
-                This page allows you to select and order the {artworkLabelLower} displayed in the homepage carousel.
+                This page allows you to select and order the {artworkLabelLowerPlural} displayed in the homepage carousel.
             </p>
 
             <div className="bg-yellow-100 border border-yellow-600 rounded-lg p-4 mb-6">
                 <p className="text-black text-sm">
-                    <strong>Note:</strong> The carousel requires between 3 and 8 {artworkLabelLower} to be selected. Order determines display sequence.
+                    <strong>Note:</strong> The carousel requires between 3 and 8 {artworkLabelLowerPlural} to be selected. Order determines display sequence.
                 </p>
                 <p className="text-black text-sm mt-1">
-                    <strong>Requirement:</strong> Only {artworkLabelLower} that are wider than they are tall (landscape orientation) can be added to the carousel.
+                    <strong>Requirement:</strong> Only landscape {artworkLabelLowerPlural} (wider than tall) can be added to the carousel.
                 </p>
             </div>
 
             {saveSuccess && (
                 <div className="bg-green-200 border border-green-500 rounded-lg p-4 mb-6">
-                    <p className="text-black">Changes saved successfully! ({selectedPaintings.length} {artworkLabelLower} selected)</p>
+                    <p className="text-black">Changes saved successfully! ({selectedPaintings.length} {artworkLabelLowerPlural} selected)</p>
                 </div>
             )}
 
@@ -165,10 +167,10 @@ export default function CarouselContentPage() {
             {/* Current Carousel Paintings */}
             <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-3 text-[var(--title-color)]">
-                    Current Carousel {artworkLabel} ({currentCarouselPaintings.length})
+                    Current Carousel {artworkLabelPlural} ({currentCarouselPaintings.length})
                 </h2>
                 {currentCarouselPaintings.length === 0 ? (
-                    <p className="text-[var(--foreground)]">No {artworkLabelLower} are currently set for the carousel.</p>
+                    <p className="text-[var(--foreground)]">No {artworkLabelLowerPlural} currently set for the carousel.</p>
                 ) : (
                     <div className="grid lg:grid-cols-6 gap-4">
                         {currentCarouselPaintings.map((painting, index) => (
@@ -201,10 +203,10 @@ export default function CarouselContentPage() {
             {/* Updated Carousel Paintings Preview */}
             <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-3 text-[var(--title-color)]">
-                    Updated Carousel {artworkLabel} ({selectedPaintings.length})
+                    Updated Carousel {artworkLabelPlural} ({selectedPaintings.length})
                 </h2>
                 {selectedPaintings.length === 0 ? (
-                    <p className="text-[var(--foreground)]">No {artworkLabelLower} selected yet. Click on {artworkLabelLower} below to add them.</p>
+                    <p className="text-[var(--foreground)]">No {artworkLabelLowerPlural} selected yet. Click on {artworkLabelLowerPlural} below to add them.</p>
                 ) : (
                     <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
                         {selectedPaintings.map((painting, index) => (
@@ -270,12 +272,12 @@ export default function CarouselContentPage() {
                 </button>
                 {selectedPaintings.length > 0 && selectedPaintings.length < 3 && (
                     <p className="text-[var(--foreground)] text-sm mt-2">
-                        Warning: You must select between 3 and 8 carousel {artworkLabelLower}. You have selected {selectedPaintings.length}.
+                        Warning: You must select between 3 and 8 carousel {artworkLabelLowerPlural}. You have selected {selectedPaintings.length}.
                     </p>
                 )}
                 {selectedPaintings.length > 8 && (
                     <p className="text-[var(--foreground)] text-sm mt-2">
-                        Warning: You must select between 3 and 8 carousel {artworkLabelLower}. You have selected {selectedPaintings.length}.
+                        Warning: You must select between 3 and 8 carousel {artworkLabelLowerPlural}. You have selected {selectedPaintings.length}.
                     </p>
                 )}
             </div>
@@ -283,10 +285,10 @@ export default function CarouselContentPage() {
             {/* All Paintings */}
             <div>
                 <h2 className="text-xl font-semibold mb-3 text-[var(--title-color)]">
-                    Landscape {artworkLabel} ({allPaintings.filter(p => p.isLandscape).length})
+                    Landscape {artworkLabelPlural} ({allPaintings.filter(p => p.isLandscape).length})
                 </h2>
                 <p className="text-[var(--foreground)] text-sm mb-4">
-                    Click on a {artworkLabelLower} to toggle it in the carousel. Selected {artworkLabelLower} are highlighted with a blue border.
+                    Click on {artworkLabelLower} to toggle it in the carousel. Selected {artworkLabelLowerPlural} highlighted with a blue border.
                 </p>
                 <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
                     {allPaintings.filter(p => p.isLandscape).map((painting) => {

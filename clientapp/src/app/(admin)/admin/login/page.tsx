@@ -75,7 +75,7 @@ export default function AdminLoginPage() {
             setError(err instanceof Error ? err.message : 'Authentication failed');
             setLoading(false);
         }
-    }, [router]);
+    }, []);
 
     useEffect(() => {
         // Check if we have an auth code in the URL

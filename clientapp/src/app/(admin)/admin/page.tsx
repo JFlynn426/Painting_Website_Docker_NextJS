@@ -9,8 +9,10 @@ export default function AdminDashboardPage() {
     const router = useRouter();
     const [user, setUser] = useState<AdminUserDto | null>(null);
     const [loading, setLoading] = useState(true);
-    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Paintings";
+    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Painting";
+    const artworkLabelPlural = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL_PLURAL || "Paintings";
     const artworkLabelLower = artworkLabel.toLowerCase();
+    const artworkLabelLowerPlural = artworkLabelPlural.toLowerCase();
 
     useEffect(() => {
         verifyAuth().then(result => {
@@ -49,9 +51,9 @@ export default function AdminDashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Link href="/admin/paintings" className="block">
                     <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-[var(--admin-hover)] transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
-                        <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">{artworkLabel}</h2>
+                        <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">{artworkLabelPlural}</h2>
                         <p className="text-[var(--foreground)]">
-                            Manage {artworkLabelLower}: add new {artworkLabelLower}, delete existing ones, edit details, and select new arrivals.
+                            Manage {artworkLabelLowerPlural}: add new {artworkLabelLowerPlural}, delete existing ones, edit details, and select new arrivals.
                         </p>
                     </div>
                 </Link>
@@ -78,7 +80,7 @@ export default function AdminDashboardPage() {
                     <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-[var(--admin-hover)] transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">History</h2>
                         <p className="text-[var(--foreground)]">
-                            View editing history: track all changes made to {artworkLabelLower}, categories, and content.
+                            View editing history: track all changes made to {artworkLabelLowerPlural}, categories, and content.
                         </p>
                     </div>
                 </Link>

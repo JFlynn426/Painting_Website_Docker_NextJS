@@ -12,7 +12,7 @@ export default function AddCategoryPage() {
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [submitSuccess, setSubmitSuccess] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
-    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Paintings";
+    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Painting";
 
     const validate = (): boolean => {
         const newErrors: Record<string, string> = {};

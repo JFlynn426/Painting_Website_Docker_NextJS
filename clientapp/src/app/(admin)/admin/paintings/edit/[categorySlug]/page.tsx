@@ -12,6 +12,8 @@ interface EditCategoryPaintingsPageProps {
 
 export default async function EditCategoryPaintingsPage({ params }: EditCategoryPaintingsPageProps) {
     const { categorySlug } = await params;
+    const artworkLabelPlural = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL_PLURAL || "Paintings";
+    const artworkLabelLowerPlural = artworkLabelPlural.toLowerCase();
 
     let category: PaintingCategoryWithPaintings | null = null;
     let error: string | null = null;
@@ -19,7 +21,7 @@ export default async function EditCategoryPaintingsPage({ params }: EditCategory
     try {
         category = await getPaintingsByCategory(categorySlug);
     } catch (err) {
-        error = err instanceof Error ? err.message : 'Failed to fetch category paintings';
+        error = err instanceof Error ? err.message : `Failed to fetch category ${artworkLabelLowerPlural}`;
     }
 
     const categoryName = categorySlug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
@@ -27,9 +29,9 @@ export default async function EditCategoryPaintingsPage({ params }: EditCategory
     return (
         <div>
             <h1 className="text-3xl font-bold mb-2 text-[var(--title-color)]">
-                Edit Paintings in {categoryName} Category
+                Edit {artworkLabelPlural} in {categoryName} Category
             </h1>
-            <p className="text-[var(--foreground)] mb-6 text-sm">Please select a painting to edit</p>
+            <p className="text-[var(--foreground)] mb-6 text-sm">Please select {artworkLabelLowerPlural} to edit</p>
 
             {error && (
                 <div className="bg-red-200 border border-red-500 rounded-lg p-4 mb-6">
@@ -38,7 +40,7 @@ export default async function EditCategoryPaintingsPage({ params }: EditCategory
             )}
 
             {category && category.paintings.length === 0 ? (
-                <p className="text-[var(--foreground)]">No paintings found in this category.</p>
+                <p className="text-[var(--foreground)]">No {artworkLabelLowerPlural} found in this category.</p>
             ) : category ? (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {category.paintings.map((painting) => (

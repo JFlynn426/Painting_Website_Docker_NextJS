@@ -7,6 +7,8 @@ import { PaintingCategory } from '@/types';
 export const dynamic = 'force-dynamic';
 
 export default async function DeletePaintingsPage() {
+    const artworkLabelPlural = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL_PLURAL || "Paintings";
+    const artworkLabelLowerPlural = artworkLabelPlural.toLowerCase();
     let categories: PaintingCategory[] = [];
     let error: string | null = null;
 
@@ -20,9 +22,9 @@ export default async function DeletePaintingsPage() {
 
     return (
         <div>
-            <h1 className="text-3xl font-bold mb-2 text-[var(--title-color)]">Delete Paintings From Categories</h1>
+            <h1 className="text-3xl font-bold mb-2 text-[var(--title-color)]">Delete {artworkLabelPlural} From Categories</h1>
             <p className="text-[var(--foreground)] mb-6">
-                Select a category below to view its paintings. You will be able to permanently delete individual paintings from the database.
+                Select a category below to view its {artworkLabelLowerPlural}. You will be able to permanently delete individual {artworkLabelLowerPlural} from the database.
             </p>
 
             {error && (
@@ -47,7 +49,7 @@ export default async function DeletePaintingsPage() {
                                 href={`/admin/paintings/delete/${category.slug}`}
                                 className="flex-shrink-0 ml-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm font-bold"
                             >
-                                Delete Paintings
+                                Delete {artworkLabelPlural}
                             </Link>
                         </div>
                     ))}
@@ -56,7 +58,7 @@ export default async function DeletePaintingsPage() {
 
             <div className="mt-6">
                 <Link href="/admin/paintings" className="text-[var(--title-color)] hover:underline">
-                    &larr; Back to Paintings
+                    &larr; Back to {artworkLabelPlural}
                 </Link>
             </div>
         </div>

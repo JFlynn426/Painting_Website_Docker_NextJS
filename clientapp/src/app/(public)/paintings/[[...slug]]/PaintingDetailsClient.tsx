@@ -14,6 +14,7 @@ interface PaintingDetailsClientProps {
 
 export default function PaintingDetailsClient({ painting, category }: PaintingDetailsClientProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Painting";
 
     // Format price in USD
     const formattedPrice = painting.price ? new Intl.NumberFormat('en-US', {
@@ -101,7 +102,7 @@ export default function PaintingDetailsClient({ painting, category }: PaintingDe
                             <circle cx="11" cy="11" r="8"></circle>
                             <path d="m21 21-4.35-4.35"></path>
                         </svg>
-                        Examine This Painting
+                        Examine This {artworkLabel}
                     </button>
                 </div>
             </div>

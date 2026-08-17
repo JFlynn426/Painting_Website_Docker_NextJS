@@ -18,8 +18,10 @@ export default function ReassignPaintingsPage() {
     const [saveError, setSaveError] = useState<string | null>(null);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [savedCount, setSavedCount] = useState(0);
-    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Paintings";
+    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Painting";
+    const artworkLabelPlural = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL_PLURAL || "Paintings";
     const artworkLabelLower = artworkLabel.toLowerCase();
+    const artworkLabelLowerPlural = artworkLabelPlural.toLowerCase();
 
     useEffect(() => {
         async function loadData() {
@@ -124,7 +126,7 @@ export default function ReassignPaintingsPage() {
             if (count > 30) {
                 const category = categories.find(c => c.slug === slug);
                 const categoryName = category?.name || slug;
-                setSaveError(`Cannot save: "${categoryName}" would have ${count} paintings, which exceeds the maximum of 30 paintings per category.`);
+                setSaveError(`Cannot save: "${categoryName}" would have ${count} ${artworkLabelLowerPlural}, which exceeds the maximum of 30 ${artworkLabelLowerPlural} per category.`);
                 return;
             }
         }
@@ -173,9 +175,9 @@ export default function ReassignPaintingsPage() {
     if (loading) {
         return (
             <div>
-                <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Reassign {artworkLabel}</h1>
+                <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Reassign {artworkLabelPlural}</h1>
                 <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6">
-                    <p className="text-[var(--foreground)]">Loading {artworkLabelLower} and categories...</p>
+                    <p className="text-[var(--foreground)]">Loading {artworkLabelLowerPlural} and categories...</p>
                 </div>
             </div>
         );
@@ -184,7 +186,7 @@ export default function ReassignPaintingsPage() {
     if (loadError) {
         return (
             <div>
-                <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Reassign {artworkLabel}</h1>
+                <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">Reassign {artworkLabelPlural}</h1>
                 <div className="bg-red-200 border border-red-500 rounded-lg p-6">
                     <p className="text-black">Error: {loadError}</p>
                 </div>
@@ -194,20 +196,20 @@ export default function ReassignPaintingsPage() {
 
     return (
         <div>
-            <h1 className="text-3xl font-bold mb-2 text-[var(--title-color)]">Reassign {artworkLabel}</h1>
+            <h1 className="text-3xl font-bold mb-2 text-[var(--title-color)]">Reassign {artworkLabelPlural}</h1>
             <p className="text-[var(--foreground)] mb-6">
-                {artworkLabel} are displayed in their initial categories. Select the category to move the {artworkLabelLower} to by selecting a new category in the dropdown.
+                Each {artworkLabelLower} is displayed in its initial category. Select a new category in the dropdown to move {artworkLabelLowerPlural}.
             </p>
 
             <div className="bg-yellow-100 border border-yellow-600 rounded-lg p-4 mb-6">
                 <p className="text-black text-sm">
-                    <strong>Note:</strong> Categories can have no more than 30 {artworkLabelLower} per page. It is suggested that each category should contain 8 or more {artworkLabelLower}.
+                    <strong>Note:</strong> Categories can have no more than 30 {artworkLabelLowerPlural} per page. It is suggested that each category should contain 8 or more {artworkLabelLowerPlural}.
                 </p>
             </div>
 
             {saveSuccess && (
                 <div className="bg-green-200 border border-green-500 rounded-lg p-4 mb-6">
-                    <p className="text-black">Changes saved successfully! ({savedCount} {artworkLabelLower} reassigned)</p>
+                    <p className="text-black">Changes saved successfully! ({savedCount} {artworkLabelLowerPlural} reassigned)</p>
                 </div>
             )}
 
@@ -238,24 +240,24 @@ export default function ReassignPaintingsPage() {
                                         {projectedCount}
                                     </span>
                                     {projectedCount > 30 && (
-                                        <span className="text-red-700 ml-2">⚠ Error: Exceeds maximum of 30 {artworkLabelLower}</span>
+                                        <span className="text-red-700 ml-2">⚠ Error: Exceeds maximum of 30 {artworkLabelLowerPlural}</span>
                                     )}
                                     {projectedCount < 8 && projectedCount <= 30 && (
-                                        <span className="text-yellow-700 ml-2">⚠ Warning: Fewer than 8 {artworkLabelLower} suggested</span>
+                                        <span className="text-yellow-700 ml-2">⚠ Warning: Fewer than 8 {artworkLabelLowerPlural} suggested</span>
                                     )}
                                 </p>
                             )}
                             {!hasChanges && paintings.length < 8 && (
                                 <div className="bg-yellow-100 border border-yellow-600 rounded-lg p-3 mb-3">
                                     <p className="text-black text-sm">
-                                        <strong>Warning:</strong> This category has fewer than 8 {artworkLabelLower}. It is suggested that each category should contain 8 or more {artworkLabelLower}.
+                                        <strong>Warning:</strong> This category has fewer than 8 {artworkLabelLowerPlural}. It is suggested that each category should contain 8 or more {artworkLabelLowerPlural}.
                                     </p>
                                 </div>
                             )}
                             {paintings.length === 0 ? (
                                 <div className="bg-yellow-100 border border-yellow-600 rounded-lg p-4">
                                     <p className="text-black text-sm">
-                                        <strong>No paintings assigned to this category.</strong> Assign paintings from other categories above to add them here.
+                                        <strong>No {artworkLabelLowerPlural} assigned to this category.</strong> Assign {artworkLabelLowerPlural} from other categories above to add them here.
                                     </p>
                                 </div>
                             ) : (
@@ -343,7 +345,7 @@ export default function ReassignPaintingsPage() {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-gray-600">
-                                    <th className="text-left py-2 px-3 text-[var(--title-color)]">Painting</th>
+                                    <th className="text-left py-2 px-3 text-[var(--title-color)]">{artworkLabel}</th>
                                     <th className="text-left py-2 px-3 text-[var(--title-color)]">Current Category</th>
                                     <th className="text-left py-2 px-3 text-[var(--title-color)]">New Category</th>
                                 </tr>

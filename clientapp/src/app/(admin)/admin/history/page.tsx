@@ -3,8 +3,8 @@
 import Link from 'next/link';
 
 export default function HistoryAdminPage() {
-    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Paintings";
-    const artworkLabelLower = artworkLabel.toLowerCase();
+    const artworkLabelPlural = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL_PLURAL || "Paintings";
+    const artworkLabelLowerPlural = artworkLabelPlural.toLowerCase();
 
     return (
         <div>
@@ -15,7 +15,7 @@ export default function HistoryAdminPage() {
                     <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-[var(--admin-hover)] transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">View Editing History</h2>
                         <p className="text-[var(--foreground)]">
-                            Browse all editing history records for {artworkLabelLower}, categories, and content changes. Track when changes were made and by whom.
+                            Browse all editing history records for {artworkLabelLowerPlural}, categories, and content changes. Track when changes were made and by whom.
                         </p>
                     </div>
                 </Link>
@@ -24,7 +24,7 @@ export default function HistoryAdminPage() {
                     <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6 hover:bg-[var(--admin-hover)] transition-colors cursor-pointer h-[156px] flex flex-col justify-center">
                         <h2 className="text-xl font-bold mb-2 text-[var(--title-color)]">Revert Editing History</h2>
                         <p className="text-[var(--foreground)]">
-                            Revert previous changes to {artworkLabelLower}, categories, or content by selecting from editing history. Restore previous versions easily.
+                            Revert previous changes to {artworkLabelLowerPlural}, categories, or content by selecting from editing history. Restore previous versions easily.
                         </p>
                     </div>
                 </Link>

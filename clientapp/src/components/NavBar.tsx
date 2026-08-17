@@ -13,7 +13,7 @@ export default function NavBar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
     const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Gloria Gronowicz Fine Art";
-    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Paintings";
+    const artworkLabelPlural = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL_PLURAL || "Paintings";
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -94,7 +94,7 @@ export default function NavBar() {
                         href="/paintings/new-paintings"
                         className="pr-3 py-2 rounded transition duration-200 ease-in-out hover:text-[var(--link-hover)]"
                     >
-                        New {artworkLabel}
+                        New {artworkLabelPlural}
                     </Link>
                     <Link
                         href="/galleries"

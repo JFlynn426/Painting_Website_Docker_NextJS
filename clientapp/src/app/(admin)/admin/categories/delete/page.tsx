@@ -16,8 +16,9 @@ export default function DeleteCategoryPage() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
-    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Paintings";
-    const artworkLabelLower = artworkLabel.toLowerCase();
+    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Painting";
+    const artworkLabelPlural = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL_PLURAL || "Paintings";
+    const artworkLabelLowerPlural = artworkLabelPlural.toLowerCase();
 
     useEffect(() => {
         loadCategories();
@@ -87,13 +88,13 @@ export default function DeleteCategoryPage() {
         <div>
             <h1 className="text-3xl font-bold mb-2 text-[var(--title-color)]">Delete {artworkLabel} Categories</h1>
             <p className="text-[var(--foreground)] mb-4">
-                Select a category below to delete. Categories can only be deleted after all {artworkLabelLower} have been removed from them.
+                Select a category below to delete. A category must be empty of {artworkLabelLowerPlural} before it can be deleted.
             </p>
 
             <div className="bg-yellow-100 border border-yellow-600 rounded-lg p-4 mb-6">
                 <p className="text-black text-sm">
-                    <strong>Note:</strong> {artworkLabel} categories can only be deleted if the category has had all of the {artworkLabelLower} removed from the category.
-                    Use the <Link href="/admin/categories/reassign" className="underline font-medium">Reassign {artworkLabel}</Link> feature to move {artworkLabelLower} to another category before deleting.
+                    <strong>Note:</strong> {artworkLabel} categories can only be deleted if the category has had all of the {artworkLabelLowerPlural} removed from the category.
+                    Use the <Link href="/admin/categories/reassign" className="underline font-medium">Reassign {artworkLabelPlural}</Link> feature to move {artworkLabelLowerPlural} to another category before deleting.
                 </p>
             </div>
 
@@ -121,15 +122,15 @@ export default function DeleteCategoryPage() {
                                     <p className="text-[var(--foreground)]">{category.description}</p>
                                 )}
                                 <p className="text-gray-500 text-sm mt-1">
-                                    {category.paintingCount} painting{category.paintingCount !== 1 ? 's' : ''} in this category
+                                    {category.paintingCount} {artworkLabelLowerPlural} in this category
                                 </p>
                             </div>
                             {category.paintingCount > 0 ? (
                                 <span
                                     className="flex-shrink-0 ml-4 px-4 py-2 bg-gray-600 text-[var(--foreground)] rounded text-sm font-bold cursor-not-allowed"
-                                    title="Remove all paintings from this category before deleting"
+                                    title={`Remove all ${artworkLabelLowerPlural} from this category before deleting`}
                                 >
-                                    Remove Paintings
+                                    Remove {artworkLabelPlural}
                                 </span>
                             ) : (
                                 <button

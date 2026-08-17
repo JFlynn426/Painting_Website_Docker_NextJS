@@ -12,6 +12,8 @@ interface DeleteCategoryPaintingsPageProps {
 }
 
 export default function DeleteCategoryPaintingsPage({ params }: DeleteCategoryPaintingsPageProps) {
+    const artworkLabelPlural = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL_PLURAL || "Paintings";
+    const artworkLabelLowerPlural = artworkLabelPlural.toLowerCase();
     const { categorySlug } = use(params);
 
     const [category, setCategory] = useState<PaintingCategoryWithPaintings | null>(null);
@@ -55,7 +57,7 @@ export default function DeleteCategoryPaintingsPage({ params }: DeleteCategoryPa
                 const data = await getPaintingsByCategory(categorySlug, { noCache: true });
                 setCategory(data);
             } catch (err) {
-                setLoadError(err instanceof Error ? err.message : 'Failed to fetch category paintings');
+                setLoadError(err instanceof Error ? err.message : `Failed to fetch category ${artworkLabelLowerPlural}`);
             } finally {
                 setLoading(false);
             }
@@ -67,10 +69,10 @@ export default function DeleteCategoryPaintingsPage({ params }: DeleteCategoryPa
         return (
             <div>
                 <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">
-                    Delete Paintings from {categoryName}
+                    Delete {artworkLabelPlural} from {categoryName}
                 </h1>
                 <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6">
-                    <p className="text-[var(--foreground)]">Loading paintings...</p>
+                    <p className="text-[var(--foreground)]">Loading {artworkLabelLowerPlural}...</p>
                 </div>
             </div>
         );
@@ -80,7 +82,7 @@ export default function DeleteCategoryPaintingsPage({ params }: DeleteCategoryPa
         return (
             <div>
                 <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">
-                    Delete Paintings from {categoryName}
+                    Delete {artworkLabelPlural} from {categoryName}
                 </h1>
                 <div className="bg-red-200 border border-red-500 rounded-lg p-6">
                     <p className="text-black">Error: {loadError}</p>
@@ -97,15 +99,15 @@ export default function DeleteCategoryPaintingsPage({ params }: DeleteCategoryPa
     return (
         <div>
             <h1 className="text-3xl font-bold mb-2 text-[var(--title-color)]">
-                Delete Paintings from {categoryName}
+                Delete {artworkLabelPlural} from {categoryName}
             </h1>
             <p className="text-[var(--foreground)] mb-6">
-                Click the delete button to permanently remove a painting from the database. This action cannot be undone.
+                Click the delete button to permanently remove {artworkLabelLowerPlural} from the database. This action cannot be undone.
             </p>
 
             {deletedCount > 0 && (
                 <div className="bg-green-200 border border-green-500 rounded-lg p-4 mb-6">
-                    <p className="text-black">{deletedCount} painting{deletedCount !== 1 ? 's' : ''} deleted successfully.</p>
+                    <p className="text-black">{deletedCount} {artworkLabelLowerPlural} deleted successfully.</p>
                 </div>
             )}
 
@@ -116,7 +118,7 @@ export default function DeleteCategoryPaintingsPage({ params }: DeleteCategoryPa
             )}
 
             {category && category.paintings.length === 0 ? (
-                <p className="text-[var(--foreground)]">No paintings found in this category.</p>
+                <p className="text-[var(--foreground)]">No {artworkLabelLowerPlural} found in this category.</p>
             ) : category ? (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {category.paintings.map((painting) => (
@@ -174,7 +176,7 @@ export default function DeleteCategoryPaintingsPage({ params }: DeleteCategoryPa
                     &larr; Back to Categories
                 </Link>
                 <Link href="/admin/paintings" className="block text-[var(--title-color)] hover:underline">
-                    &larr; Back to Paintings Admin
+                    &larr; Back to {artworkLabelPlural} Admin
                 </Link>
             </div>
         </div>

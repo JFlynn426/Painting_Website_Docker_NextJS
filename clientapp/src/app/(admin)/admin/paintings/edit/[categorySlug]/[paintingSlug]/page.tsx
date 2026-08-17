@@ -14,6 +14,10 @@ interface EditPaintingPageProps {
 
 export default function EditPaintingPage({ params }: EditPaintingPageProps) {
     const { categorySlug, paintingSlug } = use(params);
+    const artworkLabel = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL || "Painting";
+    const artworkLabelPlural = process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL_PLURAL || "Paintings";
+    const artworkLabelLower = artworkLabel.toLowerCase();
+    const artworkLabelLowerPlural = artworkLabelPlural.toLowerCase();
     const router = useRouter();
 
     const [painting, setPainting] = useState<Painting | null>(null);
@@ -57,16 +61,16 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                     setIsAvailable(data.isAvailable);
                     setIsNew(data.isNew);
                 } else {
-                    setLoadError('Painting not found');
+                    setLoadError(`${artworkLabel} not found`);
                 }
             } catch (err) {
-                setLoadError(err instanceof Error ? err.message : 'Failed to load painting');
+                setLoadError(err instanceof Error ? err.message : `Failed to load ${artworkLabelLower}`);
             } finally {
                 setLoading(false);
             }
         }
         loadPainting();
-    }, [paintingSlug]);
+    }, [paintingSlug, artworkLabel, artworkLabelLower]);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -231,7 +235,7 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                 router.replace(`/admin/paintings/edit/${categorySlug}/${result.newSlug}`);
             }
         } catch (err) {
-            setSubmitError(err instanceof Error ? err.message : 'Failed to update painting');
+            setSubmitError(err instanceof Error ? err.message : `Failed to update ${artworkLabelLower}`);
         } finally {
             setIsSubmitting(false);
         }
@@ -243,10 +247,10 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
         return (
             <div>
                 <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">
-                    Edit Painting
+                    Edit {artworkLabel}
                 </h1>
                 <div className="bg-[var(--navbar-footer-bg)] rounded-lg p-6">
-                    <p className="text-[var(--foreground)]">Loading painting data...</p>
+                    <p className="text-[var(--foreground)]">Loading {artworkLabelLower} data...</p>
                 </div>
             </div>
         );
@@ -256,14 +260,14 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
         return (
             <div>
                 <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">
-                    Edit Painting
+                    Edit {artworkLabel}
                 </h1>
                 <div className="bg-red-200 border border-red-500 rounded-lg p-6">
-                    <p className="text-black">{loadError || 'Painting not found'}</p>
+                    <p className="text-black">{loadError || `${artworkLabel} not found`}</p>
                 </div>
                 <div className="mt-6">
                     <Link href={`/admin/paintings/edit/${categorySlug}`} className="block text-[var(--title-color)] hover:underline">
-                        &larr; Back to {categoryName} Paintings
+                        &larr; Back to {categoryName} {artworkLabelPlural}
                     </Link>
                 </div>
             </div>
@@ -286,18 +290,18 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
             <UploadSpinnerModal isVisible={isUploading} />
             <div>
                 <h1 className="text-3xl font-bold mb-6 text-[var(--title-color)]">
-                    Edit Painting: {painting.title}
+                    Edit {artworkLabel}: {painting.title}
                 </h1>
 
                 <div className="bg-yellow-100 border border-yellow-600 rounded-lg p-4 mb-6">
                     <p className="text-black text-sm">
-                        <strong>Note:</strong> Required fields are marked with a red asterisk. Attempt to fill out the same fields for every painting, where possible, to maintain consistency across the site.
+                        <strong>Note:</strong> Required fields are marked with a red asterisk. Attempt to fill out the same fields for all {artworkLabelLowerPlural}, where possible, to maintain consistency across the site.
                     </p>
                 </div>
 
                 {submitSuccess && (
                     <div className="bg-green-200 border border-green-500 rounded-lg p-4 mb-6">
-                        <p className="text-black">Painting updated successfully!</p>
+                        <p className="text-black">{artworkLabel} updated successfully!</p>
                     </div>
                 )}
 
@@ -496,7 +500,7 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                             className="w-4 h-4 text-blue-600 bg-[var(--background)] border-gray-600 rounded focus:ring-blue-500"
                         />
                         <label htmlFor="isAvailable" className="ml-2 block text-sm font-medium text-[var(--foreground)]">
-                            Painting is available
+                            {artworkLabel} is available
                         </label>
                         {isAvailable !== originalIsAvailable && (
                             <span className="ml-2 text-xs text-[var(--foreground)]">
@@ -515,7 +519,7 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                             className="w-4 h-4 text-blue-600 bg-[var(--background)] border-gray-600 rounded focus:ring-blue-500"
                         />
                         <label htmlFor="isNew" className="ml-2 block text-sm font-medium text-[var(--foreground)]">
-                            Show in New Paintings
+                            Show in New {artworkLabelPlural}
                         </label>
                         {isNew !== originalIsNew && (
                             <span className="ml-2 text-xs text-[var(--foreground)]">
@@ -531,7 +535,7 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
                             disabled={isSubmitting}
                             className="px-6 py-2 bg-[var(--button-color)] text-white rounded hover:opacity-90 transition-opacity disabled:opacity-50"
                         >
-                            {isSubmitting ? 'Updating...' : 'Update Painting'}
+                            {isSubmitting ? 'Updating...' : `Update ${artworkLabel}`}
                         </button>
                         <button
                             type="button"
@@ -545,7 +549,7 @@ export default function EditPaintingPage({ params }: EditPaintingPageProps) {
 
                 <div className="mt-6 space-y-2">
                     <Link href={`/admin/paintings/edit/${categorySlug}`} className="block text-[var(--title-color)] hover:underline">
-                        &larr; Back to {categoryName} Paintings
+                        &larr; Back to {categoryName} {artworkLabelPlural}
                     </Link>
                     <Link href="/admin/paintings/edit" className="block text-[var(--title-color)] hover:underline">
                         &larr; Back to Edit Categories

@@ -35,7 +35,7 @@ export default function MobileMenu({ categories, isOpen, onClose }: MobileMenuPr
                 className="pr-3 py-2 rounded transition duration-200 ease-in-out hover:text-[var(--link-hover)] text-center w-full"
                 onClick={onClose}
             >
-                {process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL ? `New ${process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL}` : "New Paintings"}
+                {process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL_PLURAL ? `New ${process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL_PLURAL}` : "New Paintings"}
             </Link>
             <Link
                 href="/galleries"
