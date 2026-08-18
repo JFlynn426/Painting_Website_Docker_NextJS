@@ -35,7 +35,7 @@ RUN apk update && apk upgrade --no-cache
 ARG NEXT_PUBLIC_SITE_NAME="Gloria Gronowicz Fine Art"
 ARG NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL="Painting"
 ARG NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL_PLURAL="Paintings"
-ARG NEXT_PUBLIC_SITE_DESCRIPTION="Gloria Gronowicz is an oil painter who creates works inspired by nature"
+ARG NEXT_PUBLIC_SITE_DESCRIPTION="Gloria Gronowicz is an oil painter who combines fine art with conservation. As a former Ph.D. scientist she seeks to tell the story of different species and their varied habitats, particularly in South Florida. Through color and light she creates a vignette of life in nature."
 ARG NEXT_PUBLIC_CONTACT_EMAIL=""
 ARG NEXT_PUBLIC_CONTACT_PHONE=""
 ARG NEXT_PUBLIC_CSS_BACKGROUND="#3d3d3d"
