@@ -42,7 +42,7 @@ export default function MobileMenu({ categories, isOpen, onClose }: MobileMenuPr
                 className="px-3 py-2 rounded transition duration-200 ease-in-out hover:text-[var(--link-hover)] text-center w-full"
                 onClick={onClose}
             >
-                Galleries
+                {process.env.NEXT_PUBLIC_NAVBAR_GALLERIES_LABEL || "Galleries"}
             </Link>
             <Link
                 href="/contact"
