@@ -23,13 +23,13 @@ public static class PageContentsSeedData
             Content = @"<p class='pb-4'>From the sun-drenched sidewalks of New York City to the luminous waters of South Florida, my world-wide travels for work and pleasure led me to the canvas. As a child of immigrants, I haunted grand art museums and Central Park, and carried a gift for color and light long before science claimed me. For decades, I channeled my visual insight into the world of science, becoming an Emeritus Professor at the University of Connecticut and illustrating a book on personalized medicine with my own drawings. Following the passion I carried my whole life, I returned to the canvas with a lifetime of seeing, studying, and loving the natural world around me.</p><p class='pb-4'>My oil paintings are acts of devotion — to nature, to memory, and to the fleeting moments that define life on our planet. Rooted in a deep commitment to environmental conservation and an abiding love for the remarkable ecosystems of South Florida, my work seeks to tell a story. Each painting visualizes the light and color of what came before and the quiet anticipation of what comes next, inviting the viewer to step inside a living, breathing world. My goal is to show that art and conservation become one and the same.</p>",
             PhotoUrls = new[]
             {
-                "/Seascapes-Thumbnail/Wind_and_Water_.jpg",
-                "/Animals-Thumbnail/Hawksbill_Turtle_.jpg",
-                "/Animals-Thumbnail/Buddies_.jpg",
-                "/Seascapes-Thumbnail/Solitude.jpg",
-                "/Landscapes-Thumbnail/Aspens_.jpg",
-                "/Animals-Thumbnail/Leatherback_.jpg",
-                "/Flowers-Thumbnail/Bird_of_Paradise_.jpg"
+                "/images/thumbnail/Wind_and_Water_.jpg",
+                "/images/thumbnail/Hawksbill_Turtle_.jpg",
+                "/images/thumbnail/Buddies_.jpg",
+                "/images/thumbnail/Solitude.jpg",
+                "/images/thumbnail/Aspens_.jpg",
+                "/images/thumbnail/Leatherback_.jpg",
+                "/images/thumbnail/Bird_of_Paradise_.jpg"
             }
         },
         new PageContentSeed

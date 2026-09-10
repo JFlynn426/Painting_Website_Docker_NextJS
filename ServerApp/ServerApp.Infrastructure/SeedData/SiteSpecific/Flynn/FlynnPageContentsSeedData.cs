@@ -24,13 +24,13 @@ public static class FlynnPageContentsSeedData
             Content = @"<p class='pb-4'>Terri Gray lives in Jensen Beach, Florida. Terri has spent the last 40 years as a working artist and teacher and has earned a Bachelor of Arts degree in Art Education from Florida Atlantic University, Boca Raton, FL. Terri put herself through college working as a graphic artist, and continued in the field after graduating. During this time she enjoyed learning and developing new mediums and artistic techniques. Her artwork is strongly influenced by her background as a graphic artist and interprets shapes, imagery, and textures derived from the natural world.</p><p class='pb-4'>Terri shows and sells her work at Austin Pottery Studio And Gallery. Her work has been shown in a national exhibit at Charlie Cummings Gallery in Gainesville Florida. In 2023, Terri was invited to show her work at the George Washington Carver Museum in Austin, Texas. Terri has been a featured artist for the Clay Collective of Austin and the Texas Clay Arts Association.</p>",
             PhotoUrls = new[]
             {
-                "/Seascapes-Thumbnail/Wind_and_Water_.jpg",
-                "/Animals-Thumbnail/Hawksbill_Turtle_.jpg",
-                "/Animals-Thumbnail/Buddies_.jpg",
-                "/Seascapes-Thumbnail/Solitude.jpg",
-                "/Landscapes-Thumbnail/Aspens_.jpg",
-                "/Animals-Thumbnail/Leatherback_.jpg",
-                "/Flowers-Thumbnail/Bird_of_Paradise_.jpg"
+                "/images/thumbnail/Wind_and_Water_.jpg",
+                "/images/thumbnail/Hawksbill_Turtle_.jpg",
+                "/images/thumbnail/Buddies_.jpg",
+                "/images/thumbnail/Solitude.jpg",
+                "/images/thumbnail/Aspens_.jpg",
+                "/images/thumbnail/Leatherback_.jpg",
+                "/images/thumbnail/Bird_of_Paradise_.jpg"
             }
         },
         new PageContentSeed

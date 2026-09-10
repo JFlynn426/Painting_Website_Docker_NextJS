@@ -77,7 +77,7 @@ services:
     restart: unless-stopped
     read_only: true
     volumes:
-      - image_data_gg:/app/images:rw
+      - ./image-data/gg:/app/images:rw
     tmpfs:
       - /tmp
     healthcheck:
@@ -313,8 +313,6 @@ services:
 
 volumes:
   postgres_data:
-  image_data_gg:
-    driver: local
   image_data_flynn:
     driver: local
 
