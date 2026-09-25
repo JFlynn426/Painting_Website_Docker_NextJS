@@ -40,9 +40,28 @@
 #
 # image files are treated as binary by default.
 ###############################################################################
-#*.jpg   binary
-#*.png   binary
-#*.gif   binary
+*.jpg   binary
+*.jpeg  binary
+*.png   binary
+*.gif   binary
+*.ico   binary
+*.webp  binary
+*.svg   binary
+*.bmp   binary
+*.avif  binary
+*.tiff  binary
+*.tif   binary
+
+###############################################################################
+# behavior for font files
+#
+# font files are binary and must not have line endings normalized.
+###############################################################################
+*.ttf   binary
+*.otf   binary
+*.woff  binary
+*.woff2 binary
+*.eot   binary
 
 ###############################################################################
 # diff behavior for common document formats
