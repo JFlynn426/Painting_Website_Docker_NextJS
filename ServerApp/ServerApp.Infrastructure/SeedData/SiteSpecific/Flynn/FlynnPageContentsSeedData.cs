@@ -24,13 +24,14 @@ public static class FlynnPageContentsSeedData
             Content = @"<p class='pb-4'>Terri Gray lives in Jensen Beach, Florida. Terri has spent the last 40 years as a working artist and teacher and has earned a Bachelor of Arts degree in Art Education from Florida Atlantic University, Boca Raton, FL. Terri put herself through college working as a graphic artist, and continued in the field after graduating. During this time she enjoyed learning and developing new mediums and artistic techniques. Her artwork is strongly influenced by her background as a graphic artist and interprets shapes, imagery, and textures derived from the natural world.</p><p class='pb-4'>Terri shows and sells her work at Austin Pottery Studio And Gallery. Her work has been shown in a national exhibit at Charlie Cummings Gallery in Gainesville Florida. In 2023, Terri was invited to show her work at the George Washington Carver Museum in Austin, Texas. Terri has been a featured artist for the Clay Collective of Austin and the Texas Clay Arts Association.</p>",
             PhotoUrls = new[]
             {
-                "/images/thumbnail/Heron_in_Water_18x24_.jpg",
+                // Paintings
                 "/images/thumbnail/Spoonbill_24x20_.jpg",
-                "/images/thumbnail/Waves_20x24_.jpg",
                 "/images/thumbnail/Yellow_Boat_30_24_.jpg",
                 "/images/thumbnail/Houses_20_16_.jpg",
-                "/images/thumbnail/B_W_Bird_12x16_.jpg",
-                "/images/thumbnail/IMG_2805_.jpg"
+                // Ceramics
+                "/images/thumbnail/E969A8CA-3A01-4065-BF4D-3596C65FE4BA_.jpg",
+                "/images/thumbnail/IMG_3080_.jpg",
+                "/images/thumbnail/IMG_3028_.jpg"
             }
         },
         new PageContentSeed
@@ -38,19 +39,19 @@ public static class FlynnPageContentsSeedData
             Address = "about",
             Title = "Oil Painter & Ceramic Artist | Jensen Beach, Florida",
             Content = @"<p class='pb-4'>I am a Jensen Beach, Florida–based artist and my creative practice moves fluidly between oil painting and ceramics. My work is rooted in a deep appreciation for color, texture, form, and the expressive qualities of handmade objects.</p><p class='pb-4'>Through oil painting, I explore atmosphere, emotion, and the subtle relationships between light and color. My paintings invite viewers to slow down and discover the layers, gestures, and visual rhythms of nature within each composition. In ceramics, I bring that same sensitivity to surface and form, creating pieces that celebrate the tactile nature of clay and the individuality of the handmade process. Each of my ceramic pieces are hand carved using the Sgraffito technique. I view every ceramic work as a functional canvas that can enhance everyday life experiences.</p><p class='pb-4'>Working across two distinct yet complementary mediums allows me to explore both the painted surface and the physical object. My paintings and ceramics reflect an intuitive, process-driven approach in which experimentation and discovery are central to the work.</p><p class='pb-4'>Based on Florida's Treasure Coast, which is known for its vibrant and diverse arts community, I draw inspiration from the natural environment, everyday experiences, and the ever-changing qualities of light, color, and texture. Whether working on canvas or shaping clay, I approach each piece as an opportunity to explore beauty, movement, and personal expression.</p><p class='pb-4'>My work reflects a contemporary artistic practice grounded in craftsmanship, curiosity, and a genuine connection to the creative process. My paintings and ceramics offer viewers an intimate experience of color, texture, surface, and form—each piece carrying the character and energy of the artist's hand.</p>",
-            PhotoUrls = new[] { "/Other/AboutPagePhoto.JPG" }
+            PhotoUrls = new[] { "/images/original/Terri_Self_Portrait.jpg" }
         },
         new PageContentSeed
         {
             Address = "galleries",
             Title = "Galleries",
-            Content = @"<p class='pb-4' style='text-align: center'><strong>Emerging Artist at Stuart Artfest 2024</strong></p><p class='pb-4' style='text-align: center'><strong>Lighthouse Art Center</strong><br>Annual Art Show<br>373 Tequesta Drive<br>Tequesta, FL 3349</p><p class='pb-4' style='text-align: center'><strong>Palm City Art Association</strong><br>Annual Art Show at Cumming Library<br>2551 SW Matheson Avenue<br>Palm City FL. 34990</p><p class='pb-4' style='text-align: center'><strong>Cleveland Clinic Health and Wellness Center</strong><br>3066 SW Martin Downs Blvd.<br>Palm City, FL 34990</p><p class='pb-4' style='text-align: center'><strong>Martin Arts</strong><br>Annual Art Show<br>80 SE Ocean Blvd<br>Stuart, FL 33494</p><p class='pb-4' style='text-align: center'><strong>Hammock Creek Golf Club</strong><br>2400 SW Golden Bear Way<br>Palm City, FL 34990</p>"
+            Content = @"<p class='pb-4' style='text-align: center'>Coming Soon</p>"
         },
         new PageContentSeed
         {
             Address = "contact",
             Title = "Contact",
-            Content = @"<p class='pb-4' style='text-align: center'>To inquire about purchasing a painting or ordering prints, please contact Gloria Gronowicz.</p><p class='pb-4' style='text-align: center'>Email inquiries are preferred for detailed questions about specific artworks.</p><p class='pb-4' style='text-align: center'><strong>Email:</strong> gloriagronowicz@gmail.com</p><p class='pb-4' style='text-align: center'><strong>Phone:</strong> (860) 670-0799</p><p class='pb-4' style='text-align: center'>I look forward to hearing from you and discussing how my art can bring beauty to your home or office.</p>"
+            Content = @"<p class='pb-4' style='text-align: center'>To inquire about purchasing a painting or ordering prints, please contact Terri Gray.</p><p class='pb-4' style='text-align: center'>Email inquiries are preferred for detailed questions about specific artworks.</p><p class='pb-4' style='text-align: center'><strong>Email:</strong> texasterrigray@yahoo.com</p><p class='pb-4' style='text-align: center'><strong>Phone:</strong> 512-461-8075</p><p class='pb-4' style='text-align: center'>I look forward to hearing from you and discussing how my art can bring beauty to your home or office.</p>"
         }
     };
 }

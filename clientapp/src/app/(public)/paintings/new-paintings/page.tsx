@@ -28,7 +28,7 @@ export default async function NewPaintingsPage() {
 
     return (
         <div className={styles.container}>
-            <h1 className={styles.categoryTitle}>New Paintings</h1>
+            <h1 className={styles.categoryTitle}>New {process.env.NEXT_PUBLIC_NAVBAR_ARTWORK_LABEL_PLURAL || "Paintings"}</h1>
             <p className={styles.description}>Discover our latest additions to the collection.</p>
 
             {images.length > 0 ? (

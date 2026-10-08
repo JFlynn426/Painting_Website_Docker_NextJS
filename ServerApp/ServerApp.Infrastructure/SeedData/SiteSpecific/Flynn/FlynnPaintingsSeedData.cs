@@ -38,7 +38,8 @@ public static class FlynnPaintingsSeedData
             ImageUrl = "/images/high-res/E969A8CA-3A01-4065-BF4D-3596C65FE4BA.jpeg",
             ThumbnailUrl = "/images/thumbnail/E969A8CA-3A01-4065-BF4D-3596C65FE4BA_.jpg",
             CategorySlug = "paintings",
-            IsAvailable = true
+            IsAvailable = true,
+            IsNew = true
         },
         new PaintingSeed
         {
@@ -63,6 +64,7 @@ public static class FlynnPaintingsSeedData
             Width = 20,
             Height = 16,
             IsAvailable = true,
+            IsNew = true,
             IsLandscape = true
         },
         new PaintingSeed
@@ -76,6 +78,7 @@ public static class FlynnPaintingsSeedData
             Width = 24,
             Height = 20,
             IsAvailable = true,
+            IsNew = true,
             IsLandscape = true
         },
         new PaintingSeed
@@ -101,6 +104,7 @@ public static class FlynnPaintingsSeedData
             Width = 30,
             Height = 24,
             IsAvailable = true,
+            IsNew = true,
             IsLandscape = true
         },
 
@@ -165,7 +169,8 @@ public static class FlynnPaintingsSeedData
             ImageUrl = "/images/high-res/IMG_3028.jpeg",
             ThumbnailUrl = "/images/thumbnail/IMG_3028_.jpg",
             CategorySlug = "ceramics",
-            IsAvailable = true
+            IsAvailable = true,
+            IsNew = true
         },
         new PaintingSeed
         {
@@ -186,6 +191,7 @@ public static class FlynnPaintingsSeedData
             ThumbnailUrl = "/images/thumbnail/IMG_3080_.jpg",
             CategorySlug = "ceramics",
             IsAvailable = true,
+            IsNew = true,
             IsLandscape = true
         }
     };
