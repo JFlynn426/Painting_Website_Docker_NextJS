@@ -17,9 +17,9 @@ public class PaintingSeed
     public string? Description { get; set; }
     public required string ImageUrl { get; set; }
     public required string CategorySlug { get; set; }
-    public int? Width { get; set; }
-    public int? Height { get; set; }
-    public int? Depth { get; set; }
+    public decimal? Width { get; set; }
+    public decimal? Height { get; set; }
+    public decimal? Depth { get; set; }
     public int? Year { get; set; }
     public decimal? Price { get; set; }
     public bool IsAvailable { get; set; } = true;

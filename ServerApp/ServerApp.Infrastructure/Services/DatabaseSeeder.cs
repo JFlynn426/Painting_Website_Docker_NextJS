@@ -156,7 +156,8 @@ internal sealed class DatabaseSeeder
             year: seed.Year.HasValue ? new PaintingYear(seed.Year.Value) : null,
             isAvailable: new PaintingIsAvailable(seed.IsAvailable),
             isNew: new PaintingIsNew(seed.IsNew),
-            isLandscape: new PaintingIsLandscape(seed.IsLandscape)
+            isLandscape: new PaintingIsLandscape(seed.IsLandscape),
+            slug: new PaintingSlug(seed.Slug)
         );
     }
 }

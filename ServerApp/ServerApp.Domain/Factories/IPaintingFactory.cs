@@ -19,5 +19,6 @@ public interface IPaintingFactory
         PaintingYear? year = null,
         PaintingIsAvailable isAvailable = default!,
         PaintingIsNew isNew = default!,
-        PaintingIsLandscape isLandscape = default!);
+        PaintingIsLandscape isLandscape = default!,
+        PaintingSlug? slug = null);
 }
