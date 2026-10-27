@@ -137,8 +137,7 @@ public static class FlynnPaintingsSeedData
             Height = 4,
             Width = 5.5m,
             Price = 75m,
-            IsAvailable = false,
-            IsLandscape = true
+            IsAvailable = false
         },
         new PaintingSeed
         {
