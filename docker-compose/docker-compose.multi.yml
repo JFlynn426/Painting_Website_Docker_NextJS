@@ -21,7 +21,10 @@ services:
     container_name: artgallery-postgres
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      # NOTE: the official postgres image ignores *_FILE variables — the password must be
+      # passed via POSTGRES_PASSWORD (it must match the password the data volume was
+      # initialized with, and the value used in the API connection strings below).
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro

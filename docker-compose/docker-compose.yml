@@ -5,7 +5,9 @@ services:
     environment:
       POSTGRES_DB: artgallery
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      # NOTE: the official postgres image ignores *_FILE variables — the password must be
+      # passed via POSTGRES_PASSWORD, otherwise the container refuses to initialise.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ${BACKUP_DIR:-./backups}:/backups:ro

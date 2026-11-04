@@ -92,7 +92,7 @@ echo "------------------------------------------"
 echo "All pre-flight checks passed!"
 echo ""
 
-echo "[1/6] Setting up NGINX file permissions for non-root user (UID 101)..."
+echo "[1/8] Setting up NGINX file permissions for non-root user (UID 101)..."
 
 # Set ownership of SSL directories and files to UID 101 (nginx user)
 for site_dir in nginx/ssl/gg nginx/ssl/flynn; do
@@ -121,11 +121,25 @@ else
 fi
 
 echo ""
-echo "[2/6] Stopping existing containers..."
+echo "[2/8] Setting up image-data ownership for API user (UID 1)..."
+
+# The API containers run as UID 1 and mount ./image-data/<site> read-write.
+# Docker creates missing bind-mount directories as root, which the API cannot write to,
+# so painting uploads fail with "permission denied". Create and hand them to UID 1.
+mkdir -p image-data/gg/original image-data/gg/high-res image-data/gg/thumbnail
+mkdir -p image-data/flynn/original image-data/flynn/high-res image-data/flynn/thumbnail
+for site_dir in image-data/gg image-data/flynn; do
+    chown -R 1:1 "$site_dir"
+    chmod 755 "$site_dir"
+    echo "  $site_dir owned by UID 1"
+done
+
+echo ""
+echo "[3/8] Stopping existing containers..."
 $COMPOSE -f docker-compose.multi.yml down || true
 
 echo ""
-echo "[3/6] Starting PostgreSQL..."
+echo "[4/8] Starting PostgreSQL..."
 $COMPOSE -f docker-compose.multi.yml up -d postgres
 
 # Wait for PostgreSQL to be healthy
@@ -160,58 +174,76 @@ SITE_DATABASES[gg]="artgallery_gg"
 SITE_DATABASES[flynn]="artgallery_flynn"
 
 echo ""
-echo "[4/6] Restoring databases from backups..."
+echo "[5/8] Ensuring site databases exist..."
+
+# init-databases.sql only runs when the postgres_data volume is empty. On an existing
+# deployment (for example when adding the flynn site to a server that already runs gg)
+# the new site's database does not exist yet, and the API container fails on startup
+# because EF Core cannot migrate a missing database. Because nginx waits for both API
+# containers to be healthy, that single failure would take the whole site down.
+for site in gg flynn; do
+    DATABASE_NAME="${SITE_DATABASES[$site]}"
+    DB_EXISTS=$(docker exec "$CONTAINER_NAME" psql -U postgres -tAc \
+        "SELECT 1 FROM pg_database WHERE datname = '$DATABASE_NAME'" 2>/dev/null || echo "")
+    if [ "$DB_EXISTS" = "1" ]; then
+        echo "  Database $DATABASE_NAME already exists"
+    else
+        echo "  Creating database $DATABASE_NAME ..."
+        docker exec "$CONTAINER_NAME" createdb -U postgres "$DATABASE_NAME"
+    fi
+done
+
+echo ""
+echo "[6/8] Restoring databases from backups..."
 
 for site in gg flynn; do
     DATABASE_NAME="${SITE_DATABASES[$site]}"
     echo "  Checking backups for site '$site' (database: $DATABASE_NAME)..."
 
-    if [ -d "$BACKUP_DIR" ]; then
-        # Find latest backup for this specific site
-        LATEST_BACKUP=$(ls -1t "$BACKUP_DIR"/artgallery_${DATABASE_NAME}_*.dump 2>/dev/null | head -1)
-        if [ -n "$LATEST_BACKUP" ]; then
-            BACKUP_NAME=$(basename "$LATEST_BACKUP")
-            echo "    Restoring from backup: $BACKUP_NAME"
-
-            # Copy backup file into container
-            docker cp "$LATEST_BACKUP" "$CONTAINER_NAME:/tmp/$BACKUP_NAME" 2>&1
-
-            if [ $? -eq 0 ]; then
-                # Drop and recreate database, then restore
-                docker exec "$CONTAINER_NAME" psql -U postgres -c "DROP DATABASE IF EXISTS $DATABASE_NAME;" 2>/dev/null || true
-                docker exec "$CONTAINER_NAME" psql -U postgres -c "CREATE DATABASE $DATABASE_NAME;" 2>/dev/null || true
-
-                docker exec -i "$CONTAINER_NAME" pg_restore \
-                    -U postgres \
-                    -d "$DATABASE_NAME" \
-                    "/tmp/$BACKUP_NAME" \
-                    2>&1
-
-                # Clean up temp file in container
-                docker exec "$CONTAINER_NAME" rm -f "/tmp/$BACKUP_NAME" 2>/dev/null || true
-
-                if [ ${PIPESTATUS[0]:-$?} -eq 0 ]; then
-                    echo "    Database restored successfully for site '$site'!"
-                else
-                    echo "    WARNING: Database restore failed for site '$site'. Seeder will populate data."
-                fi
-            else
-                echo "    WARNING: Failed to copy backup to container for site '$site'. Seeder will populate data."
-            fi
-        else
-            echo "    No backup files found for site '$site' in $BACKUP_DIR. Database will be seeded."
-        fi
-    else
+    if [ ! -d "$BACKUP_DIR" ]; then
         echo "    Backup directory $BACKUP_DIR not found for site '$site'. Database will be seeded."
+        continue
     fi
+
+    # This glob only matches dumps written by scripts/backup-multi.sh, which prefixes files
+    # with 'artgallery_<database>_'. Single-site dumps from scripts/backup.sh are named
+    # 'artgallery_db_<timestamp>.dump' and are deliberately not restored here.
+    LATEST_BACKUP=$(ls -1t "$BACKUP_DIR"/artgallery_${DATABASE_NAME}_*.dump 2>/dev/null | head -1)
+    if [ -z "$LATEST_BACKUP" ]; then
+        echo "    No backup files found for site '$site' in $BACKUP_DIR. Database will be seeded."
+        continue
+    fi
+
+    BACKUP_NAME=$(basename "$LATEST_BACKUP")
+    echo "    Restoring from backup: $BACKUP_NAME"
+
+    if ! docker cp "$LATEST_BACKUP" "$CONTAINER_NAME:/tmp/$BACKUP_NAME"; then
+        echo "    WARNING: Failed to copy backup to container for site '$site'. Seeder will populate data."
+        continue
+    fi
+
+    # Drop and recreate database, then restore. `set -e` is active, so every step has to opt
+    # out explicitly: run bare, a failing pg_restore aborts the script here and leaves the
+    # stack with only PostgreSQL up, instead of falling through to the seeder as intended.
+    docker exec "$CONTAINER_NAME" psql -U postgres -c "DROP DATABASE IF EXISTS $DATABASE_NAME;" >/dev/null 2>&1 || true
+    docker exec "$CONTAINER_NAME" psql -U postgres -c "CREATE DATABASE $DATABASE_NAME;" >/dev/null 2>&1 || true
+
+    if docker exec -i "$CONTAINER_NAME" pg_restore -U postgres -d "$DATABASE_NAME" "/tmp/$BACKUP_NAME"; then
+        echo "    Database restored successfully for site '$site'!"
+    else
+        echo "    WARNING: Database restore failed for site '$site'. Seeder will populate data."
+    fi
+
+    # Clean up temp file in container
+    docker exec "$CONTAINER_NAME" rm -f "/tmp/$BACKUP_NAME" 2>/dev/null || true
 done
 
 echo ""
-echo "[5/6] Building and starting remaining containers..."
+echo "[7/8] Building and starting remaining containers..."
 $COMPOSE -f docker-compose.multi.yml up -d --build
 
 echo ""
-echo "[6/6] Checking container status..."
+echo "[8/8] Checking container status..."
 $COMPOSE -f docker-compose.multi.yml ps
 
 echo ""
@@ -219,29 +251,50 @@ echo "Running security checks..."
 echo "------------------------------------------"
 
 # Security Check: Verify all containers run as non-root
+#
+# `docker exec ... whoami` only reflects a container's real user when its image declares a
+# USER. The API and frontend images do, so their UID is read directly. PostgreSQL and NGINX
+# start as root and drop privileges at runtime, so `docker exec` still reports root for
+# them; their actual process owner is read with `docker top` instead.
 echo "Checking container users (should all be non-root)..."
-API_GG_USER=$(docker exec artgallery-api-gg whoami 2>/dev/null || echo "FAILED")
-API_FLYNN_USER=$(docker exec artgallery-api-flynn whoami 2>/dev/null || echo "FAILED")
-FRONTEND_GG_USER=$(docker exec artgallery-frontend-gg whoami 2>/dev/null || echo "FAILED")
-FRONTEND_FLYNN_USER=$(docker exec artgallery-frontend-flynn whoami 2>/dev/null || echo "FAILED")
-POSTGRES_USER=$(docker exec artgallery-postgres whoami 2>/dev/null || echo "FAILED")
-NGINX_USER=$(docker exec artgallery-nginx whoami 2>/dev/null || echo "FAILED")
-
-echo "  API (GG):         $API_GG_USER (expected: appuser)"
-echo "  API (Flynn):      $API_FLYNN_USER (expected: appuser)"
-echo "  Frontend (GG):    $FRONTEND_GG_USER (expected: nextjs)"
-echo "  Frontend (Flynn): $FRONTEND_FLYNN_USER (expected: nextjs)"
-echo "  PostgreSQL:       $POSTGRES_USER (expected: postgres)"
-echo "  NGINX:            $NGINX_USER (expected: nginx)"
-
-# Validate users are non-root
 SECURITY_PASSED=true
-for user_check in "$API_GG_USER" "$API_FLYNN_USER" "$FRONTEND_GG_USER" "$FRONTEND_FLYNN_USER" "$POSTGRES_USER" "$NGINX_USER"; do
-    if [ "$user_check" = "root" ] || [ "$user_check" = "FAILED" ]; then
-        echo "  WARNING: A container may be running as root or failed to check!"
+
+check_uid() {
+    local name="$1"
+    local uid
+    uid=$(docker exec "$name" id -u 2>/dev/null || echo "")
+    if [ -z "$uid" ]; then
+        echo "  $name: WARNING - could not check (is the container running?)"
         SECURITY_PASSED=false
+    elif [ "$uid" = "0" ]; then
+        echo "  $name: WARNING - running as root (UID 0)"
+        SECURITY_PASSED=false
+    else
+        echo "  $name: non-root (UID $uid)"
     fi
-done
+}
+
+check_proc_owner() {
+    local name="$1"
+    local owner
+    owner=$(docker top "$name" 2>/dev/null | awk 'NR==1 && $1=="UID" {next} {print $1; exit}')
+    if [ -z "$owner" ]; then
+        echo "  $name: WARNING - could not check (is the container running?)"
+        SECURITY_PASSED=false
+    elif [ "$owner" = "root" ]; then
+        echo "  $name: WARNING - process owner is root"
+        SECURITY_PASSED=false
+    else
+        echo "  $name: non-root ($owner)"
+    fi
+}
+
+check_uid artgallery-api-gg
+check_uid artgallery-api-flynn
+check_uid artgallery-frontend-gg
+check_uid artgallery-frontend-flynn
+check_proc_owner artgallery-postgres
+check_proc_owner artgallery-nginx
 
 if [ "$SECURITY_PASSED" = true ]; then
     echo "  All containers running as non-root users"
@@ -288,10 +341,10 @@ echo "To check health:"
 echo "  curl http://localhost:9090/health"
 echo ""
 echo "To run security checks manually:"
-echo "  docker exec artgallery-api-gg whoami"
-echo "  docker exec artgallery-api-flynn whoami"
-echo "  docker exec artgallery-frontend-gg whoami"
-echo "  docker exec artgallery-frontend-flynn whoami"
-echo "  docker exec artgallery-postgres whoami"
-echo "  docker exec artgallery-nginx whoami"
+echo "  docker exec artgallery-api-gg id -u          # non-zero"
+echo "  docker exec artgallery-api-flynn id -u       # non-zero"
+echo "  docker exec artgallery-frontend-gg id -u     # 1001 (nextjs)"
+echo "  docker exec artgallery-frontend-flynn id -u  # 1001 (nextjs)"
+echo "  docker top artgallery-postgres | head -2     # USER column should be postgres"
+echo "  docker top artgallery-nginx | head -2        # USER column should be nginx (101)"
 echo ""

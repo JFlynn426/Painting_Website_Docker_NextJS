@@ -16,7 +16,7 @@ Write-Host ""
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $scriptDir
 
-Write-Host "[1/4] Setting up NGINX file permissions for non-root user (UID 101)..." -ForegroundColor Yellow
+Write-Host "[1/5] Setting up NGINX file permissions for non-root user (UID 101)..." -ForegroundColor Yellow
 
 # Set permissions on SSL directory and files
 $sslDir = Join-Path $scriptDir "nginx\ssl"
@@ -57,11 +57,11 @@ else {
 }
 
 Write-Host ""
-Write-Host "[2/4] Stopping existing containers..." -ForegroundColor Yellow
+Write-Host "[2/5] Stopping existing containers..." -ForegroundColor Yellow
 docker-compose -f docker-compose.prod.yml down 2>$null | Out-Null
 
 Write-Host ""
-Write-Host "[3/4] Building and starting containers..." -ForegroundColor Yellow
+Write-Host "[3/5] Building and starting containers..." -ForegroundColor Yellow
 docker-compose -f docker-compose.prod.yml up -d --build
 
 Write-Host ""
@@ -72,34 +72,40 @@ Write-Host ""
 Write-Host "[5/5] Running security checks..." -ForegroundColor Yellow
 Write-Host "------------------------------------------" -ForegroundColor Gray
 
-# Security Check 1: Verify all containers run as non-root
+# Security Check 1: Verify no container serves traffic as root.
+#
+# `docker exec ... whoami` only reflects a container's real user when its image declares a
+# USER. The API and frontend images do, so their UID is read directly. PostgreSQL and NGINX
+# do NOT declare a USER — they start as root and drop privileges before serving traffic, so
+# `docker exec` would report root even on a correct deployment. For those two the running
+# process owner is inspected with `docker top` instead.
 Write-Host "✓ Checking container users (should all be non-root)..." -ForegroundColor Green
-$API_USER = & docker exec artgallery-api whoami 2>$null
-$FRONTEND_USER = & docker exec artgallery-frontend whoami 2>$null
-$SQL_USER = & docker exec artgallery-sql-prod whoami 2>$null
-$NGINX_USER = & docker exec artgallery-nginx whoami 2>$null
+$API_UID = & docker exec artgallery-api-prod id -u 2>$null
+$FRONTEND_UID = & docker exec artgallery-frontend-prod id -u 2>$null
+$POSTGRES_PROC = & docker top artgallery-postgres-prod 2>$null | Select-Object -Skip 1 -First 1
+$NGINX_PROC = & docker top artgallery-nginx 2>$null | Select-Object -Skip 1 -First 1
 
-Write-Host "  API Container:    $API_USER (expected: appuser)" -ForegroundColor White
-Write-Host "  Frontend:         $FRONTEND_USER (expected: nextjs)" -ForegroundColor White
-Write-Host "  SQL Server:       $SQL_USER (expected: mssql)" -ForegroundColor White
-Write-Host "  NGINX:            $NGINX_USER (expected: nginx)" -ForegroundColor White
+Write-Host "  API Container:    UID $API_UID (expected: non-zero)" -ForegroundColor White
+Write-Host "  Frontend:         UID $FRONTEND_UID (expected: 1001 = nextjs)" -ForegroundColor White
+Write-Host "  PostgreSQL:       $POSTGRES_PROC" -ForegroundColor White
+Write-Host "  NGINX:            $NGINX_PROC" -ForegroundColor White
 
 # Validate users are non-root
 $SECURITY_PASSED = $true
-if ($API_USER -eq "root" -or $API_USER -eq $null) {
+if ([string]::IsNullOrWhiteSpace($API_UID) -or $API_UID -eq "0") {
     Write-Host "  ⚠️  WARNING: API container may be running as root!" -ForegroundColor Yellow
     $SECURITY_PASSED = $false
 }
-if ($FRONTEND_USER -eq "root" -or $FRONTEND_USER -eq $null) {
-    Write-Host "  ⚠️  WARNING: Frontend container may be running as root!" -ForegroundColor Yellow
+if ($FRONTEND_UID -ne "1001") {
+    Write-Host "  ⚠️  WARNING: Frontend is not running as UID 1001 (nextjs)!" -ForegroundColor Yellow
     $SECURITY_PASSED = $false
 }
-if ($SQL_USER -eq "root" -or $SQL_USER -eq $null) {
-    Write-Host "  ⚠️  WARNING: SQL Server container may be running as root!" -ForegroundColor Yellow
+if ($POSTGRES_PROC -match "(^|\s)root(\s|$)") {
+    Write-Host "  ⚠️  WARNING: PostgreSQL may be serving traffic as root!" -ForegroundColor Yellow
     $SECURITY_PASSED = $false
 }
-if ($NGINX_USER -eq "root" -or $NGINX_USER -eq $null) {
-    Write-Host "  ⚠️  WARNING: NGINX container may be running as root!" -ForegroundColor Yellow
+if ($NGINX_PROC -match "(^|\s)root(\s|$)") {
+    Write-Host "  ⚠️  WARNING: NGINX may be serving traffic as root!" -ForegroundColor Yellow
     $SECURITY_PASSED = $false
 }
 
@@ -145,11 +151,12 @@ Write-Host "To view logs:" -ForegroundColor Yellow
 Write-Host "  docker-compose -f docker-compose.prod.yml logs -f" -ForegroundColor White
 Write-Host ""
 Write-Host "To check health:" -ForegroundColor Yellow
-Write-Host "  curl http://localhost:8080/health" -ForegroundColor White
+Write-Host "  curl http://localhost:9090/health" -ForegroundColor White
+Write-Host "  curl -k https://localhost/api/health/health -H `"Host: ggpaintings.com`"" -ForegroundColor White
 Write-Host ""
 Write-Host "To run security checks manually:" -ForegroundColor Yellow
-Write-Host "  docker exec artgallery-api whoami" -ForegroundColor White
-Write-Host "  docker exec artgallery-frontend whoami" -ForegroundColor White
-Write-Host "  docker exec artgallery-sql-prod whoami" -ForegroundColor White
-Write-Host "  docker exec artgallery-nginx whoami" -ForegroundColor White
+Write-Host "  docker exec artgallery-api-prod id -u" -ForegroundColor White
+Write-Host "  docker exec artgallery-frontend-prod id -u" -ForegroundColor White
+Write-Host "  docker top artgallery-postgres-prod" -ForegroundColor White
+Write-Host "  docker top artgallery-nginx" -ForegroundColor White
 Write-Host ""

@@ -34,7 +34,7 @@ if [ -f ".env" ]; then
     echo "Loaded environment variables from .env"
 fi
 
-echo "[1/4] Setting up NGINX file permissions for non-root user (UID 101)..."
+echo "[1/6] Setting up NGINX file permissions for non-root user (UID 101)..."
 
 # Set ownership of SSL directory and files to UID 101 (nginx user)
 if [ -d "nginx/ssl" ]; then
@@ -101,27 +101,24 @@ if [ -d "$BACKUP_DIR" ]; then
         echo "[4/6] Restoring database from backup: $BACKUP_NAME"
         
         # Copy backup file into container
-        docker cp "$LATEST_BACKUP" "$CONTAINER_NAME:/tmp/$BACKUP_NAME" 2>&1
-        
-        if [ $? -eq 0 ]; then
-            # Restore using pg_restore
-            docker exec -i "$CONTAINER_NAME" pg_restore \
+        if ! docker cp "$LATEST_BACKUP" "$CONTAINER_NAME:/tmp/$BACKUP_NAME"; then
+            echo "  WARNING: Failed to copy backup to container. Seeder will populate data."
+        else
+            # `set -e` is active, so the restore has to be tested explicitly. Run bare, a
+            # non-zero pg_restore aborts the script here and leaves the stack with only
+            # PostgreSQL up, instead of falling through to the seeder as intended.
+            if docker exec -i "$CONTAINER_NAME" pg_restore \
                 -U postgres \
                 -c \
                 -d "$DATABASE_NAME" \
-                "/tmp/$BACKUP_NAME" \
-                2>&1
-            
-            # Clean up temp file in container
-            docker exec "$CONTAINER_NAME" rm -f "/tmp/$BACKUP_NAME" 2>/dev/null || true
-            
-            if [ ${PIPESTATUS[0]:-$?} -eq 0 ]; then
+                "/tmp/$BACKUP_NAME"; then
                 echo "  Database restored successfully!"
             else
                 echo "  WARNING: Database restore failed. Seeder will populate data."
             fi
-        else
-            echo "  WARNING: Failed to copy backup to container. Seeder will populate data."
+
+            # Clean up temp file in container
+            docker exec "$CONTAINER_NAME" rm -f "/tmp/$BACKUP_NAME" 2>/dev/null || true
         fi
     else
         echo "[4/6] No backup files found in $BACKUP_DIR. Database will be seeded."
@@ -142,36 +139,44 @@ echo ""
 echo "Running security checks..."
 echo "------------------------------------------"
 
-# Security Check 1: Verify all containers run as non-root
+# Security Check 1: Verify no container serves traffic as root.
+#
+# `docker exec ... whoami` only reflects a container's real user when its image declares a
+# USER. The API and frontend images do, so their UID is read directly. PostgreSQL and NGINX
+# do NOT declare a USER — they start as root and drop privileges before serving traffic, so
+# `docker exec` would report root even on a correct deployment. For those two the running
+# process owner is inspected with `docker top` instead.
 echo "✓ Checking container users (should all be non-root)..."
-API_USER=$(docker exec artgallery-api-prod whoami 2>/dev/null || echo "FAILED")
-FRONTEND_USER=$(docker exec artgallery-frontend-prod whoami 2>/dev/null || echo "FAILED")
-POSTGRES_USER=$(docker exec artgallery-postgres-prod whoami 2>/dev/null || echo "FAILED")
-NGINX_USER=$(docker exec artgallery-nginx whoami 2>/dev/null || echo "FAILED")
+API_UID=$(docker exec artgallery-api-prod id -u 2>/dev/null || echo "FAILED")
+FRONTEND_UID=$(docker exec artgallery-frontend-prod id -u 2>/dev/null || echo "FAILED")
+POSTGRES_PROC=$(docker top artgallery-postgres-prod 2>/dev/null | tail -n +2 | head -1 || true)
+NGINX_PROC=$(docker top artgallery-nginx 2>/dev/null | tail -n +2 | head -1 || true)
 
-echo "  API Container:    $API_USER (expected: appuser)"
-echo "  Frontend:         $FRONTEND_USER (expected: nextjs)"
-echo "  PostgreSQL:       $POSTGRES_USER (expected: postgres)"
-echo "  NGINX:            $NGINX_USER (expected: nginx)"
+echo "  API Container:    UID $API_UID (expected: non-zero)"
+echo "  Frontend:         UID $FRONTEND_UID (expected: 1001 = nextjs)"
+echo "  PostgreSQL:       $POSTGRES_PROC"
+echo "  NGINX:            $NGINX_PROC"
 
 # Validate users are non-root
 SECURITY_PASSED=true
-if [ "$API_USER" = "root" ] || [ "$API_USER" = "FAILED" ]; then
-    echo "  ⚠️  WARNING: API container may be running as root!"
+if [ "$API_UID" = "FAILED" ] || [ "$API_UID" = "0" ] || [ -z "$API_UID" ]; then
+    echo "  ⚠️  WARNING: API container may be running as root or is not reachable!"
     SECURITY_PASSED=false
 fi
-if [ "$FRONTEND_USER" = "root" ] || [ "$FRONTEND_USER" = "FAILED" ]; then
-    echo "  ⚠️  WARNING: Frontend container may be running as root!"
+if [ "$FRONTEND_UID" != "1001" ]; then
+    echo "  ⚠️  WARNING: Frontend is not running as UID 1001 (nextjs)!"
     SECURITY_PASSED=false
 fi
-if [ "$POSTGRES_USER" = "root" ] || [ "$POSTGRES_USER" = "FAILED" ]; then
-    echo "  ⚠️  WARNING: PostgreSQL container may be running as root!"
-    SECURITY_PASSED=false
-fi
-if [ "$NGINX_USER" = "root" ] || [ "$NGINX_USER" = "FAILED" ]; then
-    echo "  ⚠️  WARNING: NGINX container may be running as root!"
-    SECURITY_PASSED=false
-fi
+# `docker top` prints PID PPID USER COMMAND — look for a root-owned process.
+for proc in "$POSTGRES_PROC" "$NGINX_PROC"; do
+    if [ -z "$proc" ]; then
+        echo "  ⚠️  WARNING: Could not inspect a shared container with 'docker top'!"
+        SECURITY_PASSED=false
+    elif echo "$proc" | grep -Eq '(^|[[:space:]])root([[:space:]]|$)'; then
+        echo "  ⚠️  WARNING: A shared container appears to be serving as root!"
+        SECURITY_PASSED=false
+    fi
+done
 
 if [ "$SECURITY_PASSED" = true ]; then
     echo "  ✓ All containers running as non-root users"
@@ -211,11 +216,12 @@ echo "To view logs:"
 echo "  $COMPOSE -f docker-compose.prod.yml logs -f"
 echo ""
 echo "To check health:"
-echo "  curl http://localhost:8080/health"
+echo "  curl http://localhost:9090/health"
+echo "  curl -k https://localhost/api/health/health -H \"Host: ggpaintings.com\""
 echo ""
 echo "To run security checks manually:"
-echo "  docker exec artgallery-api-prod whoami"
-echo "  docker exec artgallery-frontend-prod whoami"
-echo "  docker exec artgallery-postgres-prod whoami"
-echo "  docker exec artgallery-nginx whoami"
+echo "  docker exec artgallery-api-prod id -u"
+echo "  docker exec artgallery-frontend-prod id -u"
+echo "  docker top artgallery-postgres-prod"
+echo "  docker top artgallery-nginx"
 echo ""
