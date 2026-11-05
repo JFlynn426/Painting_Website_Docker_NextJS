@@ -70,11 +70,11 @@ generate_cert \
     "DNS:ggpaintings.com,DNS:www.ggpaintings.com" \
     "GG Paintings"
 
-# Site: flynn (flynnart.com)
+# Site: flynn (earthelementsart.com)
 generate_cert \
     "${SSL_ROOT}/flynn" \
-    "flynnart.com" \
-    "DNS:flynnart.com,DNS:www.flynnart.com" \
+    "earthelementsart.com" \
+    "DNS:earthelementsart.com,DNS:www.earthelementsart.com" \
     "Flynn Art"
 
 echo ""

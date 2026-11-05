@@ -241,18 +241,29 @@ graph TD
 To **disable** read-only mode and restore normal database writes:
 
 ### Option 1: Environment Variable (Docker)
-In `docker-compose/docker-compose.prod.yml`, change or remove:
-```yaml
-# Change from:
-Database__ReadOnlyMode: ${DATABASE_READ_ONLY_MODE:-true}
-# To:
-Database__ReadOnlyMode: ${DATABASE_READ_ONLY_MODE:-false}
+
+> **Corrected 2026-11-05.** This section used to name only `docker-compose.prod.yml` and showed a
+> `:-true` default that needed flipping. Neither holds today: `prod.yml` is **retired**, and every
+> compose file already defaults to `false`. On the multi-site stack the key is also **per-site**,
+> so there are two lines to change, not one. Editing `prod.yml` changes nothing that runs.
+
+Verified in the repo:
+
+| File | Where | Key | Default |
+|------|-------|-----|---------|
+| `docker-compose.multi.yml` | `api-gg` (L74), `api-flynn` (L183) | `GG_DATABASE_READ_ONLY_MODE`, `FLYNN_DATABASE_READ_ONLY_MODE` | `false` |
+| `docker-compose.multi.arm64.yml` | `api-gg` (L91), `api-flynn` (L202) | same two per-site keys | `false` |
+| `docker-compose.yml` / `.prod.yml` / `.arm64.yml` | one shared `api` service | `DATABASE_READ_ONLY_MODE` | `false` |
+
+To disable read-only mode on the current stack, set both keys in `docker-compose/.env.multi`:
+
+```
+GG_DATABASE_READ_ONLY_MODE=false
+FLYNN_DATABASE_READ_ONLY_MODE=false
 ```
 
-Or set in `.env`:
-```
-DATABASE_READ_ONLY_MODE=false
-```
+The bare `DATABASE_READ_ONLY_MODE` key belongs only to the retired/local single-site files —
+setting it alone has no effect on `api-gg` or `api-flynn`.
 
 ### Option 2: Configuration Files
 In both `ServerApp/ServerApp.Api/appsettings.json` and `ServerApp/ServerApp.Api/appsettings.Production.json`:
@@ -263,12 +274,22 @@ In both `ServerApp/ServerApp.Api/appsettings.json` and `ServerApp/ServerApp.Api/
 ```
 
 ### Option 3: Remove Feature Entirely
-If the feature is no longer needed, revert these 3 files:
+If the feature is no longer needed, revert these files:
 
 1. **[`UnitOfWork.cs`](ServerApp/ServerApp.Infrastructure/Persistence/UnitOfWork.cs)** - Remove `_readOnlyMode` field and the `if (_readOnlyMode)` guards from `BeginTransactionAsync`, `CommitAsync`, and `RollbackAsync`. Revert constructor to single `WriteDbContext` parameter.
 
 2. **[`Extensions.cs`](ServerApp/ServerApp.Infrastructure/Extensions.cs)** - Remove `using ServerApp.Infrastructure.EF.Contexts;`, remove `readOnlyMode` variable, and revert to: `services.AddScoped<IUnitOfWork, UnitOfWork>();`
 
-3. **[`docker-compose.prod.yml`](docker-compose/docker-compose.prod.yml)** - Remove `Database__ReadOnlyMode` environment variable line.
+3. **Compose files** - Remove the `Database__ReadOnlyMode` environment variable line. On the
+   current stack that is **four** places, not one: `api-gg` and `api-flynn` in
+   [`docker-compose.multi.yml`](docker-compose/docker-compose.multi.yml) (L74, L183) and in
+   [`docker-compose.multi.arm64.yml`](docker-compose/docker-compose.multi.arm64.yml) (L91, L202).
+   The retired/local single-site files (`docker-compose.yml`, `docker-compose.prod.yml`,
+   `docker-compose.arm64.yml`) each carry one more line, plus the matching
+   `GG_`/`FLYNN_DATABASE_READ_ONLY_MODE` entries in the three `.env.multi*` files.
 
-Then rebuild: `docker-compose -f docker-compose.prod.yml -f docker-compose.yml up -d --build`
+Then rebuild with the **multi-site** command: `bash deploy-multi.sh`, or manually
+`docker compose -f docker-compose.multi.yml up -d --build`. Do **not** rebuild via
+`docker-compose.prod.yml` — that stack is retired and will not come up cleanly alongside
+`docker-compose.multi.yml` (it contends for the same `postgres_data` volume and the same
+host ports 80/443/9090).

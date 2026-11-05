@@ -4,6 +4,15 @@
 
 This document provides the production `.env` file and deployment instructions for the Linux server.
 
+> **⚠ PARTIALLY SUPERSEDED — read before running anything here.** The compose commands in this
+> document use `docker compose -f docker-compose.yml -f docker-compose.prod.yml`, which brings up
+> the **retired** single-site stack (`artgallery-postgres-prod`, one `artgallery` database, flat
+> `nginx/ssl/` cert directory). The current production path is `deploy-multi.sh` +
+> `docker-compose.multi.yml`, documented in
+> [`../docker-compose/DEPLOYMENT_GUIDE.md`](../docker-compose/DEPLOYMENT_GUIDE.md). The
+> environment-variable mapping below is still useful reference, but check each key against
+> `.env.multi.example` before applying it — several names and defaults have changed.
+
 **IMPORTANT:** When you pull code changes from GitHub, the `.env` files are NOT included (they are gitignored). You must manually create/update them on your Linux server based on the configuration keys used in the code.
 
 ---
@@ -171,14 +180,15 @@ git status --ignored -- docker-compose/.env docker-compose/secrets/
 # Navigate to the docker-compose directory
 cd docker-compose
 
-# Pull latest images and start production stack
+# Current production deploy (multi-site) — this is the path to use:
+bash deploy-multi.sh
+
+# Retired single-site stack — DO NOT run on a host that uses, or is moving to, the
+# multi-site stack. It starts artgallery-postgres-prod with a single `artgallery`
+# database, expects a flat nginx/ssl/ cert directory, and uses `api` / `frontend`
+# service names. Kept here only so the env-var mapping above can be traced back to the
+# compose file it described.
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-
-# Check container status
-docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
-
-# View logs
-docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f
 ```
 
 ---

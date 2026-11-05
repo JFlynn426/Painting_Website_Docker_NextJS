@@ -1,6 +1,6 @@
 # First-Time Deployment Guide - Ubuntu Server 26.04 LTS
 
-**Domains:** ggpaintings.com, flynnart.com
+**Domains:** ggpaintings.com, earthelementsart.com
 **Target OS:** Ubuntu Server 26.04 LTS
 **Last Updated:** 2026-07-29
 
@@ -10,7 +10,7 @@ This guide provides the commands needed for first-time deployment on a fresh Ubu
 
 | Mode | Script | Compose File | Use Case |
 |------|--------|-------------|----------|
-| **Multi-Site** (Recommended) | `deploy-multi.sh` | `docker-compose.multi.yml` | Host ggpaintings.com + flynnart.com on same server |
+| **Multi-Site** (Recommended) | `deploy-multi.sh` | `docker-compose.multi.yml` | Host ggpaintings.com + earthelementsart.com on same server |
 | **Single-Site** | `deploy.sh` | `docker-compose.prod.yml` | Host a single site |
 
 > **This guide focuses on multi-site deployment.** For single-site, use `deploy.sh` and `docker-compose.prod.yml` instead.
@@ -41,8 +41,8 @@ This guide provides the commands needed for first-time deployment on a fresh Ubu
 │  └─────────────┬───────────────────────┬─────────────────┘  │
 │                │                       │                    │
 │     ┌──────────▼──────────┐   ┌───────▼────────┐           │
-│     │  Frontend (Next.js) │   │  API (.NET 8)  │           │
-│     │  UID 1001           │   │  UID 1 (app)   │           │
+│     │  Frontend (Next.js) │   │  API (.NET 10) │           │
+│     │  UID 1001           │   │  UID 1654      │           │
 │     │  Read-only          │   │  Read-only     │           │
 │     └─────────────────────┘   └────────┬───────┘           │
 │                                        │                    │
@@ -58,8 +58,8 @@ This guide provides the commands needed for first-time deployment on a fresh Ubu
 | Service | Container Name | User | Port |
 |---------|---------------|------|------|
 | PostgreSQL | `artgallery-postgres` | postgres | 5432 (internal) |
-| API (GG) | `artgallery-api-gg` | appuser | 8080 (internal) |
-| API (Flynn) | `artgallery-api-flynn` | appuser | 8080 (internal) |
+| API (GG) | `artgallery-api-gg` | app (UID 1654) | 8080 (internal) |
+| API (Flynn) | `artgallery-api-flynn` | app (UID 1654) | 8080 (internal) |
 | Frontend (GG) | `artgallery-frontend-gg` | nextjs (UID 1001) | 3000 (internal) |
 | Frontend (Flynn) | `artgallery-frontend-flynn` | nextjs (UID 1001) | 3000 (internal) |
 | NGINX | `artgallery-nginx` | nginx (UID 101) | 80, 443, 9090 (health) |
@@ -204,7 +204,7 @@ GG_NEXT_PUBLIC_API_URL=/api
 GG_SERVER_API_URL=http://api-gg:8080/api
 ```
 
-### Site: flynn (flynnart.com)
+### Site: flynn (earthelementsart.com)
 ```env
 FLYNN_SITE_NAME="Flynn Art Gallery"
 FLYNN_SITE_DESCRIPTION="Fine art paintings by Flynn"
@@ -214,14 +214,14 @@ FLYNN_CONTACT_PHONE="555.123.4567"
 # Google OAuth - Separate client ID from Google Cloud Console
 FLYNN_GOOGLE_AUTH_CLIENT_ID=YOUR_FLYNN_CLIENT_ID.apps.googleusercontent.com
 FLYNN_GOOGLE_AUTH_CLIENT_SECRET=YOUR_FLYNN_CLIENT_SECRET
-FLYNN_GOOGLE_AUTH_REDIRECT_URI=https://flynnart.com/api/auth/google/callback
+FLYNN_GOOGLE_AUTH_REDIRECT_URI=https://earthelementsart.com/api/auth/google/callback
 
 # Admin JWT - Generate unique secret per site
 FLYNN_ADMIN_JWT_SECRET_KEY=$(openssl rand -base64 32)
 FLYNN_ADMIN_AUTHORIZED_EMAILS=flynn@example.com
 
 # CORS and API URLs
-FLYNN_CORS_ALLOWED_ORIGINS=https://flynnart.com
+FLYNN_CORS_ALLOWED_ORIGINS=https://earthelementsart.com
 FLYNN_NEXT_PUBLIC_API_URL=/api
 FLYNN_SERVER_API_URL=http://api-flynn:8080/api
 ```
@@ -288,11 +288,11 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -out ssl/gg/server.crt \
   -subj "/C=US/ST=New York/L=New York/O=GG Paintings/CN=ggpaintings.com"
 
-# Generate self-signed certificate for flynnart.com
+# Generate self-signed certificate for earthelementsart.com
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -keyout ssl/flynn/server.key \
   -out ssl/flynn/server.crt \
-  -subj "/C=US/ST=New York/L=New York/O=Flynn Art/CN=flynnart.com"
+  -subj "/C=US/ST=New York/L=New York/O=Flynn Art/CN=earthelementsart.com"
 
 # Set secure permissions
 chmod 600 ssl/gg/server.key
@@ -398,11 +398,11 @@ docker compose -f docker-compose.multi.yml ps
 ```bash
 # API-GG container
 docker exec artgallery-api-gg whoami
-# Expected: appuser
+# Expected: app
 
 # API-Flynn container
 docker exec artgallery-api-flynn whoami
-# Expected: appuser
+# Expected: app
 
 # Frontend-GG container
 docker exec artgallery-frontend-gg whoami
@@ -412,9 +412,10 @@ docker exec artgallery-frontend-gg whoami
 docker exec artgallery-frontend-flynn whoami
 # Expected: nextjs
 
-# NGINX container
-docker exec artgallery-nginx whoami
-# Expected: nginx
+# NGINX and PostgreSQL declare no USER in their image, so `docker exec` lands as root even
+# though the serving process has dropped privileges. Inspect the running process instead:
+docker top artgallery-nginx | head -2        # USER column should be nginx (101)
+docker top artgallery-postgres | head -2     # USER column should be postgres
 ```
 
 ## Verify Read-Only Filesystems
@@ -569,7 +570,7 @@ crontab -l
 # Backup only ggpaintings.com
 /opt/artgallery/scripts/backup-multi.sh gg
 
-# Backup only flynnart.com
+# Backup only earthelementsart.com
 /opt/artgallery/scripts/backup-multi.sh flynn
 
 # Check backups were created
@@ -585,7 +586,7 @@ cat /opt/artgallery/backups/backup.log
 # Restore ggpaintings.com (interactive - lists available backups)
 /opt/artgallery/scripts/restore-multi.sh gg
 
-# Restore flynnart.com from specific backup
+# Restore earthelementsart.com from specific backup
 /opt/artgallery/scripts/restore-multi.sh flynn artgallery_artgallery_flynn_20260728_020000.dump
 ```
 
@@ -687,7 +688,7 @@ ls -lh /opt/artgallery/backups/*.dump
 # Restore ggpaintings.com (interactive)
 /opt/artgallery/scripts/restore-multi.sh gg
 
-# Restore flynnart.com from specific backup
+# Restore earthelementsart.com from specific backup
 /opt/artgallery/scripts/restore-multi.sh flynn artgallery_artgallery_flynn_20260728_020000.dump
 ```
 
@@ -745,13 +746,13 @@ docker logs artgallery-nginx
 curl -H "CF-Connecting-IP: 1.2.3.4" https://ggpaintings.com
 
 # Check if Cloudflare can reach your server (Flynn site)
-curl -H "CF-Connecting-IP: 1.2.3.4" https://flynnart.com
+curl -H "CF-Connecting-IP: 1.2.3.4" https://earthelementsart.com
 
 # Verify SSL certificate for GG
 openssl s_client -connect ggpaintings.com:443 -servername ggpaintings.com
 
 # Verify SSL certificate for Flynn
-openssl s_client -connect flynnart.com:443 -servername flynnart.com
+openssl s_client -connect earthelementsart.com:443 -servername earthelementsart.com
 ```
 
 ## Reset Database (Development Only)

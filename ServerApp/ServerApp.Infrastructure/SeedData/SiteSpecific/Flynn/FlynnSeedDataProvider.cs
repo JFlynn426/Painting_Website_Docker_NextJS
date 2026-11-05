@@ -3,7 +3,7 @@ using ServerApp.Infrastructure.SeedData;
 namespace ServerApp.Infrastructure.SeedData.SiteSpecific.Flynn;
 
 /// <summary>
-/// Provides seed data for the Flynn (flynnart.com) site.
+/// Provides seed data for the Flynn (earthelementsart.com) site.
 /// Uses Flynn-specific categories, paintings, and page content.
 /// </summary>
 public sealed class FlynnSeedDataProvider : ISiteSeedDataProvider

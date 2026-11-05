@@ -1,14 +1,21 @@
-# Cloudflare + Multi-Site Migration Plan: Adding flynnart.com
+# Cloudflare + Multi-Site Migration Plan: Adding earthelementsart.com
 
-> **Goal:** Bring `flynnart.com` live behind Cloudflare on the same Linux home server as
+> **Goal:** Bring `earthelementsart.com` live behind Cloudflare on the same Linux home server as
 > `ggpaintings.com`, by migrating the production deployment from single-site
 > (`docker-compose.prod.yml`) to multi-site (`docker-compose.multi.yml`).
 >
-> **Current state:** `ggpaintings.com` is live in production via `docker-compose.prod.yml`
-> (single site, DB `artgallery`, images in named volume `image_data`). `flynnart.com` is not yet deployed.
+> **Current state (as written, 2026-11):** `ggpaintings.com` is live in production via `docker-compose.prod.yml`
+> (single site, DB `artgallery`, images in named volume `image_data`). `earthelementsart.com` is not yet deployed.
 >
 > **Target state:** Both sites served by one NGINX container + one PostgreSQL container
 > (separate databases `artgallery_gg` / `artgallery_flynn`), each behind Cloudflare in **Full** SSL mode.
+
+> **⚠ SUPERSEDED — historical planning doc.** The "Current state" above describes the position at
+> the time of writing, not today. `docker-compose.prod.yml` is now marked **retired**. Treat this
+> file as the design rationale for the migration, not as run instructions. The authoritative
+> procedure is [`../docker-compose/DEPLOYMENT_GUIDE.md`](../docker-compose/DEPLOYMENT_GUIDE.md)
+> (**Multi-Site Production Deployment**, plus **Upgrading a Single-Site Server to Multi-Site** for
+> the cutover itself); the retired single-site commands are quarantined in its Appendix A.
 
 ---
 
@@ -20,8 +27,8 @@ graph TD
     CF -->|HTTPS self-signed Full mode| NG[NGINX artgallery-nginx :443]
     NG -->|Host ggpaintings.com| FG[frontend-gg :3000]
     NG -->|Host ggpaintings.com /api /images| AG[api-gg :8080]
-    NG -->|Host flynnart.com| FF[frontend-flynn :3000]
-    NG -->|Host flynnart.com /api /images| AF[api-flynn :8080]
+    NG -->|Host earthelementsart.com| FF[frontend-flynn :3000]
+    NG -->|Host earthelementsart.com /api /images| AF[api-flynn :8080]
     AG --> PG[(PostgreSQL artgallery-postgres)]
     AF --> PG
     PG --> DBG[artgallery_gg]
@@ -76,9 +83,9 @@ Edit `.env.multi`:
    - `FLYNN_YAHOO_AUTH_CLIENT_ID` / `FLYNN_YAHOO_AUTH_CLIENT_SECRET` (from step 2.3)
    - `FLYNN_ADMIN_JWT_SECRET_KEY` — generate: `openssl rand -base64 32`
    - `FLYNN_ADMIN_AUTHORIZED_EMAILS` — the flynn admin's email
-   - Confirm `FLYNN_CORS_ALLOWED_ORIGINS=https://flynnart.com,https://www.flynnart.com`
+   - Confirm `FLYNN_CORS_ALLOWED_ORIGINS=https://earthelementsart.com,https://www.earthelementsart.com`
    - Confirm `FLYNN_NEXT_PUBLIC_API_URL=/api` and `FLYNN_SERVER_API_URL=http://api-flynn:8080/api`
-   - Confirm `FLYNN_GOOGLE_AUTH_REDIRECT_URI=https://flynnart.com/admin/login` and `FLYNN_YAHOO_AUTH_REDIRECT_URI=https://flynnart.com/admin/login`
+   - Confirm `FLYNN_GOOGLE_AUTH_REDIRECT_URI=https://earthelementsart.com/admin/login` and `FLYNN_YAHOO_AUTH_REDIRECT_URI=https://earthelementsart.com/admin/login`
 
 > `.env.multi` is gitignored (see [`docker-compose/.gitignore`](docker-compose/.gitignore)) — it will not be committed.
 
@@ -99,7 +106,7 @@ openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
 openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
   -keyout nginx/ssl/flynn/server.key \
   -out nginx/ssl/flynn/server.crt \
-  -subj "/CN=flynnart.com"
+  -subj "/CN=earthelementsart.com"
 ```
 
 > `deploy-multi.sh` will set ownership to UID 101 and `chmod 600` the `.key` files automatically.
@@ -110,28 +117,28 @@ openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
 Each site needs its **own** OAuth clients (gg already has them). Create new ones for flynn:
 
 **Google** (console.cloud.google.com → APIs & Services → Credentials → Create OAuth client ID → Web application):
-- Authorized JavaScript origins: `https://flynnart.com`, `https://www.flynnart.com`
-- Authorized redirect URIs: `https://flynnart.com/admin/login`
+- Authorized JavaScript origins: `https://earthelementsart.com`, `https://www.earthelementsart.com`
+- Authorized redirect URIs: `https://earthelementsart.com/admin/login`
 - Record the Client ID + Client Secret → `FLYNN_GOOGLE_AUTH_CLIENT_ID` / `FLYNN_GOOGLE_AUTH_CLIENT_SECRET`
 
 **Yahoo / Bing Developer** (account.live.com / developer portal → Register app):
-- Redirect URL: `https://flynnart.com/admin/login`
+- Redirect URL: `https://earthelementsart.com/admin/login`
 - Record the Client ID + Client Secret → `FLYNN_YAHOO_AUTH_CLIENT_ID` / `FLYNN_YAHOO_AUTH_CLIENT_SECRET`
 
 > Reference: [`plans/google-oauth-admin-login-simplified.md`](plans/google-oauth-admin-login-simplified.md) and [`plans/yahoo-oauth-setup-guide.md`](plans/yahoo-oauth-setup-guide.md).
 
-### 2.4 Add `flynnart.com` to Cloudflare
+### 2.4 Add `earthelementsart.com` to Cloudflare
 
 Mirror the existing `ggpaintings.com` setup (see [`plans/first-deployment-ubuntu-26.04.md`](plans/first-deployment-ubuntu-26.04.md) STEP 9):
 
-1. **Add site:** Cloudflare dashboard → *Add a site* → `flynnart.com` → free plan.
-2. **Nameservers:** Cloudflare shows two nameservers. At the flynnart.com registrar, replace the existing nameservers with Cloudflare's. (Propagation: minutes to 48h.)
+1. **Add site:** Cloudflare dashboard → *Add a site* → `earthelementsart.com` → free plan.
+2. **Nameservers:** Cloudflare shows two nameservers. At the earthelementsart.com registrar, replace the existing nameservers with Cloudflare's. (Propagation: minutes to 48h.)
 3. **DNS records** (Cloudflare → DNS → Records):
 
    | Type | Name | Content | Proxy |
    |---|---|---|---|
    | A | `@` | `<SERVER_IP>` | **Proxied** (orange cloud) |
-   | CNAME | `www` | `flynnart.com` | **Proxied** (orange cloud) |
+   | CNAME | `www` | `earthelementsart.com` | **Proxied** (orange cloud) |
 
    > `<SERVER_IP>` is the same public IP already used by `ggpaintings.com`. Cloudflare distinguishes the two sites by the `Host` header, which NGINX routes via `server_name`.
 4. **SSL/TLS → Encryption Mode: `Full`** (NOT Flexible, NOT Full Strict).
@@ -143,9 +150,9 @@ Mirror the existing `ggpaintings.com` setup (see [`plans/first-deployment-ubuntu
 6. **Security → Settings:**
    - *Security Level:* **Medium**
    - *Bot Fight Mode:* **On**
-7. **Wait for activation:** Cloudflare shows the site as *Active* once the nameservers propagate. Verify with `dig NS flynnart.com` (should return Cloudflare's nameservers).
+7. **Wait for activation:** Cloudflare shows the site as *Active* once the nameservers propagate. Verify with `dig NS earthelementsart.com` (should return Cloudflare's nameservers).
 
-> Do **not** point the A record at the server until Phase 2 cutover is ready, **or** accept that flynnart.com will briefly 502 while the old single-site stack (which has no flynn server block) is still running. Recommended: add the DNS records now (harmless) and only rely on them after the multi-site stack is up.
+> Do **not** point the A record at the server until Phase 2 cutover is ready, **or** accept that earthelementsart.com will briefly 502 while the old single-site stack (which has no flynn server block) is still running. Recommended: add the DNS records now (harmless) and only rely on them after the multi-site stack is up.
 
 ---
 
@@ -264,17 +271,17 @@ curl -sI https://ggpaintings.com | head -5
 curl -s https://ggpaintings.com/api/paintings | head -c 200
 
 # flynn (new)
-curl -sI https://flynnart.com | head -5
-curl -s https://flynnart.com/api/paintings | head -c 200
-curl -s https://flynnart.com/api/painting-categories | head -c 200
+curl -sI https://earthelementsart.com | head -5
+curl -s https://earthelementsart.com/api/paintings | head -c 200
+curl -s https://earthelementsart.com/api/painting-categories | head -c 200
 ```
 
 Expected: `200` responses; flynn `/api/paintings` returns the seeded flynn paintings; `/api/painting-categories` returns `paintings` + `ceramics`.
 
 Also verify in a browser:
-- `https://flynnart.com` renders the flynn theme (light background, "Artwork"/"Events" nav labels).
-- `https://www.flynnart.com` redirects/serves correctly.
-- `http://flynnart.com` 301-redirects to `https://flynnart.com`.
+- `https://earthelementsart.com` renders the flynn theme (light background, "Artwork"/"Events" nav labels).
+- `https://www.earthelementsart.com` redirects/serves correctly.
+- `http://earthelementsart.com` 301-redirects to `https://earthelementsart.com`.
 - `https://ggpaintings.com` is unchanged.
 
 ### 4.3 Database verification
@@ -287,14 +294,14 @@ docker exec artgallery-postgres psql -U postgres -d artgallery_flynn -c "SELECT 
 
 ### 4.4 Cloudflare verification
 
-- Cloudflare dashboard → `flynnart.com` → **SSL/TLS**: mode is **Full**, no errors.
+- Cloudflare dashboard → `earthelementsart.com` → **SSL/TLS**: mode is **Full**, no errors.
 - **Analytics**: traffic is flowing (orange-cloud proxied).
-- `curl -sI https://flynnart.com | grep -i server` → `cloudflare`.
+- `curl -sI https://earthelementsart.com | grep -i server` → `cloudflare`.
 - Confirm the origin is reached over HTTPS: NGINX access logs show real client IPs (Cloudflare `CF-Connecting-IP`), not Cloudflare edge IPs.
 
 ### 4.5 Admin login smoke test (flynn)
 
-- Visit `https://flynnart.com/admin/login`.
+- Visit `https://earthelementsart.com/admin/login`.
 - Click **Sign in with Google** → completes → lands on the flynn admin dashboard (confirms flynn Google OAuth + JWT + authorized-emails work).
 - Repeat with **Yahoo**.
 
@@ -364,10 +371,10 @@ If the multi-site deployment fails and `ggpaintings.com` must be restored quickl
 **Phase 1 (no downtime)**
 - [ ] `.env.multi` created; `POSTGRES_PASSWORD` added; gg values carried over; flynn values filled in
 - [ ] Self-signed certs generated in `nginx/ssl/gg/` and `nginx/ssl/flynn/`
-- [ ] flynn Google OAuth client created (redirect `https://flynnart.com/admin/login`)
-- [ ] flynn Yahoo OAuth client created (redirect `https://flynnart.com/admin/login`)
-- [ ] flynnart.com added to Cloudflare; nameservers changed
-- [ ] DNS: A `@` → `<SERVER_IP>` (proxied), CNAME `www` → `flynnart.com` (proxied)
+- [ ] flynn Google OAuth client created (redirect `https://earthelementsart.com/admin/login`)
+- [ ] flynn Yahoo OAuth client created (redirect `https://earthelementsart.com/admin/login`)
+- [ ] earthelementsart.com added to Cloudflare; nameservers changed
+- [ ] DNS: A `@` → `<SERVER_IP>` (proxied), CNAME `www` → `earthelementsart.com` (proxied)
 - [ ] Cloudflare: SSL **Full**, Always Use HTTPS On, Auto HTTPS Rewrites On, Min TLS 1.2, Security Medium, Bot Fight On
 
 **Phase 2 (cutover / downtime)**
@@ -381,8 +388,8 @@ If the multi-site deployment fails and `ggpaintings.com` must be restored quickl
 **Phase 3 (verification)**
 - [ ] All 6 containers healthy
 - [ ] `https://ggpaintings.com` unchanged (200, correct content)
-- [ ] `https://flynnart.com` + `https://www.flynnart.com` serve flynn content (200)
-- [ ] `http://flynnart.com` → 301 → `https://flynnart.com`
+- [ ] `https://earthelementsart.com` + `https://www.earthelementsart.com` serve flynn content (200)
+- [ ] `http://earthelementsart.com` → 301 → `https://earthelementsart.com`
 - [ ] flynn DB seeded (paintings > 0; categories = paintings, ceramics)
 - [ ] Cloudflare serving flynn (server header `cloudflare`, real IPs in NGINX logs)
 - [ ] flynn admin login works via Google and Yahoo

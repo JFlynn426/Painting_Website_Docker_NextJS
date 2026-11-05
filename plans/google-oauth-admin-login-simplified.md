@@ -9,6 +9,16 @@ Implement Google OAuth login only:
 - Admin user tracking in database
 - **No admin dashboard** (to be added in future)
 
+> **⚠ HISTORICAL — this plan is implemented; do not treat it as current instructions.** The
+> compose and `.env` snippets below target the **retired** single-site layout: a single `api:`
+> service and unprefixed keys such as `GOOGLE_AUTH_CLIENT_ID` / `ADMIN_AUTHORIZED_EMAILS`. The
+> current stack has two API services and **per-site prefixed** keys
+> (`GG_` / `FLYNN_`) defined in `docker-compose/.env.multi`, mirrored across
+> `.env.multi.example` and `.env.multi.arm64.example`. Yahoo OAuth was added after this plan was
+> written, and an admin dashboard now exists. Read
+> [`../docker-compose/DEPLOYMENT_GUIDE.md`](../docker-compose/DEPLOYMENT_GUIDE.md) for what to
+> actually run.
+
 ---
 
 ## Architecture

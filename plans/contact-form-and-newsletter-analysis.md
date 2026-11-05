@@ -12,7 +12,7 @@ This document analyzes the requirements, options, and trade-offs for adding two 
 ### Technology Stack
 - **Frontend**: Next.js with App Router, React TypeScript, Bootstrap
 - **Backend**: .NET 8 with CQRS pattern (MediatR), EF Core, PostgreSQL
-- **Deployment**: Docker Compose with multi-site support (ggpaintings.com, flynnart.com)
+- **Deployment**: Docker Compose with multi-site support (ggpaintings.com, earthelementsart.com)
 - **Reverse Proxy**: NGINX with SSL termination
 - **Server**: 10th Gen i5, Linux, **static IP with Cloudflare DNS, port 25 confirmed OPEN**
 
@@ -219,7 +219,7 @@ mailservice:
     - ./mailservice/config/maddy.conf:/etc/maddy/maddy.conf:ro
     - mailservice_data:/data
   environment:
-    - MADDY_DOMAINS=ggpaintings.com,flynnart.com
+    - MADDY_DOMAINS=ggpaintings.com,earthelementsart.com
   networks:
     - artgallery-network
   restart: unless-stopped
@@ -397,7 +397,7 @@ CREATE INDEX IX_NewsletterSubscribers_IsConfirmed ON NewsletterSubscribers(IsCon
 ### MTA Container
 ```bash
 # MTA virtual domains
-MTA_DOMAINS=ggpaintings.com,flynnart.com
+MTA_DOMAINS=ggpaintings.com,earthelementsart.com
 ```
 
 ### Per-Site API Configuration
@@ -503,14 +503,14 @@ domain ggpaintings.com {
     }
 }
 
-domain flynnart.com {
+domain earthelementsart.com {
     storage filesystem {
-        root /data/flynnart.com
+        root /data/earthelementsart.com
     }
     
-    dkim_key default /data/dkim/flynnart.com.default
+    dkim_key default /data/dkim/earthelementsart.com.default
     
-    hostname mail.flynnart.com
+    hostname mail.earthelementsart.com
     
     deliver smtp {
         host {destination}

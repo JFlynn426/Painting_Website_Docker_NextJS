@@ -121,22 +121,69 @@ else
 fi
 
 echo ""
-echo "[2/8] Setting up image-data ownership for API user (UID 1)..."
+echo "[2/8] Setting up image-data ownership for the API user (UID 1654)..."
 
-# The API containers run as UID 1 and mount ./image-data/<site> read-write.
-# Docker creates missing bind-mount directories as root, which the API cannot write to,
-# so painting uploads fail with "permission denied". Create and hand them to UID 1.
+# The API containers run as the .NET base image's non-root user `app`, whose UID comes from
+# $APP_UID in mcr.microsoft.com/dotnet/aspnet:10.0 and is 1654. Neither multi-site compose
+# file overrides `user:` for api-gg / api-flynn, so 1654 is what actually writes to
+# ./image-data/<site>. Two things make the hand-over necessary: Docker creates missing
+# bind-mount directories as root, and the API image's own `chown $APP_UID /app/images` is
+# shadowed by the mount. Without this, painting uploads fail with "permission denied".
+# Re-check the UID after a base-image bump with:
+#   docker run --rm --entrypoint sh mcr.microsoft.com/dotnet/aspnet:10.0 -c "id -u app"
+API_UID=1654
 mkdir -p image-data/gg/original image-data/gg/high-res image-data/gg/thumbnail
 mkdir -p image-data/flynn/original image-data/flynn/high-res image-data/flynn/thumbnail
 for site_dir in image-data/gg image-data/flynn; do
-    chown -R 1:1 "$site_dir"
+    chown -R "$API_UID:$API_UID" "$site_dir"
     chmod 755 "$site_dir"
-    echo "  $site_dir owned by UID 1"
+    echo "  $site_dir owned by UID $API_UID"
 done
 
 echo ""
 echo "[3/8] Stopping existing containers..."
+
+# The single-site stack (docker-compose.prod.yml) and the multi-site stack cannot run side by
+# side: both bind host ports 80/443/9090, both claim the container name 'artgallery-nginx', and
+# both mount a postgres_data volume. On a server that already runs ggpaintings.com the prod
+# stack is normally still up, so it has to be torn down before the new stack can start.
 $COMPOSE -f docker-compose.multi.yml down || true
+if [ -f "docker-compose.prod.yml" ]; then
+    echo "  Also stopping the single-site stack (docker-compose.prod.yml)..."
+    $COMPOSE -f docker-compose.prod.yml down || true
+fi
+
+# 'compose down' only reaches containers belonging to its own project. If the single-site stack
+# was originally deployed under a different project name (Visual Studio Docker tooling, an
+# explicit -p flag, or a different checkout path) its containers survive the down above and keep
+# ports 80/443/9090 bound, so the new NGINX would die with 'port is already allocated'.
+BLOCKING=$(docker ps -a --format '{{.Names}}' 2>/dev/null | grep -E '^artgallery-(nginx|postgres-prod|api-prod|frontend-prod)$' || true)
+if [ -n "$BLOCKING" ]; then
+    echo "ERROR: These containers still exist and would block the multi-site stack:"
+    echo "$BLOCKING" | sed 's/^/  - /'
+    echo "Remove them first with:"
+    echo "  docker compose -f docker-compose.prod.yml down"
+    echo "or, if they belong to an older project name:"
+    echo "  docker rm -f $(echo "$BLOCKING" | tr '\n' ' ')"
+    exit 1
+fi
+
+echo ""
+echo "  Checking PostgreSQL data volumes..."
+# Both compose files declare a named 'postgres_data' volume, and Docker namespaces named volumes
+# after the compose project name. More than one match means the multi-site stack may come up on
+# a volume that does not hold the live gg data, and the seeder would then quietly rebuild gg
+# from seed data. Pin the project name with COMPOSE_PROJECT_NAME if that happens.
+PG_VOLUMES=$(docker volume ls --format '{{.Name}}' 2>/dev/null | grep -E 'postgres_data$' || true)
+if [ -n "$PG_VOLUMES" ]; then
+    echo "$PG_VOLUMES" | sed 's/^/    found: /'
+    if [ "$(printf '%s\n' "$PG_VOLUMES" | wc -l)" -gt 1 ]; then
+        echo "  WARNING: several postgres_data volumes exist. Check that the stack below lands on"
+        echo "  the one holding your existing data before trusting this deploy."
+    fi
+else
+    echo "    none - a fresh empty volume will be created (databases will be seeded, not restored)"
+fi
 
 echo ""
 echo "[4/8] Starting PostgreSQL..."
@@ -289,6 +336,22 @@ check_proc_owner() {
     fi
 }
 
+# Ownership of the image bind mounts is not proof the API can write them, so check from inside
+# the container, which is where uploads actually run as UID 1654.
+check_writable() {
+    local name="$1"
+    local dir="$2"
+    local result
+    result=$(docker exec "$name" sh -c "test -w '$dir' && echo writable || echo blocked" 2>/dev/null || echo "unreachable")
+    if [ "$result" = "writable" ]; then
+        echo "  $name: can write $dir"
+    else
+        echo "  $name: WARNING - cannot write $dir ($result) - painting uploads will fail"
+        echo "           fix with: chown -R 1654:1654 image-data/<site>"
+        SECURITY_PASSED=false
+    fi
+}
+
 check_uid artgallery-api-gg
 check_uid artgallery-api-flynn
 check_uid artgallery-frontend-gg
@@ -296,24 +359,32 @@ check_uid artgallery-frontend-flynn
 check_proc_owner artgallery-postgres
 check_proc_owner artgallery-nginx
 
+echo ""
+echo "Checking that the API can write its image storage..."
+check_writable artgallery-api-gg /app/images/original
+check_writable artgallery-api-flynn /app/images/original
+
 if [ "$SECURITY_PASSED" = true ]; then
-    echo "  All containers running as non-root users"
+    echo "  All containers non-root, image storage writable"
 fi
 
 echo ""
 echo "Checking for exposed sensitive files in git..."
-SENSITIVE_FILES=$(git ls-files 2>/dev/null | grep -E "(password|secret|key|token)\.txt" || echo "")
+# 'git ls-files' prints paths relative to the current directory, so the pathspecs have to be
+# relative to docker-compose/ as well - 'docker-compose/.env.multi' can never match here. The
+# real secret lives at secrets/postgres_password, not in a *.txt file.
+SENSITIVE_FILES=$(git ls-files -- '.env.multi' '.env.multi.arm64' 'secrets/postgres_password' 2>/dev/null || true)
 if [ -z "$SENSITIVE_FILES" ]; then
     echo "  No sensitive files tracked in git"
 else
-    echo "  WARNING: Potential sensitive files found in git:"
+    echo "  WARNING: Sensitive files are tracked in git:"
     echo "$SENSITIVE_FILES"
 fi
 
 echo ""
 echo "Verifying .env.multi file is not tracked..."
-if git ls-files 2>/dev/null | grep -q "docker-compose/.env.multi"; then
-    echo "  WARNING: docker-compose/.env.multi is tracked in git!"
+if [ -n "$(git ls-files -- '.env.multi' '.env.multi.arm64' 2>/dev/null || true)" ]; then
+    echo "  WARNING: a .env.multi file is tracked in git!"
 else
     echo "  .env.multi file properly excluded from git"
 fi
@@ -331,8 +402,8 @@ fi
 echo "=========================================="
 echo ""
 echo "Deployed Sites:"
-echo "  - ggpaintings.com -> artgallery-frontend-gg + artgallery-api-gg"
-echo "  - flynnart.com    -> artgallery-frontend-flynn + artgallery-api-flynn"
+echo "  - ggpaintings.com      -> artgallery-frontend-gg   + artgallery-api-gg"
+echo "  - earthelementsart.com -> artgallery-frontend-flynn + artgallery-api-flynn"
 echo ""
 echo "To view logs:"
 echo "  $COMPOSE -f docker-compose.multi.yml logs -f"
@@ -341,10 +412,11 @@ echo "To check health:"
 echo "  curl http://localhost:9090/health"
 echo ""
 echo "To run security checks manually:"
-echo "  docker exec artgallery-api-gg id -u          # non-zero"
-echo "  docker exec artgallery-api-flynn id -u       # non-zero"
+echo "  docker exec artgallery-api-gg id -u          # 1654 (app, from \$APP_UID)"
+echo "  docker exec artgallery-api-flynn id -u       # 1654 (app)"
 echo "  docker exec artgallery-frontend-gg id -u     # 1001 (nextjs)"
 echo "  docker exec artgallery-frontend-flynn id -u  # 1001 (nextjs)"
 echo "  docker top artgallery-postgres | head -2     # USER column should be postgres"
 echo "  docker top artgallery-nginx | head -2        # USER column should be nginx (101)"
+echo "  docker exec artgallery-api-gg sh -c 'test -w /app/images/original && echo writable'"
 echo ""

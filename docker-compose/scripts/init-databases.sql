@@ -11,6 +11,6 @@
 SELECT 'CREATE DATABASE artgallery_gg'
 WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'artgallery_gg')\gexec
 
--- Create database for flynn site (flynnart.com)
+-- Create database for flynn site (earthelementsart.com)
 SELECT 'CREATE DATABASE artgallery_flynn'
 WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'artgallery_flynn')\gexec

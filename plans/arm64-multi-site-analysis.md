@@ -109,7 +109,7 @@ docker-compose/
 │   ├── nginx.multi.local.conf            # Existing - multi-site local config
 │   └── ssl/
 │       ├── gg/                           # Production SSL for ggpaintings.com
-│       ├── flynn/                        # Production SSL for flynnart.com
+│       ├── flynn/                        # Production SSL for earthelementsart.com
 │       └── localhost/                    # Local SSL certs (for ARM64 dev)
 │           ├── gg/
 │           │   ├── server.crt
@@ -279,7 +279,7 @@ GG_ADMIN_AUTHORIZED_EMAILS=gloriagronowicz@gmail.com
 GG_DATABASE_READ_ONLY_MODE=false
 
 # ============================================
-# Site: flynn (flynnart.com)
+# Site: flynn (earthelementsart.com)
 # ============================================
 FLYNN_SITE_NAME="Flynn Art Gallery"
 FLYNN_SITE_DESCRIPTION="Fine art paintings by Flynn"

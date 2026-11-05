@@ -1,10 +1,21 @@
 # Flynn Site Deployment Runbook (single-site → multi-site cutover)
 
-Target: add **flynnart.com** alongside the live **ggpaintings.com** on the Ubuntu server,
+Target: add **earthelementsart.com** alongside the live **ggpaintings.com** on the Ubuntu server,
 moving from `docker-compose.prod.yml` (single site) to `docker-compose.multi.yml` (6 containers).
 
 Verified against the repo on 2026-11-04. Everything below was checked in the actual files,
 not assumed. Items marked **⚠ ACTION** need a decision or edit before deploying.
+
+> **⚠ SUPERSEDED — historical planning doc.** Statements below that describe
+> `docker-compose.prod.yml` as "the current live stack" were true on the date of writing and are
+> kept for the migration rationale. `docker-compose.prod.yml` is now marked **retired** and is
+> additionally *incompatible* with the current stack (it runs `artgallery-postgres-prod` with a
+> single `artgallery` database, expects a flat `nginx/ssl/` cert directory, and uses `api` /
+> `frontend` service names). For anything you are about to actually run, use
+> [`../docker-compose/DEPLOYMENT_GUIDE.md`](../docker-compose/DEPLOYMENT_GUIDE.md) —
+> **Multi-Site Production Deployment** is the authoritative path, and the retired single-site
+> material lives in its Appendix A behind a do-not-run banner. Current tooling is
+> `deploy-multi.sh` + `docker-compose.multi.yml`.
 
 ---
 
@@ -15,8 +26,8 @@ graph LR
     CF[Cloudflare Full SSL] -->|443| NG[artgallery-nginx]
     NG -->|ggpaintings.com| FGG[frontend-gg :3000]
     NG -->|ggpaintings.com api and images| AGG[api-gg :8080]
-    NG -->|flynnart.com| FFN[frontend-flynn :3000]
-    NG -->|flynnart.com api and images| AFN[api-flynn :8080]
+    NG -->|earthelementsart.com| FFN[frontend-flynn :3000]
+    NG -->|earthelementsart.com api and images| AFN[api-flynn :8080]
     AGG --> PG[(artgallery-postgres - db artgallery_gg)]
     AFN --> PG2[(artgallery-postgres - db artgallery_flynn)]
 ```
@@ -68,7 +79,7 @@ address, OAuth login succeeds but every admin request comes back 403.
 
 ### ⚠ ISSUE 3: real OAuth credentials needed
 Flynn needs its own Google OAuth client and Yahoo OAuth app, both with redirect URI
-`https://flynnart.com/admin/login`. Fill `FLYNN_GOOGLE_AUTH_*` and `FLYNN_YAHOO_AUTH_*`
+`https://earthelementsart.com/admin/login`. Fill `FLYNN_GOOGLE_AUTH_*` and `FLYNN_YAHOO_AUTH_*`
 in `.env.multi`. Also carry over the working `GG_*` values from the server's current `.env`.
 
 ### ⚠ ISSUE 4: image-data must reach the server
@@ -142,12 +153,12 @@ All commands run in the `docker-compose/` directory on the server unless noted.
    ./scripts/generate-prod-ssl.sh
    ```
    Confirms `nginx/ssl/gg/` and `nginx/ssl/flynn/` get `server.crt`/`server.key`.
-7. **Cloudflare (flynnart.com zone)**:
+7. **Cloudflare (earthelementsart.com zone)**:
    - Nameservers pointed at Cloudflare; SSL mode **Full** (NOT Flexible, NOT Full-strict);
      Always Use HTTPS ON; Min TLS 1.2.
-   - DNS: `A @ → <SERVER_PUBLIC_IP>` proxied (orange); `CNAME www → flynnart.com` proxied.
-8. **OAuth apps** (Google Cloud Console + Yahoo developer portal): create flynnart.com
-   clients, redirect URI exactly `https://flynnart.com/admin/login`.
+   - DNS: `A @ → <SERVER_PUBLIC_IP>` proxied (orange); `CNAME www → earthelementsart.com` proxied.
+8. **OAuth apps** (Google Cloud Console + Yahoo developer portal): create earthelementsart.com
+   clients, redirect URI exactly `https://earthelementsart.com/admin/login`.
 
 ---
 
@@ -194,7 +205,8 @@ Do not start until every item in section 3 is done.
    ./deploy-multi.sh
    ```
    It tears down the old stack (step 2's postgres container goes with it, the volume does
-   not), fixes SSL perms (chown 101, chmod 600) and `image-data` ownership (chown 1:1),
+   not), fixes SSL perms (chown 101, chmod 600) and `image-data` ownership (chown 1654, the
+   API's `app` user),
    starts PostgreSQL, creates `artgallery_gg`/`artgallery_flynn`, restores backups (see the
    warning above), builds 4 app images + nginx, starts the stack, and finishes with the
    non-root checks. The script is `set -e`, so a hard failure stops the run partway through.
@@ -219,23 +231,23 @@ docker exec artgallery-api-flynn curl -fsS http://localhost:8080/api/health/heal
 
 # End-to-end through the real domains (Cloudflare in front)
 curl -s https://ggpaintings.com | head -c 300        # gg unchanged
-curl -s https://flynnart.com  | head -c 300          # flynn homepage
-curl -s https://flynnart.com/api/health/health       # flynn API through nginx
-curl -s https://flynnart.com/images/high-res/Waves_20_24.jpeg -o /dev/null -w '%{http_code}\n'  # expect 200
+curl -s https://earthelementsart.com  | head -c 300          # flynn homepage
+curl -s https://earthelementsart.com/api/health/health       # flynn API through nginx
+curl -s https://earthelementsart.com/images/high-res/Waves_20_24.jpeg -o /dev/null -w '%{http_code}\n'  # expect 200
 
 # Local end-to-end without Cloudflare: -k for the self-signed origin cert, plus an explicit
 # Host — SNI/Host of `localhost` matches no server_name and silently falls through to the
 # gg server block, which would test the wrong site
-curl -k https://localhost/api/health/health -H "Host: flynnart.com"
+curl -k https://localhost/api/health/health -H "Host: earthelementsart.com"
 
 docker exec artgallery-postgres psql -U postgres -d artgallery_flynn -c 'SELECT count(*) FROM "Paintings";'      # 15
 docker exec artgallery-postgres psql -U postgres -d artgallery_flynn -c 'SELECT slug FROM "PaintingCategories";' # paintings, ceramics
 ```
 
 Browser checks:
-- `http://flynnart.com` → 301 → `https://flynnart.com` (via Cloudflare; `server: cloudflare` header).
+- `http://earthelementsart.com` → 301 → `https://earthelementsart.com` (via Cloudflare; `server: cloudflare` header).
 - Flynn pages render with light theme (`#d0d0d0` bg), "Terri Gray Fine Art", Artwork/Events navbar, flynn favicon.
-- `https://flynnart.com/admin/login` → Google **and** Yahoo login complete → admin dashboard loads
+- `https://earthelementsart.com/admin/login` → Google **and** Yahoo login complete → admin dashboard loads
   (proves Issue 2/3 fixed).
 - Upload one test image via flynn admin (proves Issue 5).
 - NGINX access log shows real client IPs (CF-Connecting-IP), not Cloudflare edge IPs.
@@ -269,4 +281,4 @@ docker volume rm docker-compose_image_data
    `texasterrigray@yahoo.com`? (The `.env.multi` in the working tree still has
    `jflynnpics@gmail.com,flynnjohn426@yahoo.com`.)
 4. Do the flynn Google/Yahoo OAuth apps exist yet with the `/admin/login` redirect?
-5. Is flynnart.com already on Cloudflare with SSL = Full and both records proxied?
+5. Is earthelementsart.com already on Cloudflare with SSL = Full and both records proxied?

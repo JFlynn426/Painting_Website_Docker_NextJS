@@ -1,48 +1,82 @@
 
 # Deployment Guide: Art Gallery Application
 
-**Domains:** ggpaintings.com, flynnart.com
-**Last Updated:** 2026-11-04
+**Domains:** ggpaintings.com, earthelementsart.com
+**Last Updated:** 2026-11-05
 
 This guide explains how to deploy the Art Gallery application to production with Cloudflare.
 
 ## Overview
 
-The `docker-compose/` folder holds several compose files. Only one stack runs at a time:
+The `docker-compose/` folder holds several compose files. Only one stack runs at a time.
 
 | File | Purpose |
 |------|---------|
-| `docker-compose.yml` (+ `docker-compose.override.yml`) | Local development: hot reload, debug builds, no NGINX |
-| `docker-compose.prod.yml` | **Legacy single-site** stack (gg only). Being retired — see note below |
-| **`docker-compose.multi.yml`** | **Current production** stack: gg + flynn, shared PostgreSQL, shared NGINX |
+| **`docker-compose.multi.yml`** | **Current production** stack: gg + flynn, shared PostgreSQL, shared NGINX. **Use this.** |
 | `docker-compose.multi.arm64.yml` | Same topology, tuned for ARM64 hosts (Raspberry Pi / Apple Silicon) |
 | `docker-compose.multi.local.yml` | Override for testing both sites locally on non-standard ports |
+| `docker-compose.yml` (+ `docker-compose.override.yml`) | Local **single-site** stack. Not hot reload — it builds the `production` target and runs NGINX on 80/443 |
+| `docker-compose.prod.yml` | **Retired** single-site stack (gg only). Nearly identical to `docker-compose.yml`. Reference only — see Appendix A at the end of this guide |
 
 > **There is no `docker-compose.cloudflare.yml`.** Cloudflare "Full" mode is not a separate
-> stack — it is an SSL mode that applies to `docker-compose.prod.yml` and
-> `docker-compose.multi.yml`: NGINX serves a self-signed origin certificate and Cloudflare
+> stack — it is an SSL mode that applies to `docker-compose.multi.yml` (and, historically,
+> `docker-compose.prod.yml`): NGINX serves a self-signed origin certificate and Cloudflare
 > terminates TLS at the edge. Set the Cloudflare SSL/TLS mode to **Full**, never
 > *Full (strict)*, which would demand a CA-signed origin certificate.
 
-> **Legacy note:** `docker-compose.prod.yml` runs `artgallery-postgres-prod` with a single
-> `artgallery` database. The multi-site stack uses a different container (`artgallery-postgres`)
-> with per-site databases (`artgallery_gg`, `artgallery_flynn`). Both stacks want ports 80/443
-> and the `postgres_data` volume, so **they cannot run simultaneously**. Stop the old stack
-> before starting the new one.
+> **Why `prod.yml` is retired.** It is not merely unused, it is now *incompatible*. It runs
+> `artgallery-postgres-prod` with one `artgallery` database, expects a flat `nginx/ssl/`
+> certificate directory, and uses `api` / `frontend` service names. The multi-site stack uses a
+> different container (`artgallery-postgres`), per-site databases (`artgallery_gg`,
+> `artgallery_flynn`) and per-site certificate directories (`nginx/ssl/gg/`,
+> `nginx/ssl/flynn/`). Both stacks want ports 80/443 and the same `postgres_data` volume, so
+> **they cannot run simultaneously** — and `nginx/nginx.conf`, which both compose files mount,
+> now contains only per-site server blocks whose upstreams exist only in `multi.yml`. Running
+> the old `prod.yml` commands today gives you an NGINX container that cannot start.
+
+### Which Stack Am I On?
+
+Run this before anything else in this guide:
+
+```bash
+docker ps -a --format '{{.Names}}' | grep -E 'artgallery-(api|frontend|nginx|postgres)' || echo "nothing running"
+```
+
+| What you see | You are on | Go to |
+|--------------|------------|-------|
+| `artgallery-api-gg` / `artgallery-api-flynn` | Multi-site | **Multi-Site Production Deployment** |
+| `artgallery-api-prod` / `artgallery-frontend-prod` | A single-site stack | **Upgrading a Single-Site Server to Multi-Site** |
+| `nothing running` | Neither | **Multi-Site Production Deployment** |
+
+Key off the **API** container. `artgallery-nginx` exists in every stack, so it tells you
+nothing on its own; `-gg` / `-flynn` means multi-site and `-prod` means a single-site stack.
+
+> A `-prod` suffix does **not** by itself mean `docker-compose.prod.yml`. The local
+> `docker-compose.yml` reuses the same four container names, so `docker ps` cannot tell the
+> two single-site stacks apart. To find out which compose file is deployed:
+>
+> ```bash
+> docker inspect artgallery-api-prod --format '{{index .Config.Labels "com.docker.compose.project.config_files"}}'
+> ```
+>
+> Either way, the multi-site stack cannot start while a `-prod` stack holds ports 80/443 and
+> the `postgres_data` volume. `deploy-multi.sh` stops both compose files for you.
+
+Appendix A is a historical record of the retired stack, not an alternative deployment path.
 
 ## Deployment Options
 
-| Mode | Use Case | SSL | Best For |
-|------|----------|-----|----------|
-| Development | Local development | None | Coding, testing |
-| Single-site production (`prod.yml`) | One gallery | Let's Encrypt or commercial | Retired — kept for reference |
-| **Multi-site + Cloudflare Full** | **Home server hosting two galleries behind Cloudflare** | **Self-signed origin cert + Cloudflare edge** | **The current production setup** |
+| Mode | Use Case | SSL | Verdict |
+|------|----------|-----|---------|
+| **Multi-site + Cloudflare Full** (`multi.yml`) | **Home server hosting two galleries behind Cloudflare** | **Self-signed origin cert + Cloudflare edge** | **The current production setup — use this** |
+| Development (`docker-compose.yml`) | Local development | None | Coding and testing only |
+| Single-site production (`prod.yml`) | One gallery | Let's Encrypt or commercial | **Retired** — Appendix A, do not run |
 
 ## Security Features
 
 This deployment includes the following security hardening:
 
-- ✅ **All containers run as non-root users** (API: UID 1 `appuser`, Frontend: UID 1001 `nextjs`, NGINX: UID 101 `nginx`, PostgreSQL: `postgres`)
+- ✅ **All containers run as non-root users** (API: UID 1654 `app`, from the .NET base image's `$APP_UID`; Frontend: UID 1001 `nextjs`; NGINX: UID 101 `nginx`; PostgreSQL: `postgres`)
 - ✅ **Read-only filesystem** for API, Frontend and NGINX containers (writable exceptions: the `/app/images` bind mount and tmpfs caches)
 - ✅ **Health checks** on all containers, with startup ordering `api → frontend → nginx`
 - ⚠️ **The database password is passed as an environment variable** (`POSTGRES_PASSWORD`), so it *is* visible in `docker inspect`. The file `secrets/postgres_password` must still exist because `docker-compose.multi.yml` declares it as a secret, but PostgreSQL does not read it — the official image ignores `*_FILE` variables.
@@ -231,7 +265,7 @@ After adding your site to Cloudflare, configure these settings:
               ▼                           ▼
        ┌────────────┐            ┌────────────┐
        │  Frontend  │            │    API     │
-       │  (UID 1001)│            │  (UID 1)   │
+       │  (UID 1001)│            │  (UID 1654)│
        │  Read-only │            │  Read-only │
        └────────────┘            └─────┬──────┘
                                        │
@@ -251,528 +285,62 @@ After adding your site to Cloudflare, configure these settings:
 - At least 4GB RAM recommended
 - Cloudflare account with domain added
 
-## Quick Start: Deploy to ggpaintings.com
+## Local Single-Site Stack (`docker-compose.yml`)
 
-### Step 1: Cloudflare Setup
+> **This is not a hot-reload development environment.** `docker-compose.yml` builds the
+> frontend's `production` target, runs every container read-only with
+> `restart: unless-stopped`, and starts NGINX on ports 80/443. It is a single-site clone of
+> the retired production stack, kept so the full proxy path can be exercised on one machine.
+> `docker-compose.override.yml` only adds an `8080:8080` API port and swaps NGINX onto
+> `nginx/nginx.local.conf` + `nginx/ssl/localhost`. There are no source-code volume mounts
+> and no debug build.
 
-1. **Add your site to Cloudflare**
-   - Sign up/login to [Cloudflare](https://dash.cloudflare.com)
-   - Add your domain `ggpaintings.com`
-   - Change nameservers at your registrar to Cloudflare's nameservers
+For real hot-reload work, run the two apps outside Docker (`clientapp`: `npm run dev`,
+`ServerApp`: `dotnet run`) against a local PostgreSQL, or use
+`docker-compose.multi.yml` + `docker-compose.multi.local.yml` for a two-site run on
+non-standard ports — see Multi-Site Local Testing.
 
-2. **Configure DNS**
-   - Go to DNS → Records
-   - Create an A record: `@` → Your server's IP address
-   - Enable proxy (orange cloud icon should be ON)
-
-3. **Configure SSL/TLS**
-   - Go to SSL/TLS → Overview
-   - Select **"Full"** mode (not "Flexible" or "Full (Strict)")
-   - Go to Edge Certificates → Enable "Always Use HTTPS"
-   - Enable "Automatic HTTPS Rewrites"
-
-### Step 2: Server Setup
-
-```bash
-# On your Linux server
-git clone <repository-url>
-cd Painting_Website_Docker_NextJS/docker-compose
-```
-
-### Step 3: Configure Environment
-
-**3.1. Copy and Edit Environment File**
-
-```bash
-cp .env.example .env
-nano .env
-```
-
-Ensure these values are set in `.env`:
-```env
-CORS_ALLOWED_ORIGINS=https://ggpaintings.com
-NEXT_PUBLIC_API_URL=https://ggpaintings.com/api
-SERVER_API_URL=http://api:8080/api
-```
-
-**3.2. Set the PostgreSQL Password**
-
-The database is **PostgreSQL 17** (image `postgres:17-alpine`), not SQL Server. The
-password comes from `POSTGRES_PASSWORD` in `.env`.
-
-```bash
-mkdir -p secrets
-echo -n 'YourSecurePassword123!' > secrets/postgres_password
-chmod 600 secrets/postgres_password
-```
-
-Set the same value in `.env`:
-
-```env
-POSTGRES_PASSWORD=YourSecurePassword123!
-```
-
-**Important:**
-- Use `echo -n` to avoid a trailing newline
-- File permissions should be `600` (read/write for owner only)
-- The `secrets/` directory is already excluded from git (see `.gitignore`)
-- Never commit the actual password file to version control
-
-**Why the secret file if the password is also in `.env`?**
-It is not really a secret mechanism here. The official postgres image **ignores**
-`*_FILE` variables, so `secrets/postgres_password` is never read by the database. It exists
-only because `docker-compose.prod.yml` declares it and Compose refuses to start when a
-declared secret file is missing. Keep it identical to `POSTGRES_PASSWORD` and treat
-`docker inspect` output as containing a live credential.
-
-### Step 4: Generate Self-Signed SSL Certificate
-
-```bash
-mkdir -p nginx/ssl
-cd nginx/ssl
-
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout server.key \
-  -out server.crt \
-  -subj "/C=US/ST=YourState/L=YourCity/O=YourOrganization/CN=ggpaintings.com"
-
-chmod 600 server.key
-chmod 644 server.crt
-cd ../..
-```
-
-### Step 5: Deploy
-
-```bash
-# Run the deployment script (includes security checks)
-bash deploy.sh
-
-# Or manually:
-docker-compose -f docker-compose.prod.yml up -d --build
-```
-
-### Step 6: Verify Deployment
-
-**6.1. Check Container Status**
-
-```bash
-docker-compose -f docker-compose.prod.yml ps
-```
-
-All containers should show `healthy` status.
-
-**6.2. Verify Non-Root Users**
-
-Container names in `docker-compose.prod.yml` carry a `-prod` suffix. Note that
-`docker exec ... whoami` only reflects a container's real user when its image declares a
-`USER` — for NGINX and PostgreSQL it does not, so check those with `docker top`:
-
-```bash
-# Images that pin a non-root USER
-docker exec artgallery-api-prod id -u        # non-zero — the .NET base image's app user
-docker exec artgallery-frontend-prod id -u   # 1001 (nextjs)
-
-# Images that start as root and drop privileges at runtime — check the running process
-docker top artgallery-nginx | head -2              # USER column should be nginx (101)
-docker top artgallery-postgres-prod | head -2      # USER column should be postgres
-```
-
-A `0` / `root` process owner means the privilege drop did not happen.
-
-**6.3. Verify Resource Limits**
-
-Declared in `docker-compose.prod.yml` under `deploy.resources.limits`. Plain
-`docker compose` does not always apply these, so measure rather than assume:
-
-```bash
-# Declared limits: postgres 2 CPU / 4G, api 2 CPU / 4G,
-#                 frontend 2 CPU / 4G, nginx 1 CPU / 1G
-docker inspect artgallery-postgres-prod --format 'cpus={{.HostConfig.NanoCpus}} mem={{.HostConfig.Memory}}'
-docker inspect artgallery-api-prod      --format 'cpus={{.HostConfig.NanoCpus}} mem={{.HostConfig.Memory}}'
-docker inspect artgallery-frontend-prod --format 'cpus={{.HostConfig.NanoCpus}} mem={{.HostConfig.Memory}}'
-docker inspect artgallery-nginx         --format 'cpus={{.HostConfig.NanoCpus}} mem={{.HostConfig.Memory}}'
-```
-
-`cpus=0` / `mem=0` means no limit was applied and the containers can consume the whole
-host.
-
-**6.4. Check the Database Password Is Not Leaking**
-
-```bash
-# The password IS present in the container environment by design —
-# the postgres image only accepts POSTGRES_PASSWORD.
-docker inspect artgallery-postgres-prod --format '{{.Config.Env}}' | tr ' ' '\n' | grep -i password
-```
-
-Treat that output as a credential: do not paste it into issues, chat logs, or committed
-files. Anyone with read access to the Docker socket can already extract it, so the only
-real mitigation is making the password unique to this host.
-
-**6.5. Verify Read-Only Filesystems**
-
-```bash
-docker inspect artgallery-api-prod --format '{{.HostConfig.ReadonlyRootfs}}'       # Should return: true
-docker inspect artgallery-frontend-prod --format '{{.HostConfig.ReadonlyRootfs}}'   # Should return: true
-docker inspect artgallery-nginx --format '{{.HostConfig.ReadonlyRootfs}}'           # Should return: true
-```
-
-**6.6. Test the Site**
-
-```bash
-# Test HTTPS endpoint
-curl -I https://ggpaintings.com
-
-# Test API endpoint
-curl -I https://ggpaintings.com/api/health/health
-```
-
-**6.7. Verify Health Checks**
-
-```bash
-# Check all container health status
-docker-compose -f docker-compose.prod.yml ps
-# All containers should show "healthy" in the STATUS column
-```
-
-### Step 7: Wait for Cloudflare DNS Propagation
-
-DNS changes typically propagate within 5-10 minutes. Once complete, your site will be accessible at:
-- **Frontend:** https://ggpaintings.com
-- **API:** https://ggpaintings.com/api
-
----
-
-## Development Mode (Local)
-
-### Purpose
-- Fast development with hot reload
-- Debug mode enabled
-- Direct API access (no NGINX)
-- Source code mounted for live editing
-
-### Start Development Environment
+### Start It
 
 ```bash
 cd docker-compose
-docker-compose up -d
+docker compose up -d          # auto-loads docker-compose.yml + docker-compose.override.yml
 ```
+
+Because the override is loaded automatically, this binds **80, 443, 9090 and 8080** on the
+host and creates `artgallery-postgres-prod`, `artgallery-api-prod`,
+`artgallery-frontend-prod` and `artgallery-nginx`. Do not run it on a host that already runs
+the multi-site stack.
 
 ### Configuration
 
-**Environment Variables** (in `.env` or `.env.example`):
+**Environment Variables** (in `.env` — this stack reads `.env`, not `.env.multi`):
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8080/api
 SERVER_API_URL=http://api:8080/api
 CORS_ALLOWED_ORIGINS=http://localhost:3000
 ```
 
-**How it works:**
-- Browser accesses frontend at `http://localhost:3000`
-- Browser accesses API at `http://localhost:8080/api` (exposed port)
-- Frontend container accesses API at `http://api:8080/api` (Docker network)
-- Hot reload enabled - changes to source code automatically update
-
 ### Access Points
-- Frontend: http://localhost:3000
-- API: http://localhost:8080/api
-- Swagger: http://localhost:8080/swagger
-- PostgreSQL: **not published** — `docker-compose.yml` exposes no host port for the
-  `postgres` service. Reach it with `docker compose exec postgres psql -U postgres -d artgallery`.
+- Frontend and API: https://localhost (via NGINX, self-signed — use `curl -k`)
+- API direct: http://localhost:8080/api — published by `docker-compose.override.yml` only
+- NGINX health: http://localhost:9090/health
+- PostgreSQL: **not published** — no host port. Reach it with
+  `docker compose exec postgres psql -U postgres -d artgallery`
 
-### Stop Development Environment
+The frontend container publishes **no** host port in either file, so `http://localhost:3000`
+does not work against this stack. Swagger is off: the API runs with
+`ASPNETCORE_ENVIRONMENT=Production`.
+
+### Stop It
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
 To also remove volumes (database data):
 ```bash
-docker-compose down -v
-```
-
-## Production Mode (Deployment)
-
-### Purpose
-- Optimized builds for performance
-- NGINX reverse proxy with HTTPS
-- No hot reload (static builds)
-- Security hardening
-
-### Deploy to Production Server
-
-#### Step 1: Prepare Production Server
-
-```bash
-# On production Linux server
-git clone <repository-url>
-cd Painting_Website_Docker_NextJS/docker-compose
-```
-
-#### Step 2: Configure Environment
-
-**2.1. Copy and Edit Environment File**
-
-```bash
-cp .env.example .env
-nano .env
-```
-
-Update these values in `.env`:
-```env
-# CORS - your production domain
-CORS_ALLOWED_ORIGINS=https://ggpaintings.com
-
-# API URLs for production (NGINX routing)
-NEXT_PUBLIC_API_URL=https://ggpaintings.com/api
-SERVER_API_URL=http://api:8080/api
-
-# NGINX ports
-NGINX_HTTP_PORT=80
-NGINX_HTTPS_PORT=443
-```
-
-**2.2. Set the PostgreSQL Password**
-
-The database is PostgreSQL 17. The password is read from `POSTGRES_PASSWORD` in `.env`;
-`secrets/postgres_password` must exist too (Compose errors if a declared secret file is
-missing) but is not read by the postgres image. Keep both identical.
-
-```bash
-mkdir -p secrets
-echo -n 'YourSecurePassword123!' > secrets/postgres_password
-chmod 600 secrets/postgres_password
-```
-
-```env
-# .env
-POSTGRES_PASSWORD=YourSecurePassword123!
-```
-
-**Important:**
-- Use `echo -n` to avoid a trailing newline
-- File permissions should be `600` (read/write for owner only)
-- The `secrets/` directory is excluded from git
-- Never commit the actual password file to version control
-- If the `postgres_data` volume already exists, the password is fixed at the value the
-  volume was initialised with — changing it in `.env` does not rotate it
-
-#### Step 3: Set Up SSL Certificates
-
-Create SSL directory and add certificates:
-
-```bash
-mkdir -p nginx/ssl
-
-# Option A: Let's Encrypt (recommended)
-sudo apt-get update
-sudo apt-get install certbot python3-certbot-nginx
-sudo certbot certonly --standalone -d yourdomain.com -d www.yourdomain.com
-sudo cp /etc/letsencrypt/live/yourdomain.com/fullchain.pem nginx/ssl/server.crt
-sudo cp /etc/letsencrypt/live/yourdomain.com/privkey.pem nginx/ssl/server.key
-sudo apt install fail2ban
-sudo apt install unattended-upgrades
-sudo dpkg-reconfigure unattended-upgrades
-
-# Option B: Self-signed (for Cloudflare Full mode - RECOMMENDED)
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout nginx/ssl/server.key \
-  -out nginx/ssl/server.crt \
-  -subj "/C=US/ST=State/L=City/O=Organization/CN=ggpaintings.com"
-
-# Set permissions
-chmod 600 nginx/ssl/server.key
-chmod 644 nginx/ssl/server.crt
-```
-
-#### Step 4: Deploy
-
-```bash
-docker-compose -f docker-compose.prod.yml up -d --build
-```
-
-#### Step 5: Verify
-
-```bash
-# Check container status
-docker-compose -f docker-compose.prod.yml ps
-
-# View logs
-docker-compose -f docker-compose.prod.yml logs -f
-
-# Test health endpoints
-curl -k https://localhost/api/health/health -H "Host: ggpaintings.com"
-curl http://localhost:9090/health
-```
-
-Port 9090 maps to NGINX's internal 8080 health server. Port 80 is a 301 redirect only, and
-`https://localhost` needs `-k` (self-signed origin cert) plus an explicit `Host:` header so
-NGINX selects the right `server_name` block.
-
-### Production Configuration
-
-**Environment Variables** (in `.env`):
-```env
-NEXT_PUBLIC_API_URL=https://ggpaintings.com/api
-SERVER_API_URL=http://api:8080/api
-CORS_ALLOWED_ORIGINS=https://ggpaintings.com
-```
-
-**How it works:**
-- Browser accesses everything at `https://ggpaintings.com`
-- NGINX routes `/api/*` to API container
-- NGINX routes `/*` to Frontend container
-- Frontend container accesses API at `http://api:8080/api` (Docker network)
-- No CORS issues (same origin)
-
-### Access Points
-- Frontend: https://ggpaintings.com
-- API: https://ggpaintings.com/api
-- Health: http://localhost:9090/health (host mapping of NGINX's internal 8080)
-- Swagger: Disabled in production
-
-### Stop Production Environment
-
-```bash
-docker-compose -f docker-compose.prod.yml down
-```
-
-## Cloudflare Full Mode (Home Server Deployment)
-
-> **Read this section as "how Cloudflare TLS works", not as a separate deployment.**
-> The canonical procedure is **Multi-Site Production Deployment** further down; it uses
-> `docker-compose.multi.yml`. Nothing below requires a compose file of its own.
-
-### Purpose
-- Optimized for home servers with dynamic IP
-- Cloudflare handles SSL at the edge (free, trusted certificates)
-- NGINX terminates SSL with self-signed certificate
-- Extra encryption layer between Cloudflare and your server
-- No need for Let's Encrypt or domain validation
-
-### Architecture
-
-```
-User Browser → HTTPS → Cloudflare (Edge SSL) → HTTPS → Your Server (NGINX) → HTTP → Containers
-```
-
-### Prerequisites
-
-- Docker and Docker Compose installed on Linux server
-- Domain name configured with Cloudflare as DNS provider
-- Cloudflare account with site added
-- Port 443 open on your server (port 80 optional)
-
-### Deploy with Cloudflare
-
-#### Step 1: Prepare Server
-
-```bash
-# On your Linux server
-git clone <repository-url>
-cd Painting_Website_Docker_NextJS/docker-compose
-```
-
-#### Step 2: Configure Environment
-
-```bash
-cp .env.example .env
-nano .env
-```
-
-Update these values in `.env`:
-
-```env
-# PostgreSQL password — must match BOTH the password the existing postgres_data
-# volume was initialized with AND secrets/postgres_password
-POSTGRES_PASSWORD=YourSecurePassword123!
-
-# CORS - your production domain
-CORS_ALLOWED_ORIGINS=https://ggpaintings.com
-
-# API URLs for Cloudflare Full mode
-NEXT_PUBLIC_API_URL=https://ggpaintings.com/api
-SERVER_API_URL=http://api:8080/api
-```
-
-#### Step 3: Generate Self-Signed SSL Certificates
-
-`nginx/nginx.conf` is shared by both stacks and expects one certificate **per site**,
-at `nginx/ssl/gg/` and `nginx/ssl/flynn/`. A missing directory is silently created as
-an empty mount and NGINX then fails with *cannot load certificate*.
-
-```bash
-mkdir -p nginx/ssl/gg nginx/ssl/flynn
-
-# Site gg
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout nginx/ssl/gg/server.key \
-  -out nginx/ssl/gg/server.crt \
-  -subj "/C=US/ST=YourState/L=YourCity/O=YourOrganization/CN=ggpaintings.com"
-
-# Site flynn
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout nginx/ssl/flynn/server.key \
-  -out nginx/ssl/flynn/server.crt \
-  -subj "/C=US/ST=YourState/L=YourCity/O=YourOrganization/CN=flynnart.com"
-
-chmod 600 nginx/ssl/gg/server.key nginx/ssl/flynn/server.key
-chmod 644 nginx/ssl/gg/server.crt nginx/ssl/flynn/server.crt
-```
-
-`./scripts/generate-prod-ssl.sh` does the same thing interactively.
-
-#### Step 4: Configure Cloudflare
-
-1. **Add your site to Cloudflare** (if not already done)
-2. **Change DNS nameservers** at your registrar to Cloudflare's
-3. **Set SSL/TLS mode to "Full"**:
-   - Go to SSL/TLS → Overview
-   - Select "Full" (not "Flexible" or "Full (Strict)")
-4. **Ensure DNS records are proxied** (orange cloud icon):
-   - Go to DNS
-   - Make sure A record for your domain has orange cloud
-
-#### Step 5: Deploy
-
-```bash
-# Return to the docker-compose/ directory
-cd ../..
-
-# Recommended: pre-flight checks, cert/permission setup, database creation, deploy
-./deploy-multi.sh
-
-# Or manually:
-docker compose -f docker-compose.multi.yml up -d --build
-```
-
-#### Step 6: Verify
-
-```bash
-# Container status — all 6 containers should report "healthy"
-docker compose -f docker-compose.multi.yml ps
-
-# View logs
-docker compose -f docker-compose.multi.yml logs -f
-
-# Test health endpoint (host 9090 -> NGINX container 8080)
-curl http://localhost:9090/health
-
-# Test the sites
-curl -I https://ggpaintings.com
-curl -I https://flynnart.com
-```
-
-### Access Points
-
-- Frontend: https://ggpaintings.com and https://flynnart.com (via Cloudflare)
-- API: https://\<domain\>/api (via Cloudflare)
-- Health: http://localhost:9090/health (local only — do not expose this port)
-- NGINX logs: `docker compose -f docker-compose.multi.yml logs nginx`
-
-### Stop the Stack
-
-```bash
-docker compose -f docker-compose.multi.yml down
+docker compose down -v
 ```
 
 ## Multi-Site Production Deployment
@@ -784,7 +352,7 @@ The multi-site architecture runs two independent painting gallery sites on a sin
 | Site | Domain | API Container | Frontend Container | Database |
 |------|--------|--------------|-------------------|----------|
 | gg | ggpaintings.com | artgallery-api-gg | artgallery-frontend-gg | artgallery_gg |
-| flynn | flynnart.com | artgallery-api-flynn | artgallery-frontend-flynn | artgallery_flynn |
+| flynn | earthelementsart.com | artgallery-api-flynn | artgallery-frontend-flynn | artgallery_flynn |
 
 **Shared resources:**
 - Single PostgreSQL container (separate databases)
@@ -877,7 +445,7 @@ GG_ADMIN_JWT_SECRET_KEY=CHANGE_THIS_TO_A_RANDOM_SECRET_KEY_GG
 GG_ADMIN_JWT_EXPIRY_MINUTES=60
 GG_ADMIN_AUTHORIZED_EMAILS=gloriagronowicz@gmail.com
 
-# === Site: flynn (flynnart.com) ===
+# === Site: flynn (earthelementsart.com) ===
 FLYNN_SITE_NAME="Terri Gray Fine Art"
 FLYNN_SITE_DESCRIPTION="Fine art paintings by Flynn"
 FLYNN_CONTACT_EMAIL="texasterrigray@yahoo.com"
@@ -895,17 +463,17 @@ FLYNN_NEXT_PUBLIC_API_URL=/api
 FLYNN_SERVER_API_URL=http://api-flynn:8080/api
 
 # CORS
-FLYNN_CORS_ALLOWED_ORIGINS=https://flynnart.com,https://www.flynnart.com
+FLYNN_CORS_ALLOWED_ORIGINS=https://earthelementsart.com,https://www.earthelementsart.com
 
 # Google OAuth (site flynn)
 FLYNN_GOOGLE_AUTH_CLIENT_ID=YOUR_FLYNN_CLIENT_ID.apps.googleusercontent.com
 FLYNN_GOOGLE_AUTH_CLIENT_SECRET=YOUR_FLYNN_CLIENT_SECRET
-FLYNN_GOOGLE_AUTH_REDIRECT_URI=https://flynnart.com/admin/login
+FLYNN_GOOGLE_AUTH_REDIRECT_URI=https://earthelementsart.com/admin/login
 
 # Yahoo OAuth (site flynn)
 FLYNN_YAHOO_AUTH_CLIENT_ID=YOUR_FLYNN_YAHOO_CLIENT_ID
 FLYNN_YAHOO_AUTH_CLIENT_SECRET=YOUR_FLYNN_YAHOO_CLIENT_SECRET
-FLYNN_YAHOO_AUTH_REDIRECT_URI=https://flynnart.com/admin/login
+FLYNN_YAHOO_AUTH_REDIRECT_URI=https://earthelementsart.com/admin/login
 
 # Admin JWT (site flynn)
 FLYNN_ADMIN_JWT_SECRET_KEY=CHANGE_THIS_TO_A_RANDOM_SECRET_KEY_FLYNN
@@ -924,8 +492,8 @@ entries — one OAuth client per site, each with both apex and `www`:
 ```
 https://ggpaintings.com/admin/login
 https://www.ggpaintings.com/admin/login
-https://flynnart.com/admin/login
-https://www.flynnart.com/admin/login
+https://earthelementsart.com/admin/login
+https://www.earthelementsart.com/admin/login
 ```
 
 The `/admin/login` page reads the `code` query parameter and POSTs it to
@@ -991,7 +559,7 @@ cd flynn
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -keyout server.key \
   -out server.crt \
-  -subj "/C=US/ST=YourState/L=YourCity/O=YourOrganization/CN=flynnart.com"
+  -subj "/C=US/ST=YourState/L=YourCity/O=YourOrganization/CN=earthelementsart.com"
 chmod 600 server.key
 chmod 644 server.crt
 
@@ -1000,7 +568,7 @@ cd ../..
 
 ### Step 4: Configure Cloudflare (Both Sites)
 
-For **each** domain (ggpaintings.com and flynnart.com):
+For **each** domain (ggpaintings.com and earthelementsart.com):
 
 1. **Add site to Cloudflare** (if not already done)
 2. **Change DNS nameservers** at your registrar to Cloudflare's
@@ -1027,7 +595,7 @@ chmod +x deploy-multi.sh
 | Step | What it does | Why it matters |
 |------|--------------|----------------|
 | 1 | `chown 101:101` on `nginx/ssl/gg`, `nginx/ssl/flynn`, `nginx/nginx.conf` | NGINX runs as UID 101 and cannot read root-owned key files |
-| 2 | Creates `image-data/{gg,flynn}/{original,high-res,thumbnail}` and `chown -R 1:1` them | Docker creates missing bind-mount directories as **root**; the API runs as UID 1, so every painting upload would fail with *permission denied* |
+| 2 | Creates `image-data/{gg,flynn}/{original,high-res,thumbnail}` and `chown -R 1654:1654` them | Docker creates missing bind-mount directories as **root**; the API runs as UID 1654 (`app`), so every painting upload would fail with *permission denied* |
 | 3 | `docker compose down` | Clears containers left over from another compose file |
 | 4 | Starts PostgreSQL and waits for `healthy` | Avoids racing the API containers |
 | 5 | Creates `artgallery_gg` / `artgallery_flynn` if missing | `scripts/init-databases.sql` only runs on an **empty** volume — see the cutover section below |
@@ -1042,15 +610,16 @@ chmod +x deploy-multi.sh
 It also refuses to start if `secrets/postgres_password`, either SSL directory, or
 `nginx/nginx.conf` is missing, and finishes by checking that no container serves traffic as
 root — `id -u` for the four app containers, `docker top` process owner for PostgreSQL and
-NGINX.
+NGINX — plus a `test -w /app/images/original` inside each API container, which is the only
+check that catches a wrong UID on the image bind mounts.
 
 **Manual equivalent** (only if you cannot run the script):
 
 ```bash
-# 1. Image storage — must be owned by UID 1 (the API user)
+# 1. Image storage — must be owned by UID 1654 (the API's `app` user)
 mkdir -p image-data/gg/original image-data/gg/high-res image-data/gg/thumbnail
 mkdir -p image-data/flynn/original image-data/flynn/high-res image-data/flynn/thumbnail
-sudo chown -R 1:1 image-data
+sudo chown -R 1654:1654 image-data
 
 # 2. NGINX files — must be readable by UID 101 (the nginx user)
 sudo chown -R 101:101 nginx/ssl/gg nginx/ssl/flynn nginx/nginx.conf
@@ -1117,7 +686,7 @@ docker exec artgallery-api-flynn curl -fsS http://localhost:8080/api/health/heal
 
 # End-to-end through NGINX (self-signed origin cert, so -k; Host selects the server block)
 curl -k https://localhost/api/health/health -H "Host: ggpaintings.com"
-curl -k https://localhost/api/health/health -H "Host: flynnart.com"
+curl -k https://localhost/api/health/health -H "Host: earthelementsart.com"
 ```
 
 > Port 80 serves **nothing**. The only `listen 80` server block in `nginx.conf` is a
@@ -1135,8 +704,8 @@ curl -I https://ggpaintings.com
 curl -I https://ggpaintings.com/api/paintings
 
 # Site flynn
-curl -I https://flynnart.com
-curl -I https://flynnart.com/api/paintings
+curl -I https://earthelementsart.com
+curl -I https://earthelementsart.com/api/paintings
 ```
 
 ### Access Points
@@ -1144,7 +713,7 @@ curl -I https://flynnart.com/api/paintings
 | Site | Frontend | API | Notes |
 |------|----------|-----|-------|
 | gg | https://ggpaintings.com | https://ggpaintings.com/api | Via Cloudflare |
-| flynn | https://flynnart.com | https://flynnart.com/api | Via Cloudflare |
+| flynn | https://earthelementsart.com | https://earthelementsart.com/api | Via Cloudflare |
 | Health | http://localhost:9090/health | - | Local only |
 
 ### Stop Multi-Site Environment
@@ -1170,11 +739,151 @@ Prefer the script over a bare `up -d --build` for updates too: it re-applies the
 `image-data` and SSL ownership fixes (which are lost if you ever recreate those paths)
 and re-creates any database that went missing.
 
+## Cloudflare Full Mode (Home Server Deployment)
+
+> **Read this section as "how Cloudflare TLS works", not as a separate deployment.**
+> The canonical procedure is **Multi-Site Production Deployment** above; it uses
+> `docker-compose.multi.yml`. Nothing below requires a compose file of its own, and every
+> command here assumes the per-site `nginx/ssl/gg` + `nginx/ssl/flynn` certificate layout.
+
+### Purpose
+- Optimized for home servers with dynamic IP
+- Cloudflare handles SSL at the edge (free, trusted certificates)
+- NGINX terminates SSL with self-signed certificate
+- Extra encryption layer between Cloudflare and your server
+- No need for Let's Encrypt or domain validation
+
+### Architecture
+
+```
+User Browser → HTTPS → Cloudflare (Edge SSL) → HTTPS → Your Server (NGINX) → HTTP → Containers
+```
+
+### Prerequisites
+
+- Docker and Docker Compose installed on Linux server
+- Domain name configured with Cloudflare as DNS provider
+- Cloudflare account with site added
+- Port 443 open on your server (port 80 optional)
+
+### Deploy with Cloudflare
+
+#### Step 1: Prepare Server
+
+```bash
+# On your Linux server
+git clone <repository-url>
+cd Painting_Website_Docker_NextJS/docker-compose
+```
+
+#### Step 2: Configure Environment
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+Update these values in `.env`:
+
+```env
+# PostgreSQL password — must match BOTH the password the existing postgres_data
+# volume was initialized with AND secrets/postgres_password
+POSTGRES_PASSWORD=YourSecurePassword123!
+
+# CORS - your production domain
+CORS_ALLOWED_ORIGINS=https://ggpaintings.com
+
+# API URLs for Cloudflare Full mode
+NEXT_PUBLIC_API_URL=https://ggpaintings.com/api
+SERVER_API_URL=http://api:8080/api
+```
+
+#### Step 3: Generate Self-Signed SSL Certificates
+
+`nginx/nginx.conf` is shared by both stacks and expects one certificate **per site**,
+at `nginx/ssl/gg/` and `nginx/ssl/flynn/`. A missing directory is silently created as
+an empty mount and NGINX then fails with *cannot load certificate*.
+
+```bash
+mkdir -p nginx/ssl/gg nginx/ssl/flynn
+
+# Site gg
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout nginx/ssl/gg/server.key \
+  -out nginx/ssl/gg/server.crt \
+  -subj "/C=US/ST=YourState/L=YourCity/O=YourOrganization/CN=ggpaintings.com"
+
+# Site flynn
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout nginx/ssl/flynn/server.key \
+  -out nginx/ssl/flynn/server.crt \
+  -subj "/C=US/ST=YourState/L=YourCity/O=YourOrganization/CN=earthelementsart.com"
+
+chmod 600 nginx/ssl/gg/server.key nginx/ssl/flynn/server.key
+chmod 644 nginx/ssl/gg/server.crt nginx/ssl/flynn/server.crt
+```
+
+`./scripts/generate-prod-ssl.sh` does the same thing interactively.
+
+#### Step 4: Configure Cloudflare
+
+1. **Add your site to Cloudflare** (if not already done)
+2. **Change DNS nameservers** at your registrar to Cloudflare's
+3. **Set SSL/TLS mode to "Full"**:
+   - Go to SSL/TLS → Overview
+   - Select "Full" (not "Flexible" or "Full (Strict)")
+4. **Ensure DNS records are proxied** (orange cloud icon):
+   - Go to DNS
+   - Make sure A record for your domain has orange cloud
+
+#### Step 5: Deploy
+
+```bash
+# Return to the docker-compose/ directory
+cd ../..
+
+# Recommended: pre-flight checks, cert/permission setup, database creation, deploy
+./deploy-multi.sh
+
+# Or manually:
+docker compose -f docker-compose.multi.yml up -d --build
+```
+
+#### Step 6: Verify
+
+```bash
+# Container status — all 6 containers should report "healthy"
+docker compose -f docker-compose.multi.yml ps
+
+# View logs
+docker compose -f docker-compose.multi.yml logs -f
+
+# Test health endpoint (host 9090 -> NGINX container 8080)
+curl http://localhost:9090/health
+
+# Test the sites
+curl -I https://ggpaintings.com
+curl -I https://earthelementsart.com
+```
+
+### Access Points
+
+- Frontend: https://ggpaintings.com and https://earthelementsart.com (via Cloudflare)
+- API: https://\<domain\>/api (via Cloudflare)
+- Health: http://localhost:9090/health (local only — do not expose this port)
+- NGINX logs: `docker compose -f docker-compose.multi.yml logs nginx`
+
+### Stop the Stack
+
+```bash
+docker compose -f docker-compose.multi.yml down
+```
+
 ## Upgrading a Single-Site Server to Multi-Site
 
 This is the path for a server that already runs ggpaintings.com via
 `docker-compose.prod.yml` and is being moved onto `docker-compose.multi.yml` in order to
-add flynnart.com. It is **not** a drop-in `up -d`. The two stacks disagree on four things,
+add earthelementsart.com. It is **not** a drop-in `up -d`. The two stacks disagree on four things,
 and each one takes the existing gg site down if you skip it.
 
 ### What changes between the two stacks
@@ -1200,17 +909,25 @@ Expect 5–15 minutes of downtime for ggpaintings.com. Schedule a window.
 
 ```bash
 cd ~/Painting_Website_Docker_NextJS/docker-compose
-mkdir -p backups
+
+# deploy-multi.sh restores from BACKUP_DIR (default /opt/artgallery/backups), not from
+# ./backups. Writing the dump anywhere else means the restore is skipped and gg is rebuilt
+# from seed data. Override it by setting BACKUP_DIR in .env.multi.
+BACKUP_DIR=${BACKUP_DIR:-/opt/artgallery/backups}
+mkdir -p "$BACKUP_DIR"
 
 # Database — note the single-site container and database names
+STAMP=$(date +%Y%m%d_%H%M%S)
 docker exec artgallery-postgres-prod \
   pg_dump -U postgres -Fc -f /tmp/gg.dump artgallery
 docker cp artgallery-postgres-prod:/tmp/gg.dump \
-  ./backups/artgallery_artgallery_gg_$(date +%Y%m%d_%H%M%S).dump
+  "$BACKUP_DIR/artgallery_artgallery_gg_$STAMP.dump"
 
-# Images — move the named volume into the bind mount multi.yml expects
-docker volume ls | grep image_data   # confirm the exact volume name first
-docker run --rm -v docker-compose_image_data:/from -v "$PWD/image-data:/to" alpine \
+# Images — move the named volume into the bind mount multi.yml expects.
+# Named volumes are prefixed with the compose project name, so look it up instead of guessing.
+IMG_VOL=$(docker volume ls --format '{{.Name}}' | grep 'image_data$' | head -1)
+echo "image volume: ${IMG_VOL:-none found}"
+[ -n "$IMG_VOL" ] && docker run --rm -v "$IMG_VOL":/from -v "$PWD/image-data:/to" alpine \
   sh -c 'mkdir -p /to/gg && cp -a /from/. /to/gg/'
 ```
 
@@ -1230,17 +947,31 @@ mkdir -p nginx/ssl/gg nginx/ssl/flynn
 # Generate a fresh self-signed pair for flynn (full command in Step 3 above)
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -keyout nginx/ssl/flynn/server.key -out nginx/ssl/flynn/server.crt \
-  -subj "/C=US/ST=Texas/L=Austin/O=Terri Gray Fine Art/CN=flynnart.com"
+  -subj "/C=US/ST=Texas/L=Austin/O=Terri Gray Fine Art/CN=earthelementsart.com"
 ```
 
 **3. Stop the single-site stack completely**
 
+`deploy-multi.sh` now runs `docker compose -f docker-compose.prod.yml down` for you before it
+brings anything up, then refuses to continue if any of `artgallery-nginx`,
+`artgallery-postgres-prod`, `artgallery-api-prod` or `artgallery-frontend-prod` still exists —
+a leftover container keeps ports 80/443/9090 bound and the new NGINX cannot start.
+
+To do it by hand first (or to clear that abort):
+
 ```bash
 docker compose -f docker-compose.prod.yml down
-docker ps --format '{{.Names}}'   # must be empty before continuing
+docker ps -a --format '{{.Names}}'   # must be empty before continuing
 ```
 
-If `artgallery-nginx` is still up, port 443 stays bound and the new NGINX cannot start.
+`docker compose down` only clears containers belonging to its own **project**. If the original
+gg deployment used a different project name (Visual Studio Docker tooling, an explicit `-p`, or
+a different checkout path), the old containers survive and the script stops with the list of
+names to remove. Check what is there first:
+
+```bash
+docker volume ls | grep postgres_data   # more than one = more than one project
+```
 
 **4. Confirm the PostgreSQL password still matches**
 
@@ -1258,7 +989,7 @@ one. `.env.multi` must contain the *original* value — see section 2.4.
 ```
 
 It creates `artgallery_gg` and `artgallery_flynn` (step 5/8), chowns `image-data/` to
-UID 1 (step 2/8), and restores the newest matching dump (step 6/8).
+UID 1654 (step 2/8), and restores the newest matching dump (step 6/8).
 
 **6. Verify before calling it done**
 
@@ -1271,7 +1002,7 @@ docker exec artgallery-postgres psql -U postgres -d artgallery_gg -c 'SELECT COU
 
 # Each site serves its own content, not gg's
 curl -k https://localhost/api/paintings -H "Host: ggpaintings.com" | head -c 400
-curl -k https://localhost/api/paintings -H "Host: flynnart.com"   | head -c 400
+curl -k https://localhost/api/paintings -H "Host: earthelementsart.com"   | head -c 400
 ```
 
 A non-zero painting count on gg means the restore worked. If `artgallery_gg` came up empty,
@@ -1279,14 +1010,19 @@ the dump was skipped — re-check the filename against the glob in step 1.
 
 ### After the cutover
 
-- Add flynnart.com to Cloudflare and set SSL/TLS to **Full** (Step 4).
-- Register the flynn OAuth client with `https://flynnart.com/admin/login` and
-  `https://www.flynnart.com/admin/login` (section 2.2).
+- Add earthelementsart.com to Cloudflare and set SSL/TLS to **Full** (Step 4).
+- Register the flynn OAuth client with `https://earthelementsart.com/admin/login` and
+  `https://www.earthelementsart.com/admin/login` (section 2.2).
 - Re-point the backup cron: run `scripts/install-backup-cron-multi.sh`, then `crontab -e`
   and remove the old single-site entry so two jobs are not writing to the same directory.
-- `image-data/` is **not** gitignored — 167 painting files are currently tracked. Adding
-  flynn's paintings will keep growing the repo; consider moving image storage to object
-  storage or adding `image-data/` to `.gitignore` before the next commit.
+- `image-data/` is **intentionally tracked as seed fixture data** — do not add an ignore
+  rule for it. The seed data references these files by path (for example
+  `/images/high-res/B_W_Bird_12_16.jpeg`), served from `/app/images` and bound from
+  `./image-data/<site>`. A clone without `image-data/` therefore yields a seeded database
+  whose every painting 404s. A `.gitignore` rule would also be inert here, because those
+  paths are already tracked — it would take a `git rm -r --cached` to untrack them, which
+  breaks the documented `git pull` deploy path. If the repo grows too large, move image
+  storage to object storage instead of untracking it.
 
 ### Multi-Site Local Testing
 
@@ -1315,61 +1051,57 @@ docker compose -f docker-compose.multi.yml -f docker-compose.multi.local.yml up 
 - [ ] Cloudflare SSL/TLS mode set to "Full" for both domains
 - [ ] Cloudflare DNS records proxied (orange cloud enabled) for both domains
 
-## Switching Between Modes
+## Switching Between Stacks
 
-### From Development to Production
+Only **one** stack runs on a host at a time. Every compose file here binds host ports 80/443
+and claims the `artgallery-nginx` container name, so bringing one up means tearing the other
+down first.
 
-1. **Stop development:**
-   ```bash
-   docker-compose down
-   ```
+### Multi-Site ⇄ Local Single-Site
 
-2. **Update .env for production:**
-    ```env
-    NEXT_PUBLIC_API_URL=https://ggpaintings.com/api
-    SERVER_API_URL=http://api:8080/api
-    CORS_ALLOWED_ORIGINS=https://ggpaintings.com
-    ```
+```bash
+# Multi-site -> local single-site
+docker compose -f docker-compose.multi.yml down
+docker compose down            # loads docker-compose.yml + docker-compose.override.yml
 
-3. **Deploy production:**
-   ```bash
-   docker-compose -f docker-compose.prod.yml up -d --build
-   ```
+# Local single-site -> multi-site
+docker compose down
+./deploy-multi.sh              # preferred over a bare `up -d --build`
+```
 
-### From Production to Development
+`docker-compose.yml` reads `.env`; `docker-compose.multi.yml` reads `.env.multi`. They are
+separate files and neither one inherits from the other.
 
-1. **Stop production:**
-   ```bash
-   docker-compose -f docker-compose.prod.yml down
-   ```
+### If the host is still on `docker-compose.prod.yml`
 
-2. **Update .env for development:**
-   ```env
-   NEXT_PUBLIC_API_URL=http://localhost:8080/api
-   SERVER_API_URL=http://api:8080/api
-   CORS_ALLOWED_ORIGINS=http://localhost:3000
-   ```
-
-3. **Start development:**
-   ```bash
-   docker-compose up -d
-   ```
+That stack is retired. `deploy-multi.sh` runs `docker compose -f docker-compose.prod.yml down`
+for you, then aborts if any of `artgallery-nginx`, `artgallery-postgres-prod`,
+`artgallery-api-prod` or `artgallery-frontend-prod` still exists — a leftover container keeps
+ports 80/443/9090 bound and the new NGINX cannot start. For the data side of that move, see
+[Upgrading a Single-Site Server to Multi-Site](#upgrading-a-single-site-server-to-multi-site).
 
 ## Key Differences
 
-| Feature | Development | Production |
-|---------|-------------|------------|
-| Compose File | `docker-compose.yml` | `docker-compose.prod.yml` |
-| Build Target | `development` | `production` |
-| Hot Reload | ✅ Yes | ❌ No |
-| NGINX | ❌ No | ✅ Yes |
-| HTTPS | ❌ No | ✅ Yes |
-| Swagger | ✅ Enabled | ❌ Disabled |
-| Logging | Information | Warning |
-| Database | PostgreSQL 17, one `artgallery` database | PostgreSQL 17, `artgallery_gg` + `artgallery_flynn` |
+Neither Docker stack hot-reloads: both build the frontend's `production` target and run every
+container read-only. "Local" below means the single-site stack, which reproduces production
+topology on one machine — it is not a coding environment.
+
+| Feature | Local (`docker-compose.yml` + override) | Production (`docker-compose.multi.yml`) |
+|---------|------------------------------------------|------------------------------------------|
+| Sites | One (gg) | Two (gg + flynn) |
+| Env file | `.env` | `.env.multi` |
+| NGINX config | `nginx/nginx.local.conf` (via override) | `nginx/nginx.conf` |
+| SSL layout | `nginx/ssl/localhost/` (via override) | `nginx/ssl/gg/` + `nginx/ssl/flynn/` |
+| Compose service names | `api`, `frontend` | `api-gg`, `frontend-gg`, `api-flynn`, `frontend-flynn` |
+| API container | `artgallery-api-prod` | `artgallery-api-gg`, `artgallery-api-flynn` |
+| Postgres container | `artgallery-postgres-prod` | `artgallery-postgres` |
+| Databases | one `artgallery` | `artgallery_gg` + `artgallery_flynn` |
+| Image storage | named volume `image_data` | bind mounts `./image-data/gg`, `./image-data/flynn` |
+| Host ports | 80, 443, 9090, plus 8080 (override) | 80, 443, 9090 |
 | API URL (Browser) | `http://localhost:8080/api` | `/api` |
-| CORS Required | ✅ Yes | ❌ No (same origin) |
-| Restart Policy | None | `unless-stopped` |
+| CORS | Required (`CORS_ALLOWED_ORIGINS`) | Not required (same origin) |
+| Swagger | Disabled — `ASPNETCORE_ENVIRONMENT=Production` | Disabled |
+| Restart policy | `unless-stopped` | `unless-stopped` |
 
 ## Configuration Details
 
@@ -1405,100 +1137,126 @@ Production settings in `ServerApp/ServerApp.Api/appsettings.Production.json`:
 
 ## Updating Application Code
 
-### In Development
+There is no hot-reload path in Docker — both compose files build the frontend's `production`
+target and run every container read-only, so any source change needs a rebuild. For iteration
+without rebuilds, run the two apps outside Docker (`clientapp`: `npm run dev`, `ServerApp`:
+`dotnet run`) against a local PostgreSQL.
 
-1. Make changes to source code
-2. Changes automatically hot-reload
-3. No rebuild needed
-
-### In Production
+### On a Production Server
 
 1. Pull latest code:
    ```bash
    git pull
    ```
 
-2. Rebuild and redeploy:
+2. Redeploy:
    ```bash
-   docker-compose -f docker-compose.prod.yml up -d --build
+   ./deploy-multi.sh
    ```
 
 3. Monitor logs:
    ```bash
-   docker-compose -f docker-compose.prod.yml logs -f
+   docker compose -f docker-compose.multi.yml logs -f
    ```
 
+Prefer the script over a bare `docker compose up -d --build`: it re-applies the `image-data`
+and SSL ownership fixes and re-creates any database that went missing.
+
 ## Monitoring and Maintenance
+
+Everything below uses `docker-compose.multi.yml`. Pass the compose **service** name, not the
+container name: `postgres`, `api-gg`, `frontend-gg`, `api-flynn`, `frontend-flynn`, `nginx`.
 
 ### View Logs
 
 ```bash
 # All services
-docker-compose -f docker-compose.prod.yml logs -f
+docker compose -f docker-compose.multi.yml logs -f
 
-# Specific service (use the compose *service* name, not the container name)
-docker-compose -f docker-compose.prod.yml logs -f api
-docker-compose -f docker-compose.prod.yml logs -f frontend
-docker-compose -f docker-compose.prod.yml logs -f postgres
-docker-compose -f docker-compose.prod.yml logs -f nginx
+# One service
+docker compose -f docker-compose.multi.yml logs -f api-gg
+docker compose -f docker-compose.multi.yml logs -f api-flynn
+docker compose -f docker-compose.multi.yml logs -f frontend-gg
+docker compose -f docker-compose.multi.yml logs -f frontend-flynn
+docker compose -f docker-compose.multi.yml logs -f nginx
+docker compose -f docker-compose.multi.yml logs -f postgres
 ```
 
 ### Restart Services
 
 ```bash
 # Restart all services
-docker-compose -f docker-compose.prod.yml restart
+docker compose -f docker-compose.multi.yml restart
 
-# Restart specific service
-docker-compose -f docker-compose.prod.yml restart api
+# Restart one service
+docker compose -f docker-compose.multi.yml restart api-flynn
 ```
+
+NGINX resolves the `api-gg` / `api-flynn` upstream hostnames when it loads its config, so if an
+API comes back on a different address and NGINX keeps returning 502, restart NGINX too.
 
 ### Database Backup
 
-Use the scripts in `scripts/` rather than ad-hoc commands. Both run `pg_dump -Fc` inside the
+Use the scripts in `scripts/` rather than ad-hoc commands. They run `pg_dump -Fc` inside the
 PostgreSQL container, copy the dump to the host, write a `.sha256` checksum, and prune dumps
-older than the retention window:
+older than the retention window.
 
 ```bash
 cd docker-compose
 
-# Single-site stack (container artgallery-postgres-prod, database artgallery)
-./scripts/backup.sh
-
-# Multi-site stack (container artgallery-postgres, databases artgallery_gg + artgallery_flynn)
+# Multi-site stack — container artgallery-postgres, databases artgallery_gg + artgallery_flynn
 ./scripts/backup-multi.sh              # both sites
+./scripts/backup-multi.sh gg           # gg only
 ./scripts/backup-multi.sh flynn        # flynn only
+
+# Once installed on the server, the same script lives under /opt/artgallery/scripts/
+/opt/artgallery/scripts/backup-multi.sh
 ```
 
-Manual equivalent for the single-site stack:
+Dumps land in `$BACKUP_DIR` (default `/opt/artgallery/backups`) named
+`artgallery_<database>_<timestamp>.dump`, for example
+`artgallery_artgallery_gg_20261105_020000.dump`. That `artgallery_<database>_` prefix is the
+exact glob `deploy-multi.sh` and `restore-multi.sh` search for.
+
+Manual equivalent for the multi-site stack:
 
 ```bash
-docker exec artgallery-postgres-prod pg_dump -U postgres -Fc -f /tmp/artgallery.dump artgallery
-docker cp artgallery-postgres-prod:/tmp/artgallery.dump ./artgallery.dump
+docker exec artgallery-postgres pg_dump -U postgres -Fc -f /tmp/gg.dump artgallery_gg
+docker cp artgallery-postgres:/tmp/gg.dump ./artgallery_artgallery_gg_$(date +%Y%m%d_%H%M%S).dump
 ```
 
-> **Filename gotcha:** `backup.sh` writes `artgallery_db_<timestamp>.dump`, but
-> `deploy-multi.sh` and `restore-multi.sh` only look for `artgallery_<database>_*.dump`
-> (e.g. `artgallery_artgallery_gg_20261101_020000.dump`). A single-site backup is therefore
-> silently skipped during the multi-site cutover. Either rename it to
+> **Legacy scripts:** `scripts/backup.sh` and `scripts/restore.sh` still target the retired
+> single-site stack — container `artgallery-postgres-prod`, database `artgallery`, filename
+> `artgallery_db_<timestamp>.dump`. That filename does **not** match the glob above, so a dump
+> made by `backup.sh` is silently skipped during a multi-site cutover. Rename it to
 > `artgallery_artgallery_gg_<timestamp>.dump` before deploying, or restore it explicitly with
 > `./scripts/restore-multi.sh gg <file>.dump`, which accepts an explicit filename.
 
 ### Database Restore
 
-```bash
-# Copy the dump into the container
-docker cp ./artgallery.dump artgallery-postgres-prod:/tmp/artgallery.dump
+Use `./scripts/restore-multi.sh <gg|flynn> [dumpfile]`. It verifies the `.sha256` checksum,
+stops the affected API container, drops and recreates the correct database, restores into it,
+then restarts the API.
 
-# Drop, recreate, then restore into the fresh database
-docker exec artgallery-postgres-prod psql -U postgres -c "DROP DATABASE IF EXISTS artgallery;"
-docker exec artgallery-postgres-prod psql -U postgres -c "CREATE DATABASE artgallery;"
-docker exec -i artgallery-postgres-prod pg_restore -U postgres -d artgallery /tmp/artgallery.dump
+```bash
+# Interactive — lists matching dumps in $BACKUP_DIR, newest first
+/opt/artgallery/scripts/restore-multi.sh gg
+
+# Explicit file
+/opt/artgallery/scripts/restore-multi.sh flynn artgallery_artgallery_flynn_20261105_020000.dump
 ```
 
-For the multi-site stack prefer `./scripts/restore-multi.sh <gg|flynn> [dumpfile]`. It stops
-the affected API container first, verifies the checksum, restores into the correct database,
-and restarts the API afterwards.
+If you have to do it by hand, the multi-site equivalent is:
+
+```bash
+# Stop the site's API first — leaving it up means in-flight requests hit a half-restored schema
+docker stop artgallery-api-gg
+docker cp ./gg.dump artgallery-postgres:/tmp/gg.dump
+docker exec artgallery-postgres psql -U postgres -c "DROP DATABASE IF EXISTS artgallery_gg;"
+docker exec artgallery-postgres psql -U postgres -c "CREATE DATABASE artgallery_gg;"
+docker exec -i artgallery-postgres pg_restore -U postgres -d artgallery_gg /tmp/gg.dump
+docker start artgallery-api-gg
+```
 
 ## Security Considerations
 
@@ -1513,19 +1271,29 @@ and restarts the API afterwards.
 
 ### CORS Configuration
 
-Update `CORS_ALLOWED_ORIGINS` with your production domain:
+The multi-site stack has one CORS variable **per site**. Both are redundant in production,
+because each site's browser traffic is same-origin (`/api` on the same domain), so leave them
+at the values in `.env.multi.example` unless you add a separate frontend origin:
+
 ```env
-CORS_ALLOWED_ORIGINS=https://ggpaintings.com
+GG_CORS_ALLOWED_ORIGINS=https://ggpaintings.com
+FLYNN_CORS_ALLOWED_ORIGINS=https://earthelementsart.com,https://www.earthelementsart.com
 ```
 
-### SSL/TLS Auto-Renewal
+### SSL/TLS Certificate Renewal
 
-If using Let's Encrypt, configure auto-renewal:
+Production uses self-signed origin certificates, which Cloudflare Full mode accepts. They expire
+after 365 days. Regenerate them per site (Step 3 of the Multi-Site Production Deployment), then
+restart NGINX:
+
 ```bash
-sudo crontab -e
-# Add this line for auto-renewal
-0 0 * * * /usr/bin/certbot renew --quiet && docker-compose -f docker-compose.prod.yml restart nginx
+docker compose -f docker-compose.multi.yml restart nginx
 ```
+
+If you switch to Let's Encrypt instead, note that the certificates live in `nginx/ssl/gg/` and
+`nginx/ssl/flynn/`, and that `deploy-multi.sh` re-chowns those directories to UID 101 on every
+run. A certbot renewal hook has to write into both per-site directories or the next deploy will
+serve stale certificates.
 
 ### Firewall Configuration
 
@@ -1539,100 +1307,105 @@ sudo ufw enable
 
 ## Troubleshooting
 
+All commands below assume `docker-compose.multi.yml`. Compose **service** names are `postgres`,
+`api-gg`, `frontend-gg`, `api-flynn`, `frontend-flynn`, `nginx`; container names are the same
+with an `artgallery-` prefix.
+
 ### Frontend Can't Reach API
 
-**Development:**
-- Check if API container is running: `docker-compose ps`
-- Verify port 8080 is exposed: `docker-compose port api 8080`
+- Check NGINX: `docker compose -f docker-compose.multi.yml logs nginx`
+- The `api-gg` / `api-flynn` hostnames only resolve inside `artgallery-network`, so test from a
+  container: `docker exec artgallery-api-flynn curl -f http://localhost:8080/api/health/health`
+- End-to-end from the host (self-signed cert, so `-k`, plus an explicit `Host:` so NGINX selects
+  the right server block):
+  `curl -k https://localhost/api/health/health -H "Host: earthelementsart.com"`
 
-**Production:**
-- Check NGINX configuration: `docker-compose -f docker-compose.prod.yml logs nginx`
-- The `api` hostname only resolves inside the Docker network, so run it from a container:
-  `docker exec artgallery-api-prod curl -f http://localhost:8080/api/health/health`
-- End-to-end from the host (self-signed cert, so `-k`):
-  `curl -k https://localhost/api/health/health -H "Host: ggpaintings.com"`
+Without a `Host:` header, SNI and `Host` are both `localhost`, which matches no `server_name`,
+so NGINX falls through to the first 443 block (gg) and you silently test the wrong site.
 
-### CORS Errors in Development
+### CORS Errors When Running Outside Docker
 
-Update `.env`:
-```env
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
-```
+If you run `npm run dev` and `dotnet run` on the host, the frontend origin is not same-origin
+and the API needs CORS. Add the dev origins to the relevant variable in `.env.multi`, then
+restart that site's API:
 
-Restart API:
 ```bash
-docker-compose restart api
+docker compose -f docker-compose.multi.yml restart api-flynn
 ```
 
 ### SSL Certificate Errors
 
-The single-site stack keeps its certificates in `nginx/ssl/` (mounted whole at
-`/etc/nginx/ssl`). The multi-site stack expects one directory per site — `nginx/ssl/gg/` and
-`nginx/ssl/flynn/` — each containing `server.crt` and `server.key`.
+The multi-site stack expects one directory per site — `nginx/ssl/gg/` and `nginx/ssl/flynn/` —
+each containing `server.crt` and `server.key`. A missing directory is silently created as an
+empty bind mount and NGINX then exits with *cannot load certificate*.
 
 ```bash
-# Single-site
-ls -la nginx/ssl/
-chmod 600 nginx/ssl/server.key
-chmod 644 nginx/ssl/server.crt
-
-# Multi-site
 for d in nginx/ssl/gg nginx/ssl/flynn; do
+  ls -l "$d"
+  chown 101:101 "$d"
   chmod 600 "$d/server.key"
   chmod 644 "$d/server.crt"
 done
 ```
 
-`deploy-multi.sh` performs these `chmod`s (and `chown 101:101`) for you, and refuses to
-deploy if either site's certificate pair is missing.
+`deploy-multi.sh` performs the same `chmod`/`chown 101:101` and refuses to deploy if either
+site's certificate pair is missing. Restart NGINX afterwards:
 
-Restart NGINX:
 ```bash
-docker-compose -f docker-compose.prod.yml restart nginx
+docker compose -f docker-compose.multi.yml restart nginx
 ```
 
 ### API Won't Start
 
-Check API logs:
+Check the API logs:
 ```bash
-docker-compose -f docker-compose.prod.yml logs api
+docker compose -f docker-compose.multi.yml logs api-gg
+docker compose -f docker-compose.multi.yml logs api-flynn
 ```
 
 Common issues:
-- Database not ready (wait for health check)
-- Connection string incorrect
-- Port already in use
+- PostgreSQL not yet `healthy` — both API services gate on `condition: service_healthy`
+- Wrong database in `ConnectionStrings__DefaultConnection` (it is `artgallery_gg` /
+  `artgallery_flynn`, not `artgallery`)
+- The site's database does not exist. `deploy-multi.sh` step 5 creates it; a bare
+  `docker compose up -d` does not.
 
 ### Frontend Build Fails
 
-Check frontend logs:
+Check the frontend logs:
 ```bash
-docker-compose -f docker-compose.prod.yml logs frontend
+docker compose -f docker-compose.multi.yml logs frontend-gg
+docker compose -f docker-compose.multi.yml logs frontend-flynn
 ```
 
 Common issues:
-- API URL incorrect
-- Missing environment variables
-- Node modules cache issues (rebuild)
+- `NEXT_PUBLIC_API_URL` / `SERVER_API_URL` build args missing or wrong
+- A `NEXT_PUBLIC_*` variable present in `.env.multi` but not declared as both `ARG` and `ENV`
+  in `clientapp/Dockerfile` — Compose passes it, the Next.js build silently ignores it
+- Stale `.next` cache — rebuild with
+  `docker compose -f docker-compose.multi.yml build --no-cache frontend-flynn`
 
 ### Database Connection Issues
 
 Verify PostgreSQL is running and reachable:
 
 ```bash
-docker-compose -f docker-compose.prod.yml logs postgres
+docker compose -f docker-compose.multi.yml logs postgres
 
-# Should report "accepting connections"
-docker exec artgallery-postgres-prod pg_isready -U postgres -d artgallery
+# Should report "accepting connections" — note the per-site database name
+docker exec artgallery-postgres pg_isready -U postgres -d artgallery_flynn
 
 # Should print: 1
-docker exec artgallery-postgres-prod psql -U postgres -tAc "SELECT 1"
+docker exec artgallery-postgres psql -U postgres -tAc "SELECT 1"
+
+# Both site databases should be listed
+docker exec artgallery-postgres psql -U postgres -lqt | cut -d'|' -f1 | grep artgallery
 ```
 
-If the API logs `password authentication failed`, the `POSTGRES_PASSWORD` in your env file
-does not match the one the existing `postgres_data` volume was created with. Change it back
-to the original value, or recreate the volume — editing it in place does nothing, because
-PostgreSQL only reads `POSTGRES_PASSWORD` while the data directory is empty.
+If the API logs `password authentication failed`, the `POSTGRES_PASSWORD` in `.env.multi` does
+not match the one the existing `postgres_data` volume was created with. Change it back to the
+original value, or recreate the volume — editing it in place does nothing, because PostgreSQL
+only reads `POSTGRES_PASSWORD` while the data directory is empty.
 
 ## Performance Optimization
 
@@ -1668,58 +1441,85 @@ For high-traffic deployments:
 
 ## Quick Reference
 
-### Development Commands
+Use `docker compose` (v2 plugin syntax). For the production stack, pass the compose
+**service** name rather than the container name: `postgres`, `api-gg`, `frontend-gg`,
+`api-flynn`, `frontend-flynn`, `nginx`.
+
+### Production Commands (multi-site)
 
 ```bash
-# Start
-docker-compose up -d
+# Deploy — preferred: pre-flight checks, SSL and image-data permissions,
+# database creation, backup restore, non-root sweep
+./deploy-multi.sh
+
+# Build and start without those extra steps
+docker compose -f docker-compose.multi.yml up -d --build
 
 # Stop
-docker-compose down
+docker compose -f docker-compose.multi.yml down
 
-# Stop and remove data
-docker-compose down -v
+# Stop and remove data (destroys BOTH site databases — artgallery_gg and artgallery_flynn)
+docker compose -f docker-compose.multi.yml down -v
 
 # View logs
-docker-compose logs -f
+docker compose -f docker-compose.multi.yml logs -f
 
-# Rebuild
-docker-compose up -d --build
+# Restart one service
+docker compose -f docker-compose.multi.yml restart api-flynn
+docker compose -f docker-compose.multi.yml restart nginx
+
+# Container status — all 6 should report "healthy"
+docker compose -f docker-compose.multi.yml ps
 ```
 
-### Production Commands
+### Local Single-Site Commands
 
 ```bash
-# Deploy
-docker-compose -f docker-compose.prod.yml up -d --build
-
-# Stop
-docker-compose -f docker-compose.prod.yml down
-
-# View logs
-docker-compose -f docker-compose.prod.yml logs -f
-
-# Restart specific service
-docker-compose -f docker-compose.prod.yml restart api
+cd docker-compose
+docker compose up -d          # auto-loads docker-compose.yml + docker-compose.override.yml
+docker compose down
+docker compose down -v        # also removes the postgres_data and image_data volumes
+docker compose logs -f
+docker compose up -d --build
 ```
+
+This stack binds host ports 80, 443, 9090 and 8080 and creates `artgallery-postgres-prod`,
+`artgallery-api-prod`, `artgallery-frontend-prod` and `artgallery-nginx`. Tear it down
+before starting the multi-site stack — the two cannot coexist.
 
 ## Security Checklist for Production
 
-- [ ] `POSTGRES_PASSWORD` set to a strong password that matches the existing `postgres_data` volume
-- [ ] SSL certificates installed and configured (self-signed for Cloudflare Full mode)
-- [ ] `CORS_ALLOWED_ORIGINS` set to `https://ggpaintings.com`
-- [ ] `.env` file not committed to git
-- [ ] Firewall configured (ports 80, 443 only)
-- [ ] Database backups scheduled
-- [ ] Cloudflare SSL/TLS mode set to "Full"
-- [ ] Cloudflare DNS records proxied (orange cloud enabled)
+Short version of **Multi-Site Security Checklist** above — re-run this after any change.
+Everything here is per-site unless stated otherwise.
+
+- [ ] `POSTGRES_PASSWORD` in `.env.multi` matches the password the existing
+      `postgres_data` volume was initialised with, and `secrets/postgres_password` holds
+      the same value (the file must exist for Compose, but PostgreSQL never reads it)
+- [ ] `nginx/ssl/gg/server.{crt,key}` **and** `nginx/ssl/flynn/server.{crt,key}` exist —
+      a missing directory is mounted as an empty dir and NGINX exits with
+      *cannot load certificate*
+- [ ] Both SSL directories and `nginx/nginx.conf` owned by UID 101
+- [ ] `image-data/gg` and `image-data/flynn` owned by UID 1654 (the API's `app` user), or
+      uploads fail with *permission denied*
+- [ ] Per-site CORS left at the `.env.multi.example` values — production traffic is
+      same-origin, so `GG_CORS_ALLOWED_ORIGINS` / `FLYNN_CORS_ALLOWED_ORIGINS` are
+      redundant. There is no single `CORS_ALLOWED_ORIGINS` in the multi-site stack.
+- [ ] `GG_ADMIN_JWT_SECRET_KEY` and `FLYNN_ADMIN_JWT_SECRET_KEY` are different random
+      values, and each site has its own OAuth clients
+- [ ] `.env`, `.env.multi`, `.env.multi.arm64` and `secrets/*` not committed to git
+- [ ] Firewall configured (ports 80, 443 only — 9090 stays host-local)
+- [ ] Database backups scheduled via `scripts/install-backup-cron-multi.sh`
+- [ ] Cloudflare SSL/TLS mode **Full** (not Full strict) and DNS proxied, for **both**
+      domains
 
 ### Security Hardening (Already Configured)
 
 The following security features are already enabled in the deployment:
 
 - ✅ API and frontend containers declare a non-root `USER` (API: the .NET base image's
-  `$APP_UID`; frontend: `nextjs`, UID 1001, also pinned with `user: "1001:1001"`)
+  `$APP_UID` = UID 1654, user `app`; frontend: `nextjs`, UID 1001, also pinned with
+  `user: "1001:1001"` in both multi-site compose files — the API services carry no `user:`
+  key, so their UID comes from the image)
 - ✅ NGINX and PostgreSQL start as root but drop privileges before serving traffic — NGINX via
   `su-exec 101` in `nginx/entrypoint.sh`, PostgreSQL via its own init scripts. Neither image
   declares a `USER`, so `docker exec` on those two still lands as `root`
@@ -1744,25 +1544,378 @@ After deployment, verify the security configuration.
 
 ```bash
 # Images that pin a non-root USER — docker exec reports the real user
-docker exec artgallery-api-prod id -u         # non-zero ($APP_UID from the .NET base image)
-docker exec artgallery-frontend-prod id -u    # 1001 (nextjs)
+docker exec artgallery-api-gg          id -u   # 1654 (app — $APP_UID from the .NET base image)
+docker exec artgallery-api-flynn       id -u   # 1654
+docker exec artgallery-frontend-gg     id -u   # 1001 (nextjs)
+docker exec artgallery-frontend-flynn  id -u   # 1001 (nextjs)
 
 # Images that start as root and drop privileges at runtime — inspect the running process
-docker top artgallery-nginx | head -2         # USER column should be nginx (101)
-docker top artgallery-postgres-prod | head -2 # USER column should be postgres
+docker top artgallery-nginx | head -2           # USER column should be nginx (101)
+docker top artgallery-postgres | head -2        # USER column should be postgres
 
 # Verify read-only filesystem
-docker inspect artgallery-api-prod --format '{{.HostConfig.ReadonlyRootfs}}'       # true
-docker inspect artgallery-frontend-prod --format '{{.HostConfig.ReadonlyRootfs}}'   # true
+docker inspect artgallery-api-gg --format '{{.HostConfig.ReadonlyRootfs}}'          # true
+docker inspect artgallery-api-flynn --format '{{.HostConfig.ReadonlyRootfs}}'       # true
+docker inspect artgallery-frontend-gg --format '{{.HostConfig.ReadonlyRootfs}}'     # true
+docker inspect artgallery-frontend-flynn --format '{{.HostConfig.ReadonlyRootfs}}'  # true
 docker inspect artgallery-nginx --format '{{.HostConfig.ReadonlyRootfs}}'           # true
 
-# Verify health checks
-docker-compose -f docker-compose.prod.yml ps  # All containers should show healthy status
+# Verify health checks — all 6 containers should show "healthy"
+docker compose -f docker-compose.multi.yml ps
+```
+
+`deploy-multi.sh` runs this same sweep at the end of every deploy and prints a `WARNING`
+line for any container that comes back as root. Treat that as a failed deploy: it means
+the image was not rebuilt, or the privilege drop did not happen.
+
+## Appendix A - Legacy Single-Site Stack (Retired)
+
+> **Do not run anything in this appendix on a host that uses `docker-compose.multi.yml`.**
+> Everything below targets the retired single-site stack: the `artgallery` database on the
+> `artgallery-postgres-prod` container, a flat `nginx/ssl/` certificate directory, and the
+> `api` / `frontend` service names that do not exist in the multi-site stack. It is kept only
+> so an old gg-only host can still be brought back up. For any new deployment, or for adding
+> the second site, use **Multi-Site Production Deployment** above.
+
+### A.1 Quick Start: Deploy to ggpaintings.com
+
+#### Step 1: Cloudflare Setup
+
+1. **Add your site to Cloudflare**
+   - Sign up/login to [Cloudflare](https://dash.cloudflare.com)
+   - Add your domain `ggpaintings.com`
+   - Change nameservers at your registrar to Cloudflare's nameservers
+
+2. **Configure DNS**
+   - Go to DNS → Records
+   - Create an A record: `@` → Your server's IP address
+   - Enable proxy (orange cloud icon should be ON)
+
+3. **Configure SSL/TLS**
+   - Go to SSL/TLS → Overview
+   - Select **"Full"** mode (not "Flexible" or "Full (Strict)")
+   - Go to Edge Certificates → Enable "Always Use HTTPS"
+   - Enable "Automatic HTTPS Rewrites"
+
+#### Step 2: Server Setup
+
+```bash
+# On your Linux server
+git clone <repository-url>
+cd Painting_Website_Docker_NextJS/docker-compose
+```
+
+#### Step 3: Configure Environment
+
+**3.1. Copy and Edit Environment File**
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+Ensure these values are set in `.env`:
+```env
+CORS_ALLOWED_ORIGINS=https://ggpaintings.com
+NEXT_PUBLIC_API_URL=https://ggpaintings.com/api
+SERVER_API_URL=http://api:8080/api
+```
+
+**3.2. Set the PostgreSQL Password**
+
+The database is **PostgreSQL 17** (image `postgres:17-alpine`), not SQL Server. The
+password comes from `POSTGRES_PASSWORD` in `.env`.
+
+```bash
+mkdir -p secrets
+echo -n 'YourSecurePassword123!' > secrets/postgres_password
+chmod 600 secrets/postgres_password
+```
+
+Set the same value in `.env`:
+
+```env
+POSTGRES_PASSWORD=YourSecurePassword123!
+```
+
+**Important:**
+- Use `echo -n` to avoid a trailing newline
+- File permissions should be `600` (read/write for owner only)
+- The `secrets/` directory is already excluded from git (see `.gitignore`)
+- Never commit the actual password file to version control
+
+**Why the secret file if the password is also in `.env`?**
+It is not really a secret mechanism here. The official postgres image **ignores**
+`*_FILE` variables, so `secrets/postgres_password` is never read by the database. It exists
+only because `docker-compose.prod.yml` declares it and Compose refuses to start when a
+declared secret file is missing. Keep it identical to `POSTGRES_PASSWORD` and treat
+`docker inspect` output as containing a live credential.
+
+#### Step 4: Generate Self-Signed SSL Certificate
+
+```bash
+mkdir -p nginx/ssl
+cd nginx/ssl
+
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout server.key \
+  -out server.crt \
+  -subj "/C=US/ST=YourState/L=YourCity/O=YourOrganization/CN=ggpaintings.com"
+
+chmod 600 server.key
+chmod 644 server.crt
+cd ../..
+```
+
+#### Step 5: Deploy
+
+```bash
+# Run the deployment script (includes security checks)
+bash deploy.sh
+
+# Or manually:
+docker-compose -f docker-compose.prod.yml up -d --build
+```
+
+#### Step 6: Verify Deployment
+
+**6.1. Check Container Status**
+
+```bash
+docker-compose -f docker-compose.prod.yml ps
+```
+
+All containers should show `healthy` status.
+
+**6.2. Verify Non-Root Users**
+
+Container names in `docker-compose.prod.yml` carry a `-prod` suffix. Note that
+`docker exec ... whoami` only reflects a container's real user when its image declares a
+`USER` — for NGINX and PostgreSQL it does not, so check those with `docker top`:
+
+```bash
+# Images that pin a non-root USER
+docker exec artgallery-api-prod id -u        # non-zero — the .NET base image's app user
+docker exec artgallery-frontend-prod id -u   # 1001 (nextjs)
+
+# Images that start as root and drop privileges at runtime — check the running process
+docker top artgallery-nginx | head -2              # USER column should be nginx (101)
+docker top artgallery-postgres-prod | head -2      # USER column should be postgres
+```
+
+A `0` / `root` process owner means the privilege drop did not happen.
+
+**6.3. Verify Resource Limits**
+
+Declared in `docker-compose.prod.yml` under `deploy.resources.limits`. Plain
+`docker compose` does not always apply these, so measure rather than assume:
+
+```bash
+# Declared limits: postgres 2 CPU / 4G, api 2 CPU / 4G,
+#                 frontend 2 CPU / 4G, nginx 1 CPU / 1G
+docker inspect artgallery-postgres-prod --format 'cpus={{.HostConfig.NanoCpus}} mem={{.HostConfig.Memory}}'
+docker inspect artgallery-api-prod      --format 'cpus={{.HostConfig.NanoCpus}} mem={{.HostConfig.Memory}}'
+docker inspect artgallery-frontend-prod --format 'cpus={{.HostConfig.NanoCpus}} mem={{.HostConfig.Memory}}'
+docker inspect artgallery-nginx         --format 'cpus={{.HostConfig.NanoCpus}} mem={{.HostConfig.Memory}}'
+```
+
+`cpus=0` / `mem=0` means no limit was applied and the containers can consume the whole
+host.
+
+**6.4. Check the Database Password Is Not Leaking**
+
+```bash
+# The password IS present in the container environment by design —
+# the postgres image only accepts POSTGRES_PASSWORD.
+docker inspect artgallery-postgres-prod --format '{{.Config.Env}}' | tr ' ' '\n' | grep -i password
+```
+
+Treat that output as a credential: do not paste it into issues, chat logs, or committed
+files. Anyone with read access to the Docker socket can already extract it, so the only
+real mitigation is making the password unique to this host.
+
+**6.5. Verify Read-Only Filesystems**
+
+```bash
+docker inspect artgallery-api-prod --format '{{.HostConfig.ReadonlyRootfs}}'       # Should return: true
+docker inspect artgallery-frontend-prod --format '{{.HostConfig.ReadonlyRootfs}}'   # Should return: true
+docker inspect artgallery-nginx --format '{{.HostConfig.ReadonlyRootfs}}'           # Should return: true
+```
+
+**6.6. Test the Site**
+
+```bash
+# Test HTTPS endpoint
+curl -I https://ggpaintings.com
+
+# Test API endpoint
+curl -I https://ggpaintings.com/api/health/health
+```
+
+**6.7. Verify Health Checks**
+
+```bash
+# Check all container health status
+docker-compose -f docker-compose.prod.yml ps
+# All containers should show "healthy" in the STATUS column
+```
+
+#### Step 7: Wait for Cloudflare DNS Propagation
+
+DNS changes typically propagate within 5-10 minutes. Once complete, your site will be accessible at:
+- **Frontend:** https://ggpaintings.com
+- **API:** https://ggpaintings.com/api
+
+### A.2 Production Mode (Deployment)
+
+#### Purpose
+- Optimized builds for performance
+- NGINX reverse proxy with HTTPS
+- No hot reload (static builds)
+- Security hardening
+
+#### Deploy to Production Server
+
+##### Step 1: Prepare Production Server
+
+```bash
+# On production Linux server
+git clone <repository-url>
+cd Painting_Website_Docker_NextJS/docker-compose
+```
+
+##### Step 2: Configure Environment
+
+**2.1. Copy and Edit Environment File**
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+Update these values in `.env`:
+```env
+# CORS - your production domain
+CORS_ALLOWED_ORIGINS=https://ggpaintings.com
+
+# API URLs for production (NGINX routing)
+NEXT_PUBLIC_API_URL=https://ggpaintings.com/api
+SERVER_API_URL=http://api:8080/api
+
+# NGINX ports
+NGINX_HTTP_PORT=80
+NGINX_HTTPS_PORT=443
+```
+
+**2.2. Set the PostgreSQL Password**
+
+The database is PostgreSQL 17. The password is read from `POSTGRES_PASSWORD` in `.env`;
+`secrets/postgres_password` must exist too (Compose errors if a declared secret file is
+missing) but is not read by the postgres image. Keep both identical.
+
+```bash
+mkdir -p secrets
+echo -n 'YourSecurePassword123!' > secrets/postgres_password
+chmod 600 secrets/postgres_password
+```
+
+```env
+# .env
+POSTGRES_PASSWORD=YourSecurePassword123!
+```
+
+**Important:**
+- Use `echo -n` to avoid a trailing newline
+- File permissions should be `600` (read/write for owner only)
+- The `secrets/` directory is excluded from git
+- Never commit the actual password file to version control
+- If the `postgres_data` volume already exists, the password is fixed at the value the
+  volume was initialised with — changing it in `.env` does not rotate it
+
+##### Step 3: Set Up SSL Certificates
+
+Create SSL directory and add certificates:
+
+```bash
+mkdir -p nginx/ssl
+
+# Option A: Let's Encrypt (recommended)
+sudo apt-get update
+sudo apt-get install certbot python3-certbot-nginx
+sudo certbot certonly --standalone -d yourdomain.com -d www.yourdomain.com
+sudo cp /etc/letsencrypt/live/yourdomain.com/fullchain.pem nginx/ssl/server.crt
+sudo cp /etc/letsencrypt/live/yourdomain.com/privkey.pem nginx/ssl/server.key
+sudo apt install fail2ban
+sudo apt install unattended-upgrades
+sudo dpkg-reconfigure unattended-upgrades
+
+# Option B: Self-signed (for Cloudflare Full mode - RECOMMENDED)
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout nginx/ssl/server.key \
+  -out nginx/ssl/server.crt \
+  -subj "/C=US/ST=State/L=City/O=Organization/CN=ggpaintings.com"
+
+# Set permissions
+chmod 600 nginx/ssl/server.key
+chmod 644 nginx/ssl/server.crt
+```
+
+##### Step 4: Deploy
+
+```bash
+docker-compose -f docker-compose.prod.yml up -d --build
+```
+
+##### Step 5: Verify
+
+```bash
+# Check container status
+docker-compose -f docker-compose.prod.yml ps
+
+# View logs
+docker-compose -f docker-compose.prod.yml logs -f
+
+# Test health endpoints
+curl -k https://localhost/api/health/health -H "Host: ggpaintings.com"
+curl http://localhost:9090/health
+```
+
+Port 9090 maps to NGINX's internal 8080 health server. Port 80 is a 301 redirect only, and
+`https://localhost` needs `-k` (self-signed origin cert) plus an explicit `Host:` header so
+NGINX selects the right `server_name` block.
+
+#### Production Configuration
+
+**Environment Variables** (in `.env`):
+```env
+NEXT_PUBLIC_API_URL=https://ggpaintings.com/api
+SERVER_API_URL=http://api:8080/api
+CORS_ALLOWED_ORIGINS=https://ggpaintings.com
+```
+
+**How it works:**
+- Browser accesses everything at `https://ggpaintings.com`
+- NGINX routes `/api/*` to API container
+- NGINX routes `/*` to Frontend container
+- Frontend container accesses API at `http://api:8080/api` (Docker network)
+- No CORS issues (same origin)
+
+#### Access Points
+- Frontend: https://ggpaintings.com
+- API: https://ggpaintings.com/api
+- Health: http://localhost:9090/health (host mapping of NGINX's internal 8080)
+- Swagger: Disabled in production
+
+#### Stop Production Environment
+
+```bash
+docker-compose -f docker-compose.prod.yml down
 ```
 
 ## Support
 
 For issues or questions:
-- Check logs: `docker-compose -f docker-compose.prod.yml logs -f`
-- Review NGINX config: `nginx/nginx.conf`
-- Verify environment variables: `cat .env`
+- Check logs: `docker compose -f docker-compose.multi.yml logs -f`
+- Review NGINX config: `nginx/nginx.conf` (per-site server blocks only — there is no
+  shared catch-all, so an unmatched `Host` falls through to the first 443 block, which is gg)
+- Verify environment variables: `cat .env.multi` — treat the output as live credentials

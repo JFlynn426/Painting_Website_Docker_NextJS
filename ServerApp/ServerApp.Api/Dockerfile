@@ -8,8 +8,10 @@
 # This stage is used when running from VS in fast mode (Default for Debug configuration)
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
-# The .NET base image includes a non-root user (appuser, UID 1)
-# Explicitly set to ensure non-root execution
+# The .NET base image ships a non-root user named `app`, whose UID comes from $APP_UID and is
+# 1654 on mcr.microsoft.com/dotnet/aspnet:10.0. Explicitly set to ensure non-root execution.
+# The compose files do not override `user:` for api-gg / api-flynn, so 1654 is the UID that
+# actually writes the ./image-data/<site> bind mounts (see deploy-multi.sh step 2).
 USER $APP_UID
 EXPOSE 8080
 EXPOSE 8081

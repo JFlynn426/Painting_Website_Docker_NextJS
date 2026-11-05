@@ -3,7 +3,7 @@ using ServerApp.Infrastructure.SeedData;
 namespace ServerApp.Infrastructure.SeedData.SiteSpecific.Flynn;
 
 /// <summary>
-/// Seed data for the PageContents table for the Flynn (flynnart.com) site.
+/// Seed data for the PageContents table for the Flynn (earthelementsart.com) site.
 /// Duplicates the shared <see cref="PageContentsSeedData"/> entries, with a
 /// Flynn-specific home page.
 /// 

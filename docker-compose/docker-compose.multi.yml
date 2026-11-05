@@ -157,7 +157,7 @@ services:
           cpus: '0.5'
           memory: 1G
 
-  # === Site: flynn (flynnart.com) ===
+  # === Site: flynn (earthelementsart.com) ===
 
   api-flynn:
     container_name: artgallery-api-flynn

@@ -35,7 +35,7 @@ graph TB
     subgraph NGINX[Single NGINX Container]
         direction TB
         SB1[server_block ggpaintings.com]
-        SB2[server_block flynnart.com]
+        SB2[server_block earthelementsart.com]
         SB3[server_block thirdart.com]
     end
 
@@ -154,7 +154,7 @@ services:
       SERVER_API_URL: ${GG_SERVER_API_URL}
     # ... networks, deploy
 
-  # === Site: flynn (flynnart.com) ===
+  # === Site: flynn (earthelementsart.com) ===
   api-flynn:
     container_name: artgallery-api-flynn
     build:
@@ -332,10 +332,10 @@ server {
     }
 }
 
-# Site: flynnart.com
+# Site: earthelementsart.com
 server {
     listen 443 ssl http2;
-    server_name flynnart.com www.flynnart.com;
+    server_name earthelementsart.com www.earthelementsart.com;
 
     ssl_certificate /etc/nginx/ssl/flynn/server.crt;
     ssl_certificate_key /etc/nginx/ssl/flynn/server.key;
@@ -355,7 +355,7 @@ server {
 # HTTP to HTTPS redirect (shared)
 server {
     listen 80;
-    server_name ggpaintings.com www.ggpaintings.com flynnart.com www.flynnart.com;
+    server_name ggpaintings.com www.ggpaintings.com earthelementsart.com www.earthelementsart.com;
     return 301 https://$host$request_uri;
 }
 ```
@@ -771,10 +771,10 @@ FLYNN_CSS_TITLE_COLOR="#e94560"
 FLYNN_CSS_BUTTON_COLOR="#0f3460"
 FLYNN_API_URL=/api
 FLYNN_SERVER_API_URL=http://api-flynn:8080/api
-FLYNN_CORS_ALLOWED_ORIGINS=https://flynnart.com
+FLYNN_CORS_ALLOWED_ORIGINS=https://earthelementsart.com
 FLYNN_GOOGLE_AUTH_CLIENT_ID=yyy.apps.googleusercontent.com
 FLYNN_GOOGLE_AUTH_CLIENT_SECRET=yyy
-FLYNN_GOOGLE_AUTH_REDIRECT_URI=https://flynnart.com/api/auth/google/callback
+FLYNN_GOOGLE_AUTH_REDIRECT_URI=https://earthelementsart.com/api/auth/google/callback
 FLYNN_ADMIN_JWT_SECRET_KEY=yyy
 FLYNN_ADMIN_AUTHORIZED_EMAILS=flynn@example.com
 ```
@@ -1135,7 +1135,7 @@ location /images/ {
 
 **Fix Applied:** NGINX config now has per-site server blocks with correct upstreams:
 - **ggpaintings.com** (lines 155-315): Uses `frontend_gg` and `api_gg` upstreams
-- **flynnart.com** (lines 320-480): Uses `frontend_flynn` and `api_flynn` upstreams
+- **earthelementsart.com** (lines 320-480): Uses `frontend_flynn` and `api_flynn` upstreams
 - Each server block has its own `/images/`, static asset caching, fonts, `/_next/static/`, `/api/`, and `/` location blocks
 - HTTP-to-HTTPS redirect (line 486) covers both domains
 ```nginx
@@ -1147,7 +1147,7 @@ location /images/ {
     proxy_pass http://api_gg/images/;
 }
 
-# Inside flynnart.com server block:
+# Inside earthelementsart.com server block:
 location ~ ^/(Animals|Flowers|Landscapes|Seascapes|Carousel-Paintings|Other)-(Full|Thumbnail)/ {
     proxy_pass http://frontend_flynn;
 }
@@ -1346,7 +1346,7 @@ api-flynn:
     CORS_ALLOWED_ORIGINS: ${FLYNN_CORS_ALLOWED_ORIGINS}
 ```
 
-The `.env.multi.example` sets `GG_CORS_ALLOWED_ORIGINS=https://ggpaintings.com` and `FLYNN_CORS_ALLOWED_ORIGINS=https://flynnart.com`. ASP.NET reads this via `configuration["CORS_ALLOWED_ORIGINS"]` in Program.cs.
+The `.env.multi.example` sets `GG_CORS_ALLOWED_ORIGINS=https://ggpaintings.com` and `FLYNN_CORS_ALLOWED_ORIGINS=https://earthelementsart.com`. ASP.NET reads this via `configuration["CORS_ALLOWED_ORIGINS"]` in Program.cs.
 
 ### Issue 14: Database Initialization Timing Risk
 

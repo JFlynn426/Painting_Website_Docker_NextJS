@@ -2,7 +2,14 @@
 
 **Goal:** Implement multi-site architecture so two sites can run simultaneously on localhost and production, each with independent databases, configurations, and URLs.
 
-**Target Command:** `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build`
+**Target Command (at time of writing):** `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build`
+
+> **⚠ SUPERSEDED — historical planning doc.** The command above is **not** the current deploy
+> path. `docker-compose.prod.yml` is now marked **retired** and is incompatible with the current
+> stack; the single-site `deploy.sh` it references is retired too. This plan is what *produced*
+> the multi-site stack, so its "hardcoded values" tables and rollback snippets describe a stack
+> that no longer ships. Use [`../docker-compose/DEPLOYMENT_GUIDE.md`](../docker-compose/DEPLOYMENT_GUIDE.md)
+> instead: **Multi-Site Production Deployment** via `deploy-multi.sh` + `docker-compose.multi.yml`.
 
 ## Current Hardcoded Values That Must Be Parameterized
 
@@ -401,10 +408,10 @@ http {
         }
     }
 
-    # === Site: flynnart.com ===
+    # === Site: earthelementsart.com ===
     server {
         listen 443 ssl http2;
-        server_name flynnart.com www.flynnart.com;
+        server_name earthelementsart.com www.earthelementsart.com;
 
         ssl_certificate /etc/nginx/ssl/flynn/server.crt;
         ssl_certificate_key /etc/nginx/ssl/flynn/server.key;
@@ -444,7 +451,7 @@ http {
     # HTTP to HTTPS redirect
     server {
         listen 80;
-        server_name ggpaintings.com www.ggpaintings.com flynnart.com www.flynnart.com;
+        server_name ggpaintings.com www.ggpaintings.com earthelementsart.com www.earthelementsart.com;
         return 301 https://$host$request_uri;
     }
 }
@@ -468,7 +475,7 @@ http {
 SELECT 'CREATE DATABASE artgallery_gg'
 WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'artgallery_gg')\gexec
 
--- Create database for flynn site (flynnart.com)
+-- Create database for flynn site (earthelementsart.com)
 SELECT 'CREATE DATABASE artgallery_flynn'
 WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'artgallery_flynn')\gexec
 ```
@@ -557,7 +564,7 @@ GG_ADMIN_AUTHORIZED_EMAILS=gloriagronowicz@gmail.com
 GG_DATABASE_READ_ONLY_MODE=false
 
 # ============================================
-# Site: flynn (flynnart.com)
+# Site: flynn (earthelementsart.com)
 # ============================================
 
 # --- Frontend Site Configuration ---
@@ -578,12 +585,12 @@ FLYNN_NEXT_PUBLIC_API_URL=/api
 FLYNN_SERVER_API_URL=http://api-flynn:8080/api
 
 # --- CORS ---
-FLYNN_CORS_ALLOWED_ORIGINS=https://flynnart.com
+FLYNN_CORS_ALLOWED_ORIGINS=https://earthelementsart.com
 
 # --- Google OAuth ---
 FLYNN_GOOGLE_AUTH_CLIENT_ID=YOUR_FLYNN_CLIENT_ID.apps.googleusercontent.com
 FLYNN_GOOGLE_AUTH_CLIENT_SECRET=YOUR_FLYNN_CLIENT_SECRET
-FLYNN_GOOGLE_AUTH_REDIRECT_URI=https://flynnart.com/api/auth/google/callback
+FLYNN_GOOGLE_AUTH_REDIRECT_URI=https://earthelementsart.com/api/auth/google/callback
 
 # --- Admin JWT ---
 FLYNN_ADMIN_JWT_SECRET_KEY=CHANGE_THIS_TO_A_RANDOM_SECRET_KEY_FLYNN
@@ -635,12 +642,12 @@ The deploy script handles the complete multi-site deployment workflow including 
 **Security Checks:**
 ```
 Container User Verification:
-  API (GG):         appuser (non-root)
-  API (Flynn):      appuser (non-root)
-  Frontend (GG):    nextjs (non-root)
-  Frontend (Flynn): nextjs (non-root)
-  PostgreSQL:       postgres (non-root)
-  NGINX:            nginx (non-root)
+  API (GG):         app, UID 1654
+  API (Flynn):      app, UID 1654
+  Frontend (GG):    nextjs, UID 1001
+  Frontend (Flynn): nextjs, UID 1001
+  PostgreSQL:       postgres (checked with docker top — image declares no USER)
+  NGINX:            nginx, UID 101 (checked with docker top — image declares no USER)
 
 Git Security:
   No sensitive files tracked in git
@@ -702,7 +709,7 @@ docker compose -f docker-compose.multi.yml up -d --build
 
 # Visit sites
 # http://gg.localhost or http://localhost:80 -> ggpaintings.com
-# http://flynn.localhost or http://localhost:80 -> flynnart.com
+# http://flynn.localhost or http://localhost:80 -> earthelementsart.com
 ```
 
 ### Production Deployment
@@ -783,7 +790,7 @@ This installs:
 | Site | Database | Backup File Pattern |
 |------|----------|---------------------|
 | ggpaintings.com | artgallery_gg | `artgallery_artgallery_gg_TIMESTAMP.dump` |
-| flynnart.com | artgallery_flynn | `artgallery_artgallery_flynn_TIMESTAMP.dump` |
+| earthelementsart.com | artgallery_flynn | `artgallery_artgallery_flynn_TIMESTAMP.dump` |
 
 ### Single-Site vs Multi-Site Backup Comparison
 

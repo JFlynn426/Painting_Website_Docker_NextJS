@@ -3,7 +3,7 @@ using ServerApp.Infrastructure.SeedData;
 namespace ServerApp.Infrastructure.SeedData.SiteSpecific.Flynn;
 
 /// <summary>
-/// Seed data for the Paintings table for the Flynn (flynnart.com) site.
+/// Seed data for the Paintings table for the Flynn (earthelementsart.com) site.
 /// Contains 6 oil paintings and 9 ceramic pieces.
 /// 
 /// Image URLs follow the pattern:
