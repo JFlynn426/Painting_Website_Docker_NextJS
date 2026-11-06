@@ -3,8 +3,17 @@
 Target: add **earthelementsart.com** alongside the live **ggpaintings.com** on the Ubuntu server,
 moving from `docker-compose.prod.yml` (single site) to `docker-compose.multi.yml` (6 containers).
 
-Verified against the repo on 2026-11-04. Everything below was checked in the actual files,
-not assumed. Items marked **⚠ ACTION** need a decision or edit before deploying.
+Verified against the repo on 2026-11-04, re-verified 2026-11-06. Everything below was checked in
+the actual files, not assumed. Items marked **⚠ ACTION** need a decision or edit before deploying.
+
+> **Re-verification 2026-11-06:** `scripts/restore-multi.sh`, `scripts/generate-prod-ssl.sh` and
+> `scripts/install-backup-cron-multi.sh` all exist and are wired into
+> `install-backup-cron-multi.sh`. `clientapp/public/fonts/` contains `NationalPark-Regular.ttf`
+> and `clientapp/public/favicon-flynn.ico`, so the flynn `FLYNN_CSS_FONT` / `FLYNN_FAVICON`
+> values resolve. `deploy-multi.sh` sources `.env.multi` itself (lines 31–39) and hard-exits if
+> it is missing — but every raw `docker compose -f docker-compose.multi.yml ...` command below
+> now needs an explicit `--env-file .env.multi`, because Compose only auto-loads a file named
+> `.env` and this directory has none.
 
 > **⚠ SUPERSEDED — historical planning doc.** Statements below that describe
 > `docker-compose.prod.yml` as "the current live stack" were true on the date of writing and are
@@ -121,6 +130,11 @@ nginx runs as UID 101 and binds 80/443. This requires Docker ≥ 20.10.3 (defaul
 
 All commands run in the `docker-compose/` directory on the server unless noted.
 
+> Steps 1–6 below are automated by **`./scripts/prepare-cutover.sh`** (`--check`, `--fix`,
+> `--backup`). Read this section to understand what it does; run the script to do it.
+> Order on a real host: `--check` → `--fix` → `--backup` → `--check` → `generate-prod-ssl.sh`
+> → `deploy-multi.sh`.
+
 1. **Snapshot the current state** (answers the open questions):
    ```bash
    docker compose ls
@@ -173,10 +187,11 @@ Do not start until every item in section 3 is done.
    ```bash
    docker compose -f docker-compose.prod.yml down
    ```
-2. **Start postgres only** and wait for healthy:
+2. **Start postgres only** and wait for healthy (`--env-file` required on every raw compose
+   command — see the note at the top; `deploy-multi.sh` handles this itself):
    ```bash
-   docker compose -f docker-compose.multi.yml up -d postgres
-   docker compose -f docker-compose.multi.yml ps   # artgallery-postgres healthy
+   docker compose --env-file .env.multi -f docker-compose.multi.yml up -d postgres
+   docker compose --env-file .env.multi -f docker-compose.multi.yml ps   # artgallery-postgres healthy
    ```
 3. **Migrate gg data** (only if the old `artgallery` DB is in this volume — check with
    `psql -U postgres -l`). The volume is reused, so the data is already inside the new
@@ -222,7 +237,7 @@ Do not start until every item in section 3 is done.
 ## 5. Verification (all must pass before declaring success)
 
 ```bash
-docker compose -f docker-compose.multi.yml ps        # 6/6 healthy
+docker compose --env-file .env.multi -f docker-compose.multi.yml ps   # 6/6 healthy
 
 # NGINX health — container 8080 mapped to host 9090, plain HTTP (that server block has no
 # `ssl`, so http:// not https://)
@@ -269,8 +284,10 @@ docker volume rm docker-compose_image_data
 
 ## 7. Rollback
 
-1. `docker compose -f docker-compose.multi.yml down`
-2. `docker compose -f docker-compose.prod.yml up -d --build`
+1. `docker compose --env-file .env.multi -f docker-compose.multi.yml down`
+2. `docker compose --env-file .env.multi -f docker-compose.prod.yml up -d --build`
+   (`.env.prod` holds the single-site variables; use it instead of `.env.multi` if you still
+   have it, otherwise the `prod.yml` interpolation comes back empty)
    (the `artgallery` DB and `image_data` volume were never dropped, so gg comes back as-is;
    the new multi postgres must be stopped first so the old stack can reclaim its volume/ports).
 3. Cloudflare flynn records can stay (harmless) or be set to DNS-only until fixed.

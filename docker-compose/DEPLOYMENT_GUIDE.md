@@ -627,7 +627,12 @@ sudo chmod 644 nginx/nginx.conf nginx/ssl/*/server.crt
 sudo chmod 600 nginx/ssl/*/server.key
 
 # 3. Build and start everything
-docker compose -f docker-compose.multi.yml up -d --build
+# --env-file is REQUIRED: docker-compose.multi.yml interpolates ${POSTGRES_PASSWORD},
+# ${GG_*} and ${FLYNN_*}, and Compose only auto-loads `.env` (which does not exist in this
+# directory). deploy-multi.sh sources .env.multi for you; a bare `up` in a fresh shell sends
+# every one of those values as an empty string — empty DB password, empty OAuth keys,
+# default theme colours.
+docker compose --env-file .env.multi -f docker-compose.multi.yml up -d --build
 ```
 
 Skipping step 1 gives you a stack that *looks* healthy but cannot accept an image upload.
@@ -845,8 +850,8 @@ cd ../..
 # Recommended: pre-flight checks, cert/permission setup, database creation, deploy
 ./deploy-multi.sh
 
-# Or manually:
-docker compose -f docker-compose.multi.yml up -d --build
+# Or manually (--env-file is required — see the note under "Manual equivalent")
+docker compose --env-file .env.multi -f docker-compose.multi.yml up -d --build
 ```
 
 #### Step 6: Verify
@@ -1452,8 +1457,8 @@ Use `docker compose` (v2 plugin syntax). For the production stack, pass the comp
 # database creation, backup restore, non-root sweep
 ./deploy-multi.sh
 
-# Build and start without those extra steps
-docker compose -f docker-compose.multi.yml up -d --build
+# Build and start without those extra steps (--env-file still required)
+docker compose --env-file .env.multi -f docker-compose.multi.yml up -d --build
 
 # Stop
 docker compose -f docker-compose.multi.yml down

@@ -24,11 +24,40 @@ docker ps --format '{{.Names}}' | grep -E 'artgallery-(api|frontend|nginx|postgr
 A `-prod` suffix means a single-site stack. `artgallery-nginx` exists in every stack and
 tells you nothing on its own.
 
+## Cutover preparation (`prepare-cutover.sh`)
+
+Bridges a single-site host onto the multi-site stack. Run it from `docker-compose/` **before**
+`deploy-multi.sh`.
+
+```bash
+cd docker-compose
+./scripts/prepare-cutover.sh --check    # read-only report, safe to run any time
+./scripts/prepare-cutover.sh --fix      # apply the config fixes
+./scripts/prepare-cutover.sh --backup   # dump artgallery + copy images out of image_data
+```
+
+`--fix` covers the four things that otherwise fail silently: the missing exec bit on the shell
+scripts, a missing `.env.multi`, placeholder `Admin__JwtSecretKey` values, and OAuth redirect
+URIs still pointing at `localhost`. It also repoints CORS, tops up the flynn admin allowlist,
+and copies the live Postgres password into `.env.multi` + `secrets/postgres_password` so a
+reused data volume keeps authenticating.
+
+It cannot register redirect URIs with Google/Yahoo — do that first, or admin login fails with
+`redirect_uri_mismatch` regardless of what `.env.multi` says.
+
+Then finish with:
+
+```bash
+./scripts/generate-prod-ssl.sh   # self-signed origin certs for Cloudflare Full mode
+./deploy-multi.sh
+```
+
 ## File layout
 
 ```
 /opt/artgallery/                     # server (Linux, cron)
 ├── scripts/
+│   ├── prepare-cutover.sh           # single-site -> multi-site cutover checks + fixes
 │   ├── backup-multi.sh              # multi-site backup  -> /opt/artgallery/backups
 │   ├── restore-multi.sh             # multi-site restore <- /opt/artgallery/backups
 │   ├── install-backup-cron-multi.sh # installer (also copies the legacy scripts)

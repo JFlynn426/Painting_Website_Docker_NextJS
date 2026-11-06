@@ -69,11 +69,14 @@ set_kv() {
 }
 
 # True when a value is empty or an obvious placeholder.
+# Matches empty values and the template placeholders used in .env.multi.example
+# (YOUR_GG_CLIENT_ID..., CHANGE_THIS_TO_A_RANDOM_SECRET_KEY_GG, ...).
 is_placeholder() {
     local v="$1"
     [ -z "$v" ] && return 0
     case "$v" in
-        CHANGE_THIS*|your-*|*CHANGE_ME*|*xxxx*|*placeholder*|*TODO*) return 0 ;;
+        CHANGE_THIS*|change_this*|YOUR_*|your_*|*CHANGE_ME*|*change_me*|*xxxx*|*XXXX*|*placeholder*|*PLACEHOLDER*|*TODO*)
+            return 0 ;;
     esac
     return 1
 }
@@ -170,12 +173,15 @@ do_check() {
         *)                      echo "  BAD  FLYNN_ADMIN_AUTHORIZED_EMAILS = '${v}' (missing ${FLYNN_ADMIN_EMAIL})" ;;
     esac
 
-    for key in FLYNN_GOOGLE_AUTH_CLIENT_ID FLYNN_YAHOO_AUTH_CLIENT_ID; do
+    # A template-built .env.multi carries YOUR_*_CLIENT_ID placeholders, which are technically
+    # "present" but useless, so test the value rather than just its length.
+    for key in GG_GOOGLE_AUTH_CLIENT_ID GG_YAHOO_AUTH_CLIENT_ID \
+               FLYNN_GOOGLE_AUTH_CLIENT_ID FLYNN_YAHOO_AUTH_CLIENT_ID; do
         v="$(get_kv "$key")"
-        if [ -z "$v" ]; then
-            echo "  BAD  $key is empty -> no flynn admin login at all"
+        if is_placeholder "$v"; then
+            echo "  BAD  $key = '${v}' is a placeholder -> admin OAuth cannot work"
         else
-            echo "  ok   $key present (length ${#v}) - confirm its redirect URI is registered for https://${FLYNN_DOMAIN}/admin/login"
+            echo "  ok   $key present (length ${#v}) - confirm this client's redirect URI is registered"
         fi
     done
 
@@ -227,6 +233,12 @@ do_fix() {
         if [ -f "$EXAMPLE_FILE" ]; then
             cp "$EXAMPLE_FILE" "$ENV_FILE"
             echo "    + created .env.multi from .env.multi.example"
+            echo
+            echo "    WARNING: the template ships PLACEHOLDER OAuth credentials"
+            echo "    (YOUR_GG_CLIENT_ID..., YOUR_FLYNN_YAHOO_CLIENT_SECRET ...). --fix does not"
+            echo "    invent those. Copy the real client IDs and secrets from your working"
+            echo "    .env.multi, or admin login will not work on either site."
+            echo "    Verify afterwards with:  ./scripts/prepare-cutover.sh --check"
         else
             echo "    ERROR: neither .env.multi nor .env.multi.example exists."
             exit 1

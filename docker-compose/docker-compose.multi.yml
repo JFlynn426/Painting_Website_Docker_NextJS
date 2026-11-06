@@ -2,7 +2,13 @@
 # Runs two independent painting gallery sites with shared PostgreSQL (separate databases)
 #
 # Usage:
-#   docker compose -f docker-compose.multi.yml up -d --build
+#   ./deploy-multi.sh            # sources .env.multi for you — preferred
+#
+#   docker compose --env-file .env.multi -f docker-compose.multi.yml up -d --build
+#
+# The --env-file is not optional. This file interpolates ${POSTGRES_PASSWORD}, ${GG_*} and
+# ${FLYNN_*}, and Compose only auto-loads `.env`, which does not exist here. Without
+# --env-file (or the script, which sources .env.multi) every value resolves to "".
 #
 # Each site has:
 #   - Independent database (artgallery_gg, artgallery_flynn)
