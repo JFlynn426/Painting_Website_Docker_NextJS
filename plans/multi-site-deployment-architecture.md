@@ -1,5 +1,21 @@
 # Multi-Site Deployment Architecture (Revised)
 
+> **⚠ HISTORICAL DESIGN DOC — the "Current Architecture Analysis" below is the pre-migration
+> state, not today's.** This document was written to *design* the move away from the single-site
+> stack. Its "Site-Specific Hardcoded Values" table and its Issues 3 and 4 all describe
+> `docker-compose.yml` and `docker-compose.prod.yml`, and both of those files are now **retired**:
+> neither is deployed, `prod.yml` additionally conflicts with the live stack (it wants the same
+> `postgres_data` volume and the same 80/443/9090 ports). Issues 3 and 4 are recorded as resolved
+> further down; the multi-site config that resolved them is
+> [`docker-compose.multi.yml`](docker-compose/docker-compose.multi.yml).
+>
+> Do not run commands from this file. The authoritative operational doc is
+> [`../docker-compose/DEPLOYMENT_GUIDE.md`](../docker-compose/DEPLOYMENT_GUIDE.md), and the deploy
+> entry point is `deploy-multi.sh`.
+>
+> Line-number links in this file were written against an older revision of `nginx.conf` and the
+> compose files and may no longer point at the described content.
+
 ## Executive Summary
 
 This document defines a **shared-infrastructure, multi-site deployment architecture** for hosting 2-3 painting gallery sites on a single Linux server (10th gen Core i5). The architecture uses:
@@ -1134,10 +1150,10 @@ location /images/ {
 ```
 
 **Fix Applied:** NGINX config now has per-site server blocks with correct upstreams:
-- **ggpaintings.com** (lines 155-315): Uses `frontend_gg` and `api_gg` upstreams
-- **earthelementsart.com** (lines 320-480): Uses `frontend_flynn` and `api_flynn` upstreams
+- **ggpaintings.com** (`server_name` on line 157): Uses `frontend_gg` and `api_gg` upstreams
+- **earthelementsart.com** (`server_name` on line 322): Uses `frontend_flynn` and `api_flynn` upstreams
 - Each server block has its own `/images/`, static asset caching, fonts, `/_next/static/`, `/api/`, and `/` location blocks
-- HTTP-to-HTTPS redirect (line 486) covers both domains
+- HTTP-to-HTTPS redirect (lines 488-489) covers both domains
 ```nginx
 # Inside ggpaintings.com server block:
 location ~ ^/(Animals|Flowers|Landscapes|Seascapes|Carousel-Paintings|Other)-(Full|Thumbnail)/ {

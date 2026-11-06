@@ -41,16 +41,16 @@ graph TD
 
 | Concern | Detail |
 |---|---|
-| NGINX config | [`docker-compose/nginx/nginx.conf`](docker-compose/nginx/nginx.conf) is **already complete** for both sites: Cloudflare real-IP block (lines 32-87), per-site `server_name` blocks (gg lines 155-315, flynn lines 320-480), HTTP→HTTPS redirect for both domains (lines 486-490). **No NGINX edits required.** |
+| NGINX config | [`docker-compose/nginx/nginx.conf`](docker-compose/nginx/nginx.conf) is **already complete** for both sites: Cloudflare real-IP block (lines 32-86, `real_ip_header CF-Connecting-IP` on line 86), the four upstreams (lines 119-136), the gg `server_name` block (opens line 157), the flynn `server_name` block (opens line 322), and the HTTP→HTTPS redirect for both domains (lines 488-489). **No NGINX edits required.** |
 | SSL mode | Cloudflare **Full** (not Flexible, not Full Strict). Origin uses **self-signed** certs. |
 | Databases | Single-site: `artgallery`. Multi-site: `artgallery_gg` + `artgallery_flynn`. |
 | Volume sharing | Both compose files live in `docker-compose/` → same Compose project name `docker-compose` → **same `postgres_data` volume**. The existing `artgallery` DB is preserved across the migration. |
 | Init script | [`docker-compose/scripts/init-databases.sql`](docker-compose/scripts/init-databases.sql) only runs on a **first** (empty) data dir. It will **NOT** run on the existing volume, so the two new DBs must be created manually. |
 | Auto-migrate/seed | [`ServerApp/ServerApp.Infrastructure/Services/AppInitializer.cs`](ServerApp/ServerApp.Infrastructure/Services/AppInitializer.cs) runs `MigrateAsync` (does **not** create the DB) then `SeedAsync` on startup. An empty `artgallery_flynn` auto-migrates + auto-seeds; a populated `artgallery_gg` skips both. |
 | Images | [`docker-compose/image-data/gg/`](docker-compose/image-data/gg) and [`docker-compose/image-data/flynn/`](docker-compose/image-data/flynn) are **committed to git** (not gitignored) and pre-populated. Production uploads live in the named volume `image_data` and must be merged into `./image-data/gg/`. |
-| Env file | [`docker-compose/.env.multi.example`](docker-compose/.env.multi.example) defines all `GG_*` / `FLYNN_*` vars but is **missing `POSTGRES_PASSWORD`** (required by the compose connection strings). |
-| SSL cert dirs | [`docker-compose/nginx/ssl/gg/`](docker-compose/nginx/ssl/gg) and [`docker-compose/nginx/ssl/flynn/`](docker-compose/nginx/ssl/flynn) are **both empty** — certs must be generated. |
-| Deploy script | [`docker-compose/deploy-multi.sh`](docker-compose/deploy-multi.sh) pre-flight checks `secrets/postgres_password`, SSL certs in both dirs, and `nginx.conf`; sets UID-101 permissions; starts postgres; restores per-site backups if present; builds + starts the rest; runs non-root security checks. |
+| Env file | [`docker-compose/.env.multi.example`](docker-compose/.env.multi.example) defines all `GG_*` / `FLYNN_*` vars **and** a `POSTGRES_PASSWORD=` key, but ships it **empty** — you must fill it in (required by the compose connection strings). |
+| SSL cert dirs | [`docker-compose/nginx/ssl/gg/`](docker-compose/nginx/ssl/gg) and [`docker-compose/nginx/ssl/flynn/`](docker-compose/nginx/ssl/flynn) hold dev certs, but `*.crt` / `*.key` are **gitignored** (root [`.gitignore`](.gitignore) lines 11-12). A fresh clone therefore gets **empty** dirs and certs must be generated — see step 2.2. |
+| Deploy script | [`docker-compose/deploy-multi.sh`](docker-compose/deploy-multi.sh) pre-flight checks `secrets/postgres_password`, SSL certs in both dirs, and `nginx.conf`; sets UID-101 permissions on the SSL dirs and UID-1654 on `image-data/`; tears down the single-site stack; starts postgres; **creates both site databases if missing**; restores per-site backups if present; builds + starts the rest; runs non-root security checks. |
 | Backup | [`docker-compose/scripts/backup-multi.sh`](docker-compose/scripts/backup-multi.sh) targets container `artgallery-postgres` and DBs `artgallery_gg`/`artgallery_flynn`. Install via [`docker-compose/scripts/install-backup-cron-multi.sh`](docker-compose/scripts/install-backup-cron-multi.sh). |
 
 ---
@@ -68,7 +68,7 @@ cp .env.multi.example .env.multi
 
 Edit `.env.multi`:
 
-1. **Add the missing `POSTGRES_PASSWORD`** (required by the compose connection strings; must equal the content of `secrets/postgres_password`):
+1. **Fill in the empty `POSTGRES_PASSWORD`** (`.env.multi.example` ships the key with no value; it is required by the compose connection strings and must equal the content of `secrets/postgres_password`):
    ```bash
    # value must match: cat secrets/postgres_password
    POSTGRES_PASSWORD=<paste the existing production postgres password>
@@ -205,7 +205,9 @@ docker exec artgallery-postgres psql -U postgres -d artgallery_gg -c "SELECT cou
 docker exec artgallery-postgres psql -U postgres -d artgallery_gg -c "SELECT count(*) FROM AdminUsers;"
 ```
 
-> `artgallery_flynn` is intentionally left empty. When `api-flynn` starts, [`AppInitializer`](ServerApp/ServerApp.Infrastructure/Services/AppInitializer.cs) applies all EF migrations (creating the schema) and [`DatabaseSeeder`](ServerApp/ServerApp.Infrastructure/Services/DatabaseSeeder.cs) seeds the 2 flynn categories (`paintings`, `ceramics`), the flynn paintings/ceramics, and flynn page content.
+> `artgallery_flynn` is intentionally left empty. When `api-flynn` starts, [`AppInitializer`](ServerApp/ServerApp.Infrastructure/Services/AppInitializer.cs) applies all EF migrations (creating the schema) and [`DatabaseSeeder`](ServerApp/ServerApp.Infrastructure/Services/DatabaseSeeder.cs) seeds the flynn data from [`SeedData/SiteSpecific/Flynn/`](ServerApp/ServerApp.Infrastructure/SeedData/SiteSpecific/Flynn): the 2 categories (`paintings`, `ceramics`), 15 artworks (6 oil paintings + 9 ceramic pieces), and the flynn page content.
+>
+> `deploy-multi.sh` step `[5/8]` creates both databases itself when they are missing, so the manual `CREATE DATABASE` above is only needed if you skip the script and run `docker compose up` by hand.
 >
 > **Do not drop the old `artgallery` DB yet** — keep it as a rollback safety net until Phase 3 verification passes.
 
@@ -240,13 +242,15 @@ cd docker-compose
 ./deploy-multi.sh
 ```
 
-What `deploy-multi.sh` does:
+What `deploy-multi.sh` does (its own `[1/8]`…`[8/8]` steps):
 1. Loads `.env.multi`, runs pre-flight checks (secrets, SSL certs in both dirs, `nginx.conf`).
-2. Sets UID-101 ownership on SSL dirs + `nginx.conf`, `chmod 600` the `.key` files.
-3. `down` (no-op for multi-site) → starts `postgres` → waits for healthy.
-4. Restores per-site backups from `$BACKUP_DIR` **if present** — there are none for multi-site yet, so it skips (your manually-migrated `artgallery_gg` is preserved).
-5. `up -d --build` — builds + starts `api-gg`, `frontend-gg`, `api-flynn`, `frontend-flynn`, `nginx`.
-6. Prints container status + non-root security checks.
+2. Sets UID-101 ownership on the SSL dirs + `nginx.conf`, `chmod 600` the `.key` files.
+3. Sets `image-data/{gg,flynn}` ownership to UID 1654 (the API image's non-root `app` user) so painting uploads are writable.
+4. `docker compose down` for the multi-site file, then for `docker-compose.prod.yml` if present, and **aborts** if any `artgallery-nginx|postgres-prod|api-prod|frontend-prod` container survives (it would hold ports 80/443/9090).
+5. Starts `postgres` → waits for healthy → **creates `artgallery_gg` / `artgallery_flynn` if missing**.
+6. Restores per-site backups from `$BACKUP_DIR` **if present**. The glob only matches `artgallery_<database>_*.dump` written by `scripts/backup-multi.sh`, so your manually-migrated `artgallery_gg` is left alone.
+7. `up -d --build` — builds + starts `api-gg`, `frontend-gg`, `api-flynn`, `frontend-flynn`, `nginx`.
+8. Prints container status + non-root / image-storage-writable security checks.
 
 > The `down`/`up postgres` inside the script is harmless: the `postgres_data` volume persists, so `artgallery_gg` and `artgallery_flynn` survive the restart.
 
@@ -406,10 +410,10 @@ If the multi-site deployment fails and `ggpaintings.com` must be restored quickl
 | File | Role |
 |---|---|
 | [`docker-compose/docker-compose.multi.yml`](docker-compose/docker-compose.multi.yml) | Target multi-site stack (postgres, api/frontend ×2, nginx) |
-| [`docker-compose/docker-compose.prod.yml`](docker-compose/docker-compose.prod.yml) | Current single-site stack (to be retired) |
+| [`docker-compose/docker-compose.prod.yml`](docker-compose/docker-compose.prod.yml) | **Retired** single-site stack (kept for reference/rollback only) |
 | [`docker-compose/nginx/nginx.conf`](docker-compose/nginx/nginx.conf) | Already complete for both sites + Cloudflare real-IP |
-| [`docker-compose/.env.multi.example`](docker-compose/.env.multi.example) | Template for `.env.multi` (add `POSTGRES_PASSWORD`) |
-| [`docker-compose/deploy-multi.sh`](docker-compose/deploy-multi.sh) | Multi-site deploy (permissions, postgres, restore, build, security checks) |
+| [`docker-compose/.env.multi.example`](docker-compose/.env.multi.example) | Template for `.env.multi` (`POSTGRES_PASSWORD` key present but empty — fill it in) |
+| [`docker-compose/deploy-multi.sh`](docker-compose/deploy-multi.sh) | Multi-site deploy (permissions, prod teardown, postgres, DB creation, restore, build, security checks) |
 | [`docker-compose/scripts/init-databases.sql`](docker-compose/scripts/init-databases.sql) | Creates both DBs (only on first/empty volume) |
 | [`docker-compose/scripts/backup-multi.sh`](docker-compose/scripts/backup-multi.sh) | Multi-site DB backup (both sites) |
 | [`docker-compose/scripts/install-backup-cron-multi.sh`](docker-compose/scripts/install-backup-cron-multi.sh) | Installs multi-site backup cron |

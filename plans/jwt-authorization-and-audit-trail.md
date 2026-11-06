@@ -1,5 +1,24 @@
 # JWT Authorization and Audit Trail Implementation Plan
 
+> **⚠ NOT IMPLEMENTED, and the storage naming is wrong — read before acting on this.** Two
+> separate problems with treating this as current:
+>
+> 1. **The audit trail does not exist.** There is no `AuditLog` entity, no `IAuditLogWriteRepository`,
+>    and no audit pipeline behavior anywhere under `ServerApp/` (verified by filename and by
+>    grepping the DI registrations in
+>    [`Extensions.cs`](ServerApp/ServerApp.Infrastructure/Extensions.cs:24) and
+>    [`Program.cs`](ServerApp/ServerApp.Api/Program.cs:49)). There is likewise no
+>    `AddAuthentication`/`UseAuthorization` or JWT-bearer handler wired up; `JwtTokenService`
+>    exists and issues/validates tokens, but authorization is not enforced through ASP.NET
+>    middleware. Everything below that says "New file" is still just a proposal.
+>
+> 2. **"SQLServer" in any filename is stale regardless of whether it gets built.** The persistence
+>    layer is PostgreSQL via `UseNpgsql`
+>    ([`EF/Extensions.cs:42`](ServerApp/ServerApp.Infrastructure/EF/Extensions.cs:42)). Names like
+>    `SQLServerAdminUserWriteRepository` and `SQLServerAuditLogWriteRepository` survive from an
+>    earlier design; new repositories are unprefixed (`AdminUserWriteRepository`, etc.). If this
+>    plan is ever picked up, name the audit repository for what it actually targets.
+
 ## Overview
 
 This plan adds JWT-based authorization to all mutating API calls (POST/DELETE) and implements an audit trail that records which admin performed each operation. The solution follows DDD and CQRS best practices.

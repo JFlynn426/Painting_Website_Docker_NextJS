@@ -1646,10 +1646,18 @@ POSTGRES_PASSWORD=YourSecurePassword123!
 
 **Why the secret file if the password is also in `.env`?**
 It is not really a secret mechanism here. The official postgres image **ignores**
-`*_FILE` variables, so `secrets/postgres_password` is never read by the database. It exists
-only because `docker-compose.prod.yml` declares it and Compose refuses to start when a
-declared secret file is missing. Keep it identical to `POSTGRES_PASSWORD` and treat
-`docker inspect` output as containing a live credential.
+`*_FILE` variables, so `secrets/postgres_password` is never read by the database. The real
+credential is `POSTGRES_PASSWORD`, which is what the API connection strings interpolate.
+Keep the file identical to `POSTGRES_PASSWORD` and treat `docker inspect` output as
+containing a live credential.
+
+> **Do not delete `secrets/postgres_password` on the grounds that it is "left over from the
+> retired stack".** The current stack declares it too: `secrets: [postgres_password]` on the
+> `postgres` service ([`multi.yml:31-33`](docker-compose.multi.yml:31)) plus the top-level
+> `secrets:` block ([`multi.yml:324-326`](docker-compose.multi.yml:324)), and Compose refuses
+> to start when a declared secret file is missing. `deploy-multi.sh` additionally aborts in
+> its pre-flight checks if the file is absent. Only `docker-compose.multi.arm64.yml` omits
+> secrets — it passes `POSTGRES_PASSWORD` directly.
 
 #### Step 4: Generate Self-Signed SSL Certificate
 

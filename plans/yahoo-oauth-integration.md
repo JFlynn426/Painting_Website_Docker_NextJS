@@ -1,5 +1,27 @@
 # Yahoo OAuth2 Integration Plan
 
+> **⚠ IMPLEMENTED — historical planning doc, do not treat it as current instructions.** Yahoo
+> login is live in the codebase:
+> [`YahooAuthService.cs`](ServerApp/ServerApp.Infrastructure/Services/YahooAuthService.cs:12) and its
+> [`IYahooAuthService`](ServerApp/ServerApp.Application/Services/IYahooAuthService.cs:3) interface,
+> registered in [`Extensions.cs:63-70`](ServerApp/ServerApp.Infrastructure/Extensions.cs:63), the
+> `yahoo/url` and `yahoo/callback` endpoints in
+> [`AuthController.cs:68`](ServerApp/ServerApp.Api/Controllers/AuthController.cs:68),
+> [`LoginWithYahooHandler`](ServerApp/ServerApp.Application/Commands/Handlers/LoginWithYahooHandler.cs:16),
+> and the [`AdminYahooGuid`](ServerApp/ServerApp.Domain/ValueObjects/Admin/AdminYahooGuid.cs:16)
+> value object. `AdminUser` now takes a nullable `googleSubjectId` **and** a nullable `yahooGuid`,
+> with a constructor guard requiring at least one provider id
+> ([`AdminUser.cs:24-29`](ServerApp/ServerApp.Domain/Entities/AdminUser.cs:24)) — so the
+> "Discrepancy 3" below is already resolved.
+>
+> The per-site `GG_` / `FLYNN_` env keys that "Discrepancy 1" asks for also exist, in all three
+> `.env` templates and in both multi-site compose files
+> ([`multi.yml:68-70`](docker-compose/docker-compose.multi.yml:68),
+> [`:177-179`](docker-compose/docker-compose.multi.yml:177)).
+>
+> Read [`../docker-compose/DEPLOYMENT_GUIDE.md`](../docker-compose/DEPLOYMENT_GUIDE.md) for what to
+> actually run.
+
 ## Overview
 
 This document outlines the changes required to add Yahoo OAuth2 authentication as an additional provider alongside the existing Google OAuth2 authentication.
@@ -540,10 +562,12 @@ This must be replicated for Yahoo in **ALL** docker-compose files:
   YahooAuth__ClientSecret: ${GG_YAHOO_AUTH_CLIENT_SECRET}
   YahooAuth__RedirectUri: ${GG_YAHOO_AUTH_REDIRECT_URI}
   ```
-- `docker-compose/docker-compose.multi.arm64.yml` - Same pattern for both sites
-- `docker-compose/docker-compose.yml` - Single-site version
-- `docker-compose/docker-compose.arm64.yml` - Single-site ARM64 version
-- `docker-compose/docker-compose.prod.yml` - Production single-site version
+- `docker-compose/docker-compose.multi.arm64.yml` - Same pattern for both sites (exists)
+- `docker-compose/docker-compose.yml` - Single-site version (**retired**, local dev only)
+- `docker-compose/docker-compose.arm64.yml` - Single-site ARM64 version (**retired**)
+- `docker-compose/docker-compose.prod.yml` - Former single-site production file (**retired**).
+  It carries **no** `YahooAuth__*` keys, so Yahoo login cannot work there: `YahooAuthService`
+  throws `ArgumentNullException` from its constructor when the three keys are missing.
 
 #### 6.3 No AppSettings Changes Needed
 

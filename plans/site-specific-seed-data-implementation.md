@@ -1,5 +1,22 @@
 # C# Site-Specific Seed Data Implementation Plan
 
+> **⚠ IMPLEMENTED — historical planning doc, do not treat it as current instructions.** The
+> design below shipped. [`DatabaseSeeder.cs:39-40`](ServerApp/ServerApp.Infrastructure/Services/DatabaseSeeder.cs:39)
+> reads `configuration["SITE_NAME"]` and resolves a provider through
+> [`SiteSeedDataProviderFactory.GetProvider`](ServerApp/ServerApp.Infrastructure/SeedData/SiteSpecific/SiteSeedDataProviderFactory.cs:17);
+> `GgSeedDataProvider` and `FlynnSeedDataProvider` supply the per-site categories, paintings
+> and page content.
+>
+> Watch the two unrelated "site name" variables, which are easy to conflate. The API reads
+> **`SITE_NAME`**, hardcoded to the literal `gg` / `flynn` in the compose `environment:`
+> blocks — the factory throws `ArgumentException` on anything else, so it is never a display
+> string. **`GG_SITE_NAME` / `FLYNN_SITE_NAME`** in `.env.multi*` are display names ("Gloria
+> Gronowicz Fine Art", "Terri Gray Fine Art") and feed only the frontend's
+> `NEXT_PUBLIC_SITE_NAME` build arg.
+>
+> Read [`../docker-compose/DEPLOYMENT_GUIDE.md`](../docker-compose/DEPLOYMENT_GUIDE.md) for
+> what to actually run.
+
 **Goal:** Implement site-specific seed data using C# static classes so the GG and Flynn sites can be initialized with different categories, paintings, and page content on first deployment.
 
 **Strategy:** Create site-specific seed data classes organized by site, modify `DatabaseSeeder` to select seed data based on the `SITE_NAME` environment variable, and update docker-compose to pass `SITE_NAME` to each API container.

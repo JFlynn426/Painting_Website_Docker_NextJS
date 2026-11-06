@@ -107,8 +107,11 @@ nginx runs as UID 101 and binds 80/443. This requires Docker ≥ 20.10.3 (defaul
   (`pg_dump -Fc`, `.dump` files) instead of SQL Server, and the non-root checks use
   `id -u` / `docker top`. If you still hit a contradiction, `docker-compose.multi.yml` +
   `deploy-multi.sh` + `.env.multi.example` are the source of truth.
-- `docker-compose.prod.yml` exists and is the current live stack — the plan's
-  `docker compose -f docker-compose.prod.yml down` is valid.
+- `docker-compose.prod.yml` still exists in the repo but is **retired** and is *not* what a
+  current server runs. The plan's `docker compose -f docker-compose.prod.yml down` is only valid
+  on a server that was actually deployed with it — check with `docker compose ls` /
+  `docker ps --format '{{.Names}}'` before assuming it, and note that `deploy-multi.sh` now
+  performs that teardown (and aborts if the old containers survive) on its own.
 - `init-databases.sql` only runs on a **fresh** volume; on a reused volume you must create
   the two DBs manually (Step 4 below).
 

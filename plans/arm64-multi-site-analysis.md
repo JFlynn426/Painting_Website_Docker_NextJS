@@ -3,6 +3,32 @@
 **Target Platform:** ARM64 laptop (Snapdragon processor, Windows/Linux)
 **Date:** 2026-07-29
 
+> **⚠ DONE — historical planning doc, do not treat as a to-do list.** Everything under
+> "What Needs to Be Created" below has since been built.
+> [`docker-compose.multi.arm64.yml`](docker-compose/docker-compose.multi.arm64.yml) exists and
+> implements the proposed changes: `-arm64` container-name suffixes
+> ([L40](docker-compose/docker-compose.multi.arm64.yml:40), [L69](docker-compose/docker-compose.multi.arm64.yml:69),
+> [L118](docker-compose/docker-compose.multi.arm64.yml:118),
+> [L180](docker-compose/docker-compose.multi.arm64.yml:180),
+> [L229](docker-compose/docker-compose.multi.arm64.yml:229),
+> [L290](docker-compose/docker-compose.multi.arm64.yml:290)), direct debug ports
+> `3001`/`3002` ([L145](docker-compose/docker-compose.multi.arm64.yml:145),
+> [L256](docker-compose/docker-compose.multi.arm64.yml:256)), `Dockerfile.local` for NGINX
+> ([L293](docker-compose/docker-compose.multi.arm64.yml:293)), and localhost SSL under
+> `nginx/ssl/localhost/{gg,flynn}` ([L300-301](docker-compose/docker-compose.multi.arm64.yml:300)).
+> `.env.multi.arm64.example` exists too.
+>
+> It also resolved item 2 the way this document's own line 78 predicted: **no**
+> `nginx.multi.arm64.local.conf` was created — the compose file bind-mounts the existing
+> `nginx/nginx.multi.local.conf` ([L299](docker-compose/docker-compose.multi.arm64.yml:299)),
+> because NGINX addresses services by *service* name, not container name.
+>
+> Finally, the two files listed as "Single-Site Files (Reference)" — `docker-compose.prod.yml` and
+> `docker-compose.arm64.yml` — are now **retired**. `docker-compose.multi.yml` (x86_64) and
+> `docker-compose.multi.arm64.yml` (ARM64) are what actually deploy. Read
+> [`../docker-compose/DEPLOYMENT_GUIDE.md`](../docker-compose/DEPLOYMENT_GUIDE.md) for current
+> commands.
+
 ## Existing File Structure
 
 ### Single-Site Files (Reference)

@@ -1,5 +1,19 @@
 # Complete Guide: Setting Up Yahoo OAuth for Admin Login
 
+> **Reference guide — Yahoo OAuth is already built and configured.** The service, endpoints, and
+> handler exist ([`YahooAuthService.cs`](ServerApp/ServerApp.Infrastructure/Services/YahooAuthService.cs:12),
+> [`AuthController.cs:68`](ServerApp/ServerApp.Api/Controllers/AuthController.cs:68),
+> [`LoginWithYahooHandler`](ServerApp/ServerApp.Application/Commands/Handlers/LoginWithYahooHandler.cs:16))
+> and working credentials are already present in the gitignored `docker-compose/.env.multi`
+> (`GG_YAHOO_AUTH_*`, `FLYNN_YAHOO_AUTH_*`). Use this guide to onboard a *new* provider or rotate
+> those credentials, not to add the feature.
+>
+> When you do configure keys, remember the current stack is **per-site**: the variables are
+> `GG_`/`FLYNN_` prefixed and must be added to all three of `.env.multi`,
+> `.env.multi.example`, and `.env.multi.arm64.example`, then mapped as build args / env in
+> `docker-compose.multi.yml` and `docker-compose.multi.arm64.yml`. The retired single-site
+> `docker-compose.prod.yml` has no `YahooAuth__*` keys at all.
+
 This guide walks you through everything needed to get Yahoo OAuth login working, from creating a Yahoo account to configuring the application.
 
 ---

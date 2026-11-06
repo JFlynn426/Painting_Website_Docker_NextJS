@@ -1,5 +1,14 @@
 # Contact Form & Newsletter Feature Analysis
 
+> **⚠ UNIMPLEMENTED PROPOSAL — analysis only; nothing below is implemented.** Re-checked
+> 2026-11-06: the codebase still contains no SMTP client, no `MailKit` reference, no
+> `IEmailService` and no newsletter entity, so the "No Existing Email Infrastructure" premise
+> in this document still holds. The `mailservice` container and MTA env vars proposed near the
+> end were never added to `docker-compose.multi.yml` or `.env.multi.example`. Read this as
+> design groundwork for a possible future feature, not as a description of the current system.
+> For what actually runs, see
+> [`../docker-compose/DEPLOYMENT_GUIDE.md`](../docker-compose/DEPLOYMENT_GUIDE.md).
+
 ## Overview
 
 This document analyzes the requirements, options, and trade-offs for adding two new features to the painting gallery website:
@@ -11,7 +20,7 @@ This document analyzes the requirements, options, and trade-offs for adding two 
 
 ### Technology Stack
 - **Frontend**: Next.js with App Router, React TypeScript, Bootstrap
-- **Backend**: .NET 8 with CQRS pattern (MediatR), EF Core, PostgreSQL
+- **Backend**: .NET 10 (`net10.0`) with CQRS pattern (MediatR), EF Core, PostgreSQL
 - **Deployment**: Docker Compose with multi-site support (ggpaintings.com, earthelementsart.com)
 - **Reverse Proxy**: NGINX with SSL termination
 - **Server**: 10th Gen i5, Linux, **static IP with Cloudflare DNS, port 25 confirmed OPEN**

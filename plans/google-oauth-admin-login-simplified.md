@@ -136,10 +136,10 @@ ServerApp.Infrastructure/
 │   └── Repositories/
 │       ├── Read/
 │       │   ├── IAdminUserReadRepository.cs
-│       │   └── SQLServerAdminUserReadRepository.cs
+│       │   └── AdminUserReadRepository.cs
 │       └── Write/
 │           ├── IAdminUserWriteRepository.cs
-│           └── SQLServerAdminUserWriteRepository.cs
+│           └── AdminUserWriteRepository.cs
 └── Services/
     └── GoogleAuthService.cs
 ```
@@ -719,12 +719,20 @@ export async function POST(request: NextRequest) {
 | `ServerApp.Infrastructure/Services/GoogleAuthService.cs` | Google OAuth service |
 
 ### New Infrastructure Repository Files (4 files)
+
+Names corrected to what was actually built. The `SQLServer*` names in the original plan were never
+used — the persistence layer is PostgreSQL via `UseNpgsql`
+([`EF/Extensions.cs:42`](ServerApp/ServerApp.Infrastructure/EF/Extensions.cs:42)), and the
+repositories are registered unprefixed as `AdminUserReadRepository` / `AdminUserWriteRepository`
+([`Extensions.cs:30`](ServerApp/ServerApp.Infrastructure/Extensions.cs:30),
+[`Extensions.cs:36`](ServerApp/ServerApp.Infrastructure/Extensions.cs:36)).
+
 | File | Purpose |
 |------|---------|
 | `IAdminUserReadRepository.cs` | Read repository interface |
-| `SQLServerAdminUserReadRepository.cs` | SQL Server read implementation |
+| `AdminUserReadRepository.cs` | Read implementation (PostgreSQL/Npgsql) |
 | `IAdminUserWriteRepository.cs` | Write repository interface |
-| `SQLServerAdminUserWriteRepository.cs` | SQL Server write implementation |
+| `AdminUserWriteRepository.cs` | Write implementation (PostgreSQL/Npgsql) |
 
 ### Modified Backend Files (6 files)
 | File | Change |

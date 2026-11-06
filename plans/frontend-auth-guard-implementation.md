@@ -1,5 +1,18 @@
 # Front-End Auth Guard Implementation Plan
 
+> **⚠ IMPLEMENTED — historical planning doc, do not treat it as current instructions.** All
+> four entries in the "Current State (Issues)" table below are resolved in today's code:
+> [`AuthController.cs:102-125`](ServerApp/ServerApp.Api/Controllers/AuthController.cs:102)
+> reads the httpOnly `admin_token` cookie and validates it through `IJwtTokenService` rather
+> than trusting an `X-Admin-Id` header; [`lib/auth.ts`](clientapp/src/lib/auth.ts:24) calls
+> `GET /api/auth/me` with `credentials: "include"`; and
+> [`proxy.ts`](clientapp/src/proxy.ts:19) gates `/admin/*` at the Edge on cookie presence.
+> `localStorage` now holds only non-sensitive display data under the `admin_user` key — the
+> JWT is never readable by JavaScript. Yahoo OAuth and the admin dashboard were both added
+> after this plan was written.
+> Read [`../docker-compose/DEPLOYMENT_GUIDE.md`](../docker-compose/DEPLOYMENT_GUIDE.md) for
+> what to actually run.
+
 ## Overview
 
 Migrate from localStorage-based auth verification to a hybrid model where:

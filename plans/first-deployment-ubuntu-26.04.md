@@ -10,10 +10,15 @@ This guide provides the commands needed for first-time deployment on a fresh Ubu
 
 | Mode | Script | Compose File | Use Case |
 |------|--------|-------------|----------|
-| **Multi-Site** (Recommended) | `deploy-multi.sh` | `docker-compose.multi.yml` | Host ggpaintings.com + earthelementsart.com on same server |
-| **Single-Site** | `deploy.sh` | `docker-compose.prod.yml` | Host a single site |
+| **Multi-Site** (current) | `deploy-multi.sh` | `docker-compose.multi.yml` | Host ggpaintings.com + earthelementsart.com on same server |
+| ~~Single-Site~~ (**retired**) | `deploy.sh` | `docker-compose.prod.yml` | Historical only — see the banner below |
 
-> **This guide focuses on multi-site deployment.** For single-site, use `deploy.sh` and `docker-compose.prod.yml` instead.
+> **This guide focuses on multi-site deployment.** `deploy.sh` and `docker-compose.prod.yml` are
+> **retired**: that stack runs `artgallery-postgres-prod` with a single `artgallery` database and
+> contends for the same `postgres_data` volume and the same host ports as the multi-site stack, so
+> the two cannot run side by side. Do not treat the single-site commands in this guide as a
+> supported alternative — the authoritative procedure is
+> [`../docker-compose/DEPLOYMENT_GUIDE.md`](../docker-compose/DEPLOYMENT_GUIDE.md).
 
 ## Architecture Overview
 
@@ -769,10 +774,10 @@ docker compose -f docker-compose.multi.yml up -d --build
 
 | File | Purpose |
 |------|---------|
-| `deploy.sh` | Single-site deployment script |
+| `deploy.sh` | Single-site deployment script (**retired**) |
 | `deploy-multi.sh` | Multi-site deployment script (with database restore and security checks) |
-| `docker-compose.prod.yml` | Production compose configuration |
-| `docker-compose.yml` | Base compose configuration |
+| `docker-compose.prod.yml` | Single-site production compose configuration (**retired**, kept for reference) |
+| `docker-compose.yml` | Base compose configuration (local development) |
 | `docker-compose.multi.yml` | Multi-site production compose configuration |
 | `docker-compose.multi.local.yml` | Multi-site local development override |
 | `.env.example` | Environment variable template |

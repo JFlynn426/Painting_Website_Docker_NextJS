@@ -1,5 +1,23 @@
 # Read-Only Mode Architecture Plan
 
+> **⚠ IMPLEMENTED, and the compose details below are partly stale — read before acting.**
+>
+> **Status:** built, but not as a separate "no-op UnitOfWork" class. There is one
+> [`UnitOfWork`](ServerApp/ServerApp.Infrastructure/Persistence/UnitOfWork.cs) that takes a
+> `readOnlyMode` flag, chosen at registration from the `Database:ReadOnlyMode` config key
+> ([`Extensions.cs:35-40`](ServerApp/ServerApp.Infrastructure/Extensions.cs:35)).
+>
+> **Compose layout:** the sections below that name only `docker-compose.prod.yml` describe the
+> **retired** single-site stack. On the current stack the key is **per-site** —
+> `GG_DATABASE_READ_ONLY_MODE` and `FLYNN_DATABASE_READ_ONLY_MODE` — for `api-gg` and `api-flynn`
+> ([`multi.yml:74`](docker-compose/docker-compose.multi.yml:74),
+> [`:183`](docker-compose/docker-compose.multi.yml:183)). Do not rebuild through `prod.yml` to
+> change this setting; it is not deployed and contends with `multi.yml` for the same
+> `postgres_data` volume and the same 80/443/9090 ports.
+>
+> Operational doc for what to actually run:
+> [`../docker-compose/DEPLOYMENT_GUIDE.md`](../docker-compose/DEPLOYMENT_GUIDE.md).
+
 ## Overview
 
 This plan describes the cleanest approach to disable all database-altering operations (Commands) in the CQRS architecture while still returning successful API responses. The solution uses a **no-op UnitOfWork** controlled via configuration.
