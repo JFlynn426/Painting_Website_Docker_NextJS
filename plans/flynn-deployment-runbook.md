@@ -329,20 +329,39 @@ If `prepare-cutover.sh` is missing, the push or the pull did not happen — stop
 
 ### Server — prepare (no downtime)
 
+Pick **one** data path. They are mutually exclusive.
+
+**Path A — reseed gg from scratch (chosen).** The new stack uses a *new* database name
+(`artgallery_gg`) while the live site uses `artgallery`, so the new DB starts empty and
+`DatabaseSeeder` fills it automatically at API startup. Nothing has to be dumped or restored —
+but a stray dump in `$BACKUP_DIR` **would** be restored instead of seeded, because
+`deploy-multi.sh` step 6/8 globs `artgallery_artgallery_gg_*.dump` and does
+`DROP DATABASE` + `pg_restore` when it finds one. So the requirement here is to make sure
+there isn't one.
+
 ```bash
-./scripts/prepare-cutover.sh --check   # read the report
-./scripts/prepare-cutover.sh --fix     # JWT secrets, redirect URIs, allowlist, exec bits,
-                                       # postgres password continuity
-./scripts/prepare-cutover.sh --backup  # MUST run while artgallery-postgres-prod is still up
-./scripts/prepare-cutover.sh --check   # should now read all ok
-./scripts/generate-prod-ssl.sh         # deploy-multi.sh refuses to run without these
+./scripts/prepare-cutover.sh --check
+./scripts/prepare-cutover.sh --fix        # JWT secrets, redirect URIs, allowlist, exec bits,
+                                          # postgres password continuity
+ls -l /opt/artgallery/backups/            # any artgallery_artgallery_gg_*.dump must be moved away
+sudo mkdir -p /opt/artgallery/backups/suppressed
+sudo mv /opt/artgallery/backups/artgallery_artgallery_gg_*.dump /opt/artgallery/backups/suppressed/ 2>/dev/null || true
+./scripts/prepare-cutover.sh --check
+./scripts/generate-prod-ssl.sh            # deploy-multi.sh refuses to run without these
 ```
 
-Order is not arbitrary. `deploy-multi.sh` step 3/8 tears down the prod stack, so the database
-dump has to be taken before it runs. The dump is written to `$BACKUP_DIR` as
-`artgallery_artgallery_gg_<timestamp>.dump`, which is the exact glob step 6/8 restores from, so
-`--backup` followed by `deploy-multi.sh` migrates the data automatically. Do not also run
-`restore-multi.sh` by hand; that would repeat the same `DROP DATABASE`.
+Skip `--backup` entirely on this path. The old `artgallery` database is left untouched inside
+the postgres volume, which is what makes the rollback below work.
+
+Images do **not** need migrating: the multi-site stack serves from the repo-tracked
+`./image-data/gg` bind mount (68 high-res + 68 thumbnails, all `.jpg`), and all 66 seed
+`ImageUrl` entries resolve to real files. The old single-site `image_data` named volume can be
+dropped once the new stack is confirmed.
+
+**Path B — migrate the live gg data instead.** Run `./scripts/prepare-cutover.sh --backup`
+while `artgallery-postgres-prod` is still up, then deploy. The dump lands in `$BACKUP_DIR`
+under the name step 6/8 globs for, so the restore is automatic. Do not also run
+`restore-multi.sh` by hand; that repeats the same `DROP DATABASE`.
 
 ### Server — deploy (downtime starts here)
 
@@ -355,12 +374,66 @@ sudo ./deploy-multi.sh
 ### Server — verify
 
 ```bash
-docker compose -f docker-compose.multi.yml ps      # 6/6 healthy
+# Always pass --env-file. `docker compose` auto-loads `.env`, NOT `.env.multi`, so a bare
+# compose command interpolates every ${GG_*}/${FLYNN_*} to blank. deploy-multi.sh sources
+# .env.multi itself so the deploy is fine, but a hand-run `up`/`build` would rebuild the
+# frontends with an empty API URL, no theme colours and no OAuth.
+alias dcm='docker compose -f docker-compose.multi.yml --env-file .env.multi'
+dcm ps                                                  # 6/6 healthy
+```
 
-# gg kept its real data — compare against the count taken before the cutover
+Do **not** try to confirm seeding from the logs. `appsettings.Production.json` sets
+`Logging:LogLevel:Default` to `Warning` and `DatabaseSeeder` logs at `Information`, so neither
+"Seeding initial data" nor "Skipping seeding" is ever emitted in Production. An empty grep means
+nothing. Query the database instead:
+
+```bash
+# 66 paintings and 5 categories means a genuine fresh seed actually ran.
 docker exec artgallery-postgres psql -U postgres -d artgallery_gg -c 'SELECT count(*) FROM "Paintings";'
-docker exec artgallery-postgres psql -U postgres -d artgallery_flynn -c 'SELECT slug FROM "PaintingCategories";'  # paintings, ceramics
+docker exec artgallery-postgres psql -U postgres -d artgallery_gg -c 'SELECT "Slug" FROM "PaintingCategories";'
+docker exec artgallery-postgres psql -U postgres -d artgallery_flynn -c 'SELECT "Slug" FROM "PaintingCategories";'
+```
 
+Column names are PascalCase and must be double-quoted; bare `slug` is folded to lower case by
+Postgres and errors out.
+
+Expected: 66 paintings, and `landscapes-and-cityscapes, seascapes, animals, flowers,
+new-paintings`. **Anything else means the seeder was skipped**, because `artgallery_gg` already
+existed with data from an earlier run and `SeedDatabaseAsync` returns early whenever any
+`PaintingCategory` row is present. `deploy-multi.sh` step 5 only creates a missing database; it
+never drops a populated one.
+
+### Reseeding gg
+
+```bash
+dcm stop api-gg
+docker exec artgallery-postgres psql -U postgres -c 'DROP DATABASE IF EXISTS artgallery_gg;'
+docker exec artgallery-postgres psql -U postgres -c 'CREATE DATABASE artgallery_gg;'
+dcm up -d api-gg
+```
+
+Dropping is safe and complete: `AppInitializer` runs `MigrateAsync` before `SeedAsync`, so the
+recreated empty database is migrated and then seeded on API startup. Both `ReadDbContext` and
+`WriteDbContext` use the same connection string, so there is one database per site and no second
+one to clear.
+
+### Images
+
+`/images/...` is proxied to the API, which serves it through `UseStaticFiles` from
+`ImageProcessing:StoragePath` (`/app/images`), bind-mounted from `image-data/<site>`. So a seed
+`ImageUrl` of `/images/high-res/X.jpg` resolves to `image-data/gg/high-res/X.jpg`.
+
+```bash
+docker exec artgallery-api-gg sh -c 'ls /app/images/high-res | wc -l'      # want 68
+curl -sk -o /dev/null -w '%{http_code}\n' \
+  https://localhost/images/high-res/Bird_of_Paradise.jpg -H 'Host: ggpaintings.com'
+```
+
+One seed thumbnail URL contains a literal space (`/images/thumbnail/Safflower Hummer_.jpg`).
+The file exists, and browsers percent-encode the space, so it normally works - but it is the one
+URL worth checking by hand if a single image 404s or 400s while the rest are fine.
+
+```bash
 curl http://localhost:9090/health
 docker exec artgallery-api-flynn curl -fsS http://localhost:8080/api/health/health
 
