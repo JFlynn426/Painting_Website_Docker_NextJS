@@ -60,8 +60,12 @@ set_kv() {
         echo "    = ${key} unchanged"
         return
     fi
+    # Backslash and ampersand are special on the sed replacement side, and a recovered
+    # postgres password is allowed to contain either, so escape them before interpolating.
+    local esc
+    esc="$(printf '%s' "$value" | sed 's/[\\&]/\\&/g')"
     if grep -q "^${key}=" "$ENV_FILE"; then
-        sed -i "s|^${key}=.*|${key}=${value}|" "$ENV_FILE"
+        sed -i "s|^${key}=.*|${key}=${esc}|" "$ENV_FILE"
     else
         printf '%s=%s\n' "$key" "$value" >> "$ENV_FILE"
     fi
@@ -278,18 +282,48 @@ do_fix() {
 
     echo
     echo "[6/6] Postgres password continuity"
-    local cur
+    # deploy-multi.sh aborts if secrets/postgres_password is missing, and that file is
+    # gitignored so it does not arrive with a git pull. It has to be created here.
+    mkdir -p "$(dirname "$SECRET_FILE")"
+
+    local cur vol existing fresh
     cur="$(detect_current_pg_password)"
+    vol="$(docker volume ls --format '{{.Name}}' 2>/dev/null | grep -E 'postgres_data$' | head -1 || true)"
+
     if [ -n "$cur" ]; then
+        echo "    Read the password off the running container and reused it."
         set_kv POSTGRES_PASSWORD "$cur"
-        mkdir -p "$(dirname "$SECRET_FILE")"
         printf '%s' "$cur" > "$SECRET_FILE"
         chmod 600 "$SECRET_FILE"
         echo "    wrote secrets/postgres_password (mode 600)"
+    elif [ -s "$SECRET_FILE" ]; then
+        existing="$(cat "$SECRET_FILE")"
+        echo "    secrets/postgres_password already exists - keeping it and syncing .env.multi to it."
+        set_kv POSTGRES_PASSWORD "$existing"
+    elif [ -n "$vol" ]; then
+        echo "    STOP: a postgres_data volume (${vol}) exists but its password is not reachable"
+        echo "    and secrets/postgres_password is missing."
+        echo
+        echo "    Do NOT let the stack initialise a fresh password against a populated volume -"
+        echo "    both API containers will die with 'password authentication failed'."
+        echo "    Put the real password in place yourself:"
+        echo
+        echo "      printf '%s' 'THE_REAL_PASSWORD' > secrets/postgres_password"
+        echo "      chmod 600 secrets/postgres_password"
+        echo "      sed -i \"s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=THE_REAL_PASSWORD|\" .env.multi"
+        echo
+        echo "    If losing the current gg data is acceptable, wipe the volume instead and re-run"
+        echo "    --fix, which will then generate a fresh password:"
+        echo "      docker compose -f docker-compose.multi.yml down"
+        echo "      docker volume rm ${vol}"
     else
-        echo "    No existing postgres container detected."
-        echo "    If this is a FRESH volume, set POSTGRES_PASSWORD to a new strong value here;"
-        echo "    scripts/init-databases.sql will then create both site databases for you."
+        echo "    No volume and no secret file -> fresh install, generating a new password."
+        fresh="$(random_secret)"
+        set_kv POSTGRES_PASSWORD "$fresh"
+        printf '%s' "$fresh" > "$SECRET_FILE"
+        chmod 600 "$SECRET_FILE"
+        echo "    wrote secrets/postgres_password (mode 600)"
+        echo "    scripts/init-databases.sql will create both site databases on first boot."
     fi
 
     echo

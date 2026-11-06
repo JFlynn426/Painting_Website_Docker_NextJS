@@ -302,3 +302,81 @@ docker volume rm docker-compose_image_data
    `jflynnpics@gmail.com,flynnjohn426@yahoo.com`.)
 4. Do the flynn Google/Yahoo OAuth apps exist yet with the `/admin/login` redirect?
 5. Is earthelementsart.com already on Cloudflare with SSL = Full and both records proxied?
+
+---
+
+## 9. Copy-paste sequence
+
+### Windows, once
+
+`prepare-cutover.sh` and the exec-bit fix are not in the repo until they are committed and
+pushed. A `git pull` on a server that has not received them changes nothing.
+
+```bash
+git add -A && git commit -m "Add prepare-cutover.sh; set exec bit on shell scripts" && git push
+```
+
+### Server — confirm the pull actually landed
+
+```bash
+cd <repo>/docker-compose
+git log --oneline -1                 # expect the commit you just pushed
+ls -l scripts/prepare-cutover.sh     # must exist, and be -rwxr-xr-x
+file scripts/prepare-cutover.sh      # "shell script", NOT "with CRLF line terminators"
+```
+
+If `prepare-cutover.sh` is missing, the push or the pull did not happen — stop and redo them.
+
+### Server — prepare (no downtime)
+
+```bash
+./scripts/prepare-cutover.sh --check   # read the report
+./scripts/prepare-cutover.sh --fix     # JWT secrets, redirect URIs, allowlist, exec bits,
+                                       # postgres password continuity
+./scripts/prepare-cutover.sh --backup  # MUST run while artgallery-postgres-prod is still up
+./scripts/prepare-cutover.sh --check   # should now read all ok
+./scripts/generate-prod-ssl.sh         # deploy-multi.sh refuses to run without these
+```
+
+Order is not arbitrary. `deploy-multi.sh` step 3/8 tears down the prod stack, so the database
+dump has to be taken before it runs. The dump is written to `$BACKUP_DIR` as
+`artgallery_artgallery_gg_<timestamp>.dump`, which is the exact glob step 6/8 restores from, so
+`--backup` followed by `deploy-multi.sh` migrates the data automatically. Do not also run
+`restore-multi.sh` by hand; that would repeat the same `DROP DATABASE`.
+
+### Server — deploy (downtime starts here)
+
+```bash
+sudo ./deploy-multi.sh
+```
+
+`sudo` is required: the script chowns the SSL dirs to UID 101 and `image-data` to UID 1654.
+
+### Server — verify
+
+```bash
+docker compose -f docker-compose.multi.yml ps      # 6/6 healthy
+
+# gg kept its real data — compare against the count taken before the cutover
+docker exec artgallery-postgres psql -U postgres -d artgallery_gg -c 'SELECT count(*) FROM "Paintings";'
+docker exec artgallery-postgres psql -U postgres -d artgallery_flynn -c 'SELECT slug FROM "PaintingCategories";'  # paintings, ceramics
+
+curl http://localhost:9090/health
+docker exec artgallery-api-flynn curl -fsS http://localhost:8080/api/health/health
+
+# -k for the self-signed origin cert. An explicit Host: SNI/Host of `localhost` matches no
+# server_name and silently falls through to the gg block, testing the wrong site.
+curl -k https://localhost/api/health/health -H "Host: earthelementsart.com"
+curl -s https://earthelementsart.com | head -c 300
+curl -s https://ggpaintings.com  | head -c 300
+```
+
+### Rollback
+
+```bash
+sudo docker compose -f docker-compose.multi.yml down
+sudo docker compose -f docker-compose.prod.yml up -d --build
+```
+
+Works because neither the old `artgallery` database nor the `image_data` volume is ever dropped
+by the new stack.
